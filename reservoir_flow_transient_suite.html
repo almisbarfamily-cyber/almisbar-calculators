@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reservoir Flow &amp; Pressure Transient Suite | منصة انسياب الموائع وتحليل الضغط العابر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --navy-950:#050f1a; --navy-900:#0a1e33; --navy-850:#0e2740; --navy-800:#123049;
+  --navy-700:#1c4468; --navy-600:#2a5a86;
+  --gold:#c9a227; --gold-light:#e6c85a; --gold-dim:rgba(201,162,39,0.35);
+  --paper:#f4f2ec; --paper-line:rgba(10,30,51,0.055);
+  --ink:#13202b; --muted:#5c6b78; --muted-2:#8493a0;
+  --danger:#b5432d; --good:#2e7d53;
+  --card:#ffffff; --card-border:#e4e1d6;
+  --shadow:0 10px 30px -12px rgba(10,30,51,0.18);
+  --plot-blue:#0072BD; --plot-red:#b5432d; --plot-gold:#c9a227;
+}
+*{box-sizing:border-box; margin:0; padding:0; font-variant-numeric:lining-nums;}
+html, body, input, button, select, textarea, .mono{ font-variant-numeric:lining-nums !important; }
+html{scroll-behavior:smooth;}
+body{font-family:'Tajawal','Inter',sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; direction:rtl;}
+#appShell{display:flex; width:100%;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Space Grotesk','Tajawal',sans-serif;}
+.grid-bg{background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px); background-size:28px 28px;}
+
+/* ===== Sidebar ===== */
+.sidebar{width:280px; flex-shrink:0; background:linear-gradient(180deg,var(--navy-950) 0%, var(--navy-900) 55%, var(--navy-850) 100%); color:#e8edf2; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; border-left:3px solid var(--gold);}
+.brand{padding:26px 22px 18px 22px; border-bottom:1px solid rgba(255,255,255,0.08);}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:6px;}
+.brand h1{font-size:18px; line-height:1.35; font-weight:700; color:#fff;}
+.brand .sub{margin-top:8px; font-size:12px; color:#9db0c2; line-height:1.7;}
+.brand .chip{display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--navy-950); background:var(--gold-light); padding:3px 9px; border-radius:20px; font-weight:600;}
+nav{padding:14px 12px; flex:1;}
+.nav-group-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:#6d84a0; text-transform:uppercase; padding:14px 12px 6px 12px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; font-size:13.5px; color:#c4d1de; cursor:pointer; margin-bottom:2px; transition:background .15s, color .15s;}
+.nav-item .ic{display:flex; flex-shrink:0;}
+.nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.nav-item.active{background:rgba(201,162,39,0.16); color:var(--gold-light); font-weight:600; box-shadow:inset 3px 0 0 var(--gold);}
+.sidebar-footer{padding:14px 20px 20px 20px; font-size:10.5px; color:#5f7690; line-height:1.7; border-top:1px solid rgba(255,255,255,0.08);}
+
+/* ===== Main ===== */
+.main{flex:1; min-width:0; min-height:100vh;}
+.topbar{position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:16px 34px; background:rgba(244,242,236,0.9); backdrop-filter:blur(6px); border-bottom:1px solid var(--card-border);}
+.crumb{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--muted-2); text-transform:uppercase;}
+.ttl{font-size:19px; font-weight:700; color:var(--navy-900); margin-top:2px;}
+.eqtag{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--navy-700); background:#eef3f8; padding:6px 12px; border-radius:20px; border:1px solid var(--navy-700);}
+.content{padding:30px 34px 80px 34px; max-width:1180px; margin:0 auto;}
+.section{display:none;}
+.section.active{display:block; animation:fadein .35s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(135deg,var(--navy-950),var(--navy-850) 60%, var(--navy-800)); border-radius:18px; padding:0; overflow:hidden; position:relative; margin-bottom:8px;}
+.hero::before{content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 85% 20%, rgba(201,162,39,0.16), transparent 45%); pointer-events:none;}
+.hero-inner{display:flex; align-items:center; gap:30px; padding:40px 40px;}
+.hero-text{flex:1;}
+.eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:12px;}
+.hero-text h1{font-size:30px; color:#fff; line-height:1.3; margin-bottom:14px;}
+.hero-text p{font-size:14px; color:#c4d1de; line-height:2; max-width:640px;}
+#heroSvgWrap{flex-shrink:0;}
+
+.divider-label{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1.5px; color:var(--muted-2); text-transform:uppercase; margin:30px 0 14px 2px; display:flex; align-items:center; gap:10px;}
+.divider-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
+.mod-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+.mod-card{background:var(--card); border:1.5px solid var(--card-border); border-top:3px solid var(--navy-700); border-radius:12px; padding:20px; cursor:pointer; transition:transform .15s, box-shadow .15s; box-shadow:var(--shadow);}
+.mod-card:hover{transform:translateY(-3px); box-shadow:0 16px 34px -12px rgba(10,30,51,0.25);}
+.mod-card .num{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold); margin-bottom:8px;}
+.mod-card h3{font-size:15px; color:var(--navy-900); margin-bottom:8px;}
+.mod-card p{font-size:12.5px; color:var(--muted); line-height:1.8;}
+
+/* ===== Cards ===== */
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:26px 28px; margin-bottom:20px; box-shadow:var(--shadow);}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--paper-line);}
+.card-head h2{font-size:17px; color:var(--navy-900);}
+.card-head .eq{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2);}
+.card p, .card li{font-size:14px; line-height:2; color:#2a3742; text-align:justify;}
+.card p + p{margin-top:12px;}
+.card ul, .card ol{padding-inline-start:22px; margin-top:8px;}
+.card li{margin-bottom:6px;}
+.card h3{font-size:14.5px; color:var(--navy-800); margin:16px 0 8px 0;}
+.card strong{color:var(--navy-900);}
+.lead{font-size:15px; color:#2a3742; line-height:2.1;}
+
+/* eq numbering badge */
+.eqn-tag{display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--gold-light); background:var(--navy-900); border-radius:6px; padding:2px 8px; margin-inline-start:8px;}
+
+/* formula box */
+.formula-box{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 20px; margin:14px 0; overflow-x:auto;}
+.formula-box .fb-label{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;}
+.katex-eq{display:block; overflow-x:auto; padding:4px 0;}
+.katex-display{margin:0 !important;}
+
+/* variable table */
+.vartable{width:100%; border-collapse:collapse; margin:10px 0; font-size:13px;}
+.vartable th{background:var(--navy-900); color:#fff; text-align:right; padding:8px 10px; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:11.5px;}
+.vartable td{padding:7px 10px; border-bottom:1px solid var(--paper-line); color:#2a3742;}
+.vartable tr:nth-child(even){background:#faf9f5;}
+.vartable td:first-child{font-family:'IBM Plex Mono',monospace; color:var(--navy-800); font-weight:600; white-space:nowrap;}
+
+/* diagram card */
+.diagram-card .diagram-wrap{overflow-x:auto; padding:6px 0;}
+.diagram-note{font-size:12px; color:var(--muted); margin-top:10px; text-align:center;}
+
+/* glossary */
+.gloss-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:6px;}
+.gloss-card{background:#fbfaf6; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; cursor:pointer; transition:border-color .15s;}
+.gloss-card:hover{border-color:var(--gold);}
+.gloss-card.open{border-color:var(--gold); background:#fdf9ec;}
+.gc-head{display:flex; align-items:center; justify-content:space-between;}
+.gc-term{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--navy-900); font-size:13.5px;}
+.gc-ar{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.gc-chev{color:var(--gold); transition:transform .2s;}
+.gloss-card.open .gc-chev{transform:rotate(90deg);}
+.gc-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.gloss-card.open .gc-body{max-height:220px; margin-top:10px;}
+.gc-body p{font-size:12.5px; line-height:1.85; color:#2a3742;}
+
+/* quick reference table of equations */
+.eqref{width:100%; border-collapse:collapse; font-size:13px;}
+.eqref th{background:var(--navy-900); color:#fff; padding:9px 10px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-align:right;}
+.eqref td{padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:top;}
+.eqref tr:hover{background:#faf9f5;}
+.eqref .eqno{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-weight:700; white-space:nowrap;}
+
+/* ===== Calculators ===== */
+.calc-layout{display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start;}
+@media (max-width:960px){.calc-layout{grid-template-columns:1fr;}}
+.field-group{margin-bottom:14px;}
+.field-group label{display:block; font-size:12px; color:var(--navy-800); font-weight:600; margin-bottom:5px;}
+.field-group .unit{color:var(--muted-2); font-weight:400; font-family:'IBM Plex Mono',monospace; font-size:10.5px;}
+.field-group input, .field-group select{width:100%; padding:9px 11px; border:1.5px solid var(--card-border); border-radius:8px; font-size:13.5px; font-family:'IBM Plex Mono',monospace; background:#fff; color:var(--ink); direction:ltr; text-align:left;}
+.field-group input:focus, .field-group select:focus{outline:none; border-color:var(--gold);}
+.calc-btn{width:100%; padding:12px; background:var(--navy-900); color:#fff; border:none; border-radius:9px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:14px; cursor:pointer; margin-top:6px; transition:background .15s;}
+.calc-btn:hover{background:var(--navy-700);}
+.field-note{font-size:11px; color:var(--muted-2); margin-top:10px; line-height:1.7; background:#f4f2ec; border-radius:8px; padding:8px 10px;}
+
+.kpi-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+.kpi{flex:1; min-width:140px; background:#eef3f8; border:1.5px solid var(--navy-700); border-top:3px solid var(--navy-700); border-radius:10px; padding:14px 16px;}
+.kpi.warn{border-color:var(--danger); border-top-color:var(--danger); background:#fceceb;}
+.kpi.ok{border-color:var(--good); border-top-color:var(--good); background:#eaf6ef;}
+.kpi-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.6px; color:var(--muted); text-transform:uppercase;}
+.kpi-value{font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; color:var(--navy-900); margin-top:6px;}
+.kpi-sub{font-size:10.5px; color:var(--muted); margin-top:3px;}
+
+.status-line{padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:16px; border:1.5px solid;}
+.status-line.ok{color:var(--good); border-color:var(--good); background:#eaf6ef;}
+.status-line.bad{color:var(--danger); border-color:var(--danger); background:#fceceb;}
+
+.plot-box{background:#fff; border:1px solid var(--card-border); border-radius:12px; padding:10px; margin-top:16px;}
+.result-panel{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:22px 24px; box-shadow:var(--shadow);}
+.result-panel h2{font-size:16px; color:var(--navy-900); margin-bottom:16px;}
+.steps-box{background:#fbf9f3; border-radius:10px; padding:14px 16px; margin-top:14px; font-size:12.5px; line-height:2; color:#3a4753;}
+.steps-box .step-title{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--gold); text-transform:uppercase; margin-bottom:6px;}
+
+::-webkit-scrollbar{height:8px; width:8px;}
+::-webkit-scrollbar-thumb{background:#c7c2b0; border-radius:6px;}
+
+/* ===== digit fix (force Latin numerals regardless of Arabic font locale substitution) ===== */
+* { font-feature-settings: "locl" 0, "tnum" 1; }
+
+/* ===== tabs ===== */
+.tabbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; border-bottom:2px solid var(--card-border); padding-bottom:0;}
+.tab-btn{font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; color:var(--muted); background:none; border:none; padding:10px 16px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color .15s, border-color .15s;}
+.tab-btn:hover{color:var(--navy-800);}
+.tab-btn.active{color:var(--navy-900); border-bottom-color:var(--gold);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block; animation:fadein .3s ease;}
+
+/* ===== mode selector (calc A) ===== */
+.mode-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.mode-btn{flex:1; min-width:130px; background:#fff; border:1.5px solid var(--card-border); border-radius:9px; padding:10px 8px; text-align:center; cursor:pointer; font-size:12px; font-weight:700; color:var(--navy-800); transition:all .15s;}
+.mode-btn.active{border-color:var(--gold); background:#fdf9ec; color:var(--navy-900); box-shadow:0 0 0 1px var(--gold-dim);}
+.mode-btn .mi{display:block; font-size:17px; margin-bottom:3px;}
+
+.example-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.example-btn{background:#eef3f8; border:1px solid var(--navy-700); color:var(--navy-800); border-radius:8px; padding:8px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:'Tajawal',sans-serif;}
+.example-btn:hover{background:var(--navy-700); color:#fff;}
+
+.warn-note{background:#fff8e6; border:1px solid #e8c766; color:#7a5c00; border-radius:8px; padding:9px 12px; font-size:12px; margin-bottom:12px;}
+.data-table-wrap{overflow-x:auto; margin-top:14px;}
+.data-table{width:100%; border-collapse:collapse; font-size:12.5px; font-family:'IBM Plex Mono',monospace;}
+.data-table th{background:var(--navy-900); color:#fff; padding:7px 9px;}
+.data-table td{padding:6px 9px; border-bottom:1px solid var(--paper-line); text-align:center;}
+.data-table tr:nth-child(even){background:#faf9f5;}
+
+/* worked example box */
+.example-box{background:#f6f7fb; border-right:4px solid var(--navy-700); border-radius:8px; padding:16px 18px; margin:16px 0;}
+.example-box .ex-title{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--navy-700); text-transform:uppercase; margin-bottom:8px; font-weight:700;}
+.example-box p{font-size:13.5px;}
+
+/* ===== buttons (directional-survey style) ===== */
+.btn{display:inline-flex; align-items:center; gap:8px; background:var(--navy-900); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .15s;}
+.btn:hover{background:var(--navy-700);}
+.btn.gold{background:var(--gold); color:var(--navy-950);}
+.btn.gold:hover{background:var(--gold-light);}
+.btn.ghost{background:#fff; color:var(--navy-900); border:1.5px solid var(--card-border);}
+.btn.ghost:hover{border-color:var(--navy-700);}
+.btn.danger{background:#fff; color:var(--danger); border:1.5px solid var(--danger);}
+.btn.danger:hover{background:#fceceb;}
+.btn.sm{padding:7px 14px; font-size:12px;}
+.toolbar-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+.export-row{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* ===== formula panel (identical spirit to directional survey suite) ===== */
+.formula-panel{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 18px; margin-top:6px;}
+.formula-panel .fp-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;}
+.formula-panel .fp-eq{margin:10px 0; direction:ltr; text-align:left; overflow-x:auto;}
+.formula-panel .fp-note{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.8;}
+
+/* ===== dynamic tables (rate periods / wells) ===== */
+.dyn-table{width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:10px;}
+.dyn-table th{background:var(--navy-900); color:#fff; padding:7px 8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:500;}
+.dyn-table td{padding:5px 6px; border-bottom:1px solid var(--paper-line);}
+.dyn-table input{width:100%; padding:6px 7px; border:1.3px solid var(--card-border); border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; direction:ltr; text-align:left;}
+.dyn-table .rm-row{background:#fff; color:var(--danger); border:1.3px solid var(--danger); border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px;}
+
+/* ===== print report (single-page, faithful in spirit to directional suite) ===== */
+#printReport{display:none;}
+@media print{
+  body *{visibility:hidden;}
+  #printReport, #printReport *{visibility:visible;}
+  #printReport{display:block !important; position:absolute; top:0; right:0; left:0; width:100%; margin:0; padding:0;}
+  .sidebar, .topbar, .no-print{display:none !important;}
+}
+#printReport{padding:26px; font-family:'Tajawal',sans-serif; color:#13202b;}
+#printReport .pr-headbar{background:linear-gradient(135deg,var(--navy-950),var(--navy-800)); color:#fff; border-radius:14px; padding:22px 26px; margin-bottom:20px;}
+#printReport .pr-headbar .pr-h1{font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700;}
+#printReport .pr-headbar .pr-h2{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); margin-top:6px; letter-spacing:1px;}
+#printReport .pr-infolist{width:100%; margin:14px 0; font-size:12px;}
+#printReport .pr-infolist div{display:flex; justify-content:space-between; padding:6px 2px; border-bottom:1px dotted #ddd;}
+#printReport .pr-infolist b{color:var(--navy-900);}
+#printReport .pr-kpi-row{display:flex; gap:10px; margin:18px 0; flex-wrap:wrap;}
+#printReport .pr-kpi{flex:1; min-width:120px; border:1.5px solid var(--navy-700); border-top:3px solid var(--navy-700); border-radius:10px; padding:10px 12px;}
+#printReport .pr-kpi .pr-kpi-label{font-size:9px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-transform:uppercase;}
+#printReport .pr-kpi .pr-kpi-val{font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:700; color:var(--navy-900); margin-top:4px;}
+#printReport .pr-section-title{font-family:'Space Grotesk',sans-serif; font-size:14px; color:var(--navy-900); border-bottom:2px solid var(--gold); padding-bottom:6px; margin:20px 0 10px 0;}
+#printReport table.pr-table{width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;}
+#printReport table.pr-table th{background:var(--navy-900); color:#fff; padding:6px 8px;}
+#printReport table.pr-table td{padding:5px 8px; border-bottom:1px solid #eee; text-align:center;}
+#printReport .pr-footer{margin-top:26px; padding-top:10px; border-top:1px solid #ddd; font-size:9.5px; color:var(--muted); display:flex; justify-content:space-between;}
+#printReport img.pr-chart{width:100%; max-width:640px; display:block; margin:10px auto;}
+</style>
+</head>
+<body lang="en">
+<div id="appShell">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow">Reservoir Engineering · Pressure Transient Analysis</div>
+    <h1>Reservoir Flow<br>Transient Suite</h1>
+    <div class="sub">حاسبة تفاعلية لتحليل انسياب الموائع في الأوساط المسامية واختبارات الآبار — حل Ei، عامل الأذى، معامل الإنتاجية، ومبدأ التراكب.</div>
+    <span class="chip">Reservoir Engineering Toolkit</span>
+  </div>
+  <nav id="navList">
+    <div class="nav-group-label">General</div>
+    <div class="nav-item active" data-target="home">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      الرئيسية
+    </div>
+    <div class="nav-item" data-target="learn">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M7 10.5V16c0 1.5 2 3 5 3s5-1.5 5-3v-5.5"/></svg></span>
+      انسياب الموائع في الوسط المسامي
+    </div>
+    <div class="nav-group-label">Calculators</div>
+    <div class="nav-item" data-target="calcA">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>
+      1 · توزّع الضغط الانتقالي (Ei)
+    </div>
+    <div class="nav-item" data-target="calcB">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M4 4v16h16"/><path d="M7 15l4-6 3 3 5-7"/></svg></span>
+      2 · توصيف البئر والمكمن
+    </div>
+    <div class="nav-item" data-target="calcC">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><circle cx="12" cy="17" r="3"/><path d="M8 11v0M16 11v0"/></svg></span>
+      3 · مبدأ التراكب (معدّل متغيّر)
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    مبنية على المعادلات الأساسية لتحليل الضغط العابر (Pressure Transient Analysis) — فصل انسياب الموائع في الوسط المسامي.
+  </div>
+</aside>
+
+<main class="main grid-bg">
+  <div class="topbar no-print">
+    <div>
+      <div class="crumb" id="crumb">GENERAL / OVERVIEW</div>
+      <div class="ttl" id="pageTitle">لوحة تحليل اختبار الآبار</div>
+    </div>
+    <div class="eqtag" id="eqTag">Diffusivity Equation</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ============ HOME ============ -->
+    <section class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="eyebrow">PRESSURE TRANSIENT ANALYSIS · RADIAL FLOW</div>
+            <h1>حاسبة انسياب الموائع في الأوساط المسامية</h1>
+            <p>مجموعة أدوات حسابية مبنية على حلول معادلة الانتشارية الشعاعية لتدفق سائل ضئيل الانضغاطية في مكمن متجانس: توزّع الضغط عبر حل خط المصدر (Ei-Function) بأربعة أنماط عرض، توصيف كامل للبئر (عامل الأذى، معامل الإنتاجية، نصف قطر الاستقصاء، تقريب هورنر)، وحاسبة مبدأ التراكب لنمذجة تاريخ إنتاج متغيّر المعدّل بدقة. كل حاسبة تعرض معادلاتها الحاكمة بصورة احترافية، وتصدّر النتائج كملفات CSV وExcel وتقرير مطبوع.</p>
+          </div>
+          <div id="heroSvgWrap"></div>
+        </div>
+      </div>
+
+      <div class="divider-label">وحدات المنصّة</div>
+      <div class="mod-grid">
+        <div class="mod-card" data-target="learn" style="border-color:var(--gold); grid-column:span 3;"><div class="num">00 / الأساس النظري</div><h3>🎓 انسياب الموائع في الوسط المسامي واختبار الآبار</h3><p>شرح تفصيلي: معادلة الانتشارية واشتقاقها، حلولها الأربعة، دالة Ei، عامل الأذى، أنظمة الانسياب، سعة الخزن، الانسياب الخطي، نصف قطر الاستقصاء، مبدأ التراكب بالتفصيل الكامل، وتقريب هورنر — مع أمثلة محلولة.</p></div>
+
+        <div class="mod-card" data-target="calcA"><div class="num">01</div><h3>توزّع الضغط الانتقالي (Ei-Function)</h3><p>حاسبة متعددة الأنماط: نقطة، مقطع بنصف القطر، مقطع بالزمن، أو شبكة ثنائية الأبعاد P(r,t)، مع تصدير كامل للنتائج.</p></div>
+        <div class="mod-card" data-target="calcB"><div class="num">02</div><h3>توصيف البئر والمكمن</h3><p>عامل الأذى، معامل الإنتاجية والنفاذية المتوسطة، نصف قطر الاستقصاء، وتقريب هورنر — في صفحة واحدة بأربعة تبويبات.</p></div>
+        <div class="mod-card" data-target="calcC"><div class="num">03</div><h3>مبدأ التراكب — معدّل متغيّر</h3><p>نمذجة انخفاض الضغط الكلي لبئر ينتج بمعدّلات متعاقبة متعددة، بجمع مساهمات Ei لكل فترة إنتاج، مع رسم جدول الإنتاج ومنحنى الضغط.</p></div>
+      </div>
+    </section>
+
+<!-- ============ LEARN ============ -->
+    <section class="section" id="sec-learn">
+
+      <div class="card">
+        <div class="card-head"><h2>مقدمة: النموذج المثالي للمكمن</h2><span class="eq">Section 1.1 – 1.2</span></div>
+        <p class="lead">يقوم تحليل اختبارات الآبار على وصف رياضي لحركة السوائل داخل الوسط المسامي، يُشتق من ثلاثة أسس فيزيائية: قانون حفظ الكتلة، قانون دارسي للانسياب في الوسط المسامي، ومعادلات الحالة للموائع المعنية. الغاية من هذا الوصف ليست الدقة المطلقة، بل الوصول إلى أبسط صيغة رياضية تكفي لتمثيل سلوك الضغط في البئر والمكمن بدرجة موثوقة، دون افتراضات أكثر مما تستلزمه الحاجة — ولا أقل مما تتطلبه الدقة الهندسية.</p>
+        <p>يُعرَف <strong>النموذج المثالي للمكمن</strong> بالفرضيات التالية:</p>
+        <ul>
+          <li>وسط مسامي متجانس ومتماثل الخواص (Homogeneous, Isotropic) وثابت السماكة.</li>
+          <li>خواص صخرية وموائع مستقلة عن الضغط (نفاذية وانضغاطية ثابتتان).</li>
+          <li>تدرجات ضغط صغيرة، بحيث تُهمل الحدود التربيعية في تدرج الضغط عند اشتقاق المعادلة.</li>
+          <li>انسياب شعاعي نحو البئر، وصلاحية قانون دارسي (أي أن الانسياب صفائحي/طبقي وليس مضطربًا).</li>
+          <li>إغفال قوى الجاذبية.</li>
+        </ul>
+        <p>هذه الفرضيات، رغم تبسيطها، تنتج معادلة تفاضلية جزئية واحدة — <strong>معادلة الانتشارية</strong> — تشكّل حجر الأساس لكل تحليل لاحق. يشير النص المرجعي صراحة إلى أن التفاصيل الرياضية الكاملة لاشتقاق هذه المعادلة تُترك للملاحق التخصصية، بينما يُركّز المتن على العبارات المبسّطة وتطبيقاتها العملية.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>معادلة الانتشارية واشتقاقاتها</h2><span class="eq">Eq. 1.1 – 1.5</span></div>
+        <p>بدمج قانون حفظ الكتلة مع قانون دارسي للانسياب الشعاعي أحادي الطور لسائل ضئيل الانضغاطية وثابتها، يُشتق شكل تفاضلي جزئي يصف تغيّر الضغط p بدلالة نصف القطر r والزمن t:</p>
+        <div class="formula-box">
+          <div class="fb-label">معادلة الانتشارية — الوحدات الحقلية <span class="eqn-tag">Eq. 1.1</span></div>
+          <span class="katex-eq" data-tex="\dfrac{\partial^2 p}{\partial r^2}+\dfrac{1}{r}\dfrac{\partial p}{\partial r}=\dfrac{\phi\mu c}{0.000264\,k}\dfrac{\partial p}{\partial t}"></span>
+        </div>
+        <p>الحد <code>0.000264k/φμc</code> يُسمّى <strong>الانتشارية الهيدروليكية η</strong> (Hydraulic Diffusivity)، ووحدتها قدم مربع لكل ساعة. هذه الصيغة صالحة عندما تكون الانضغاطية c صغيرة ومستقلة عن الضغط، والنفاذية k ثابتة ومتماثلة الخواص، واللزوجة μ مستقلة عن الضغط، والمسامية φ ثابتة.</p>
+        <table class="vartable">
+          <tr><th>الرمز</th><th>المعنى</th><th>الوحدة الحقلية</th></tr>
+          <tr><td>p</td><td>الضغط</td><td>psi</td></tr>
+          <tr><td>r</td><td>نصف القطر (المسافة عن البئر)</td><td>ft</td></tr>
+          <tr><td>t</td><td>الزمن</td><td>hr</td></tr>
+          <tr><td>φ</td><td>المسامية (كسر)</td><td>—</td></tr>
+          <tr><td>μ</td><td>اللزوجة</td><td>cp</td></tr>
+          <tr><td>c</td><td>الانضغاطية = (1/ρ)(dρ/dp)</td><td>psi⁻¹</td></tr>
+          <tr><td>k</td><td>النفاذية</td><td>md</td></tr>
+        </table>
+        <h3>الصيغة العامة لغاز غير مثالي</h3>
+        <p>يمكن اشتقاق معادلة مشابهة للانسياب الشعاعي لغاز غير مثالي، تتضمن معامل انحراف الغاز z:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.2</span></div>
+          <span class="katex-eq" data-tex="\dfrac{1}{r}\dfrac{\partial}{\partial r}\!\left(\dfrac{p}{\mu z}r\dfrac{\partial p}{\partial r}\right)=\dfrac{\phi}{0.000264k}\dfrac{\partial}{\partial t}\!\left(\dfrac{p}{z}\right)"></span>
+        </div>
+        <h3>الانسياب المتزامن لثلاثة أطوار</h3>
+        <p>عند وجود انسياب متزامن للنفط والغاز والماء معًا، تُستبدل الانضغاطية المفردة بالانضغاطية الكلية للنظام c<sub>t</sub>، وتُستبدل النفاذية بالحراكية الكلية λ<sub>t</sub>:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.3 – 1.5</span></div>
+          <span class="katex-eq" data-tex="\dfrac{1}{r}\dfrac{\partial}{\partial r}\!\left(r\dfrac{\partial p}{\partial r}\right)=\dfrac{\phi c_t}{0.000264\,\lambda_t}\dfrac{\partial p}{\partial t}"></span>
+          <span class="katex-eq" data-tex="c_t = S_o c_o + S_w c_w + S_g c_g + c_f \qquad\qquad \lambda_t=\left(\dfrac{k_o}{\mu_o}+\dfrac{k_g}{\mu_g}+\dfrac{k_w}{\mu_w}\right)"></span>
+        </div>
+        <p>حيث S<sub>o</sub>، S<sub>w</sub>، S<sub>g</sub> إشباعات النفط والماء والغاز على التوالي، وc<sub>f</sub> انضغاطية التكوين نفسه؛ تُضاف انضغاطية التكوين إلى المجموع لأن الحيّز المسامي يتقلّص مع انخفاض الضغط، حتى في تكوين ينتج نفطًا أحادي الطور ظاهريًا (إذ يحتوي دائمًا على ماء ثابت غير متحرك).</p>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>الانسياب الشعاعي نحو بئر في مكمن أسطواني</h2><span class="eq">تمثيل تخطيطي</span></div>
+        <div class="diagram-wrap" style="text-align:center;">
+          <svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg" style="max-width:640px; width:100%;">
+            <defs>
+              <marker id="arrIn" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#2a5a86"/></marker>
+            </defs>
+            <circle cx="380" cy="190" r="160" fill="#eef3f8" stroke="#1c4468" stroke-width="1.5"/>
+            <circle cx="380" cy="190" r="160" fill="none" stroke="#1c4468" stroke-width="2" stroke-dasharray="3 4"/>
+            <circle cx="380" cy="190" r="18" fill="#0a1e33"/>
+            <circle cx="380" cy="190" r="18" fill="none" stroke="#c9a227" stroke-width="2.5"/>
+            <g stroke="#2a5a86" stroke-width="2" marker-end="url(#arrIn)">
+              <line x1="380" y1="30" x2="380" y2="168"/>
+              <line x1="380" y1="350" x2="380" y2="212"/>
+              <line x1="220" y1="190" x2="358" y2="190"/>
+              <line x1="540" y1="190" x2="402" y2="190"/>
+              <line x1="267" y1="77" x2="367" y2="177"/>
+              <line x1="493" y1="77" x2="393" y2="177"/>
+              <line x1="267" y1="303" x2="367" y2="203"/>
+              <line x1="493" y1="303" x2="393" y2="203"/>
+            </g>
+            <text x="380" y="194" text-anchor="middle" font-size="9.5" fill="#fff" font-family="IBM Plex Mono">r_w</text>
+            <line x1="380" y1="190" x2="540" y2="190" stroke="#c9a227" stroke-width="1.2" stroke-dasharray="4 3"/>
+            <text x="470" y="182" text-anchor="middle" font-size="12" fill="#8a6d10" font-family="IBM Plex Mono">r_e</text>
+            <text x="380" y="360" text-anchor="middle" font-size="13" fill="#13202b" font-family="Space Grotesk">حدود المكمن (بلا انسياب عبرها) — r = r_e</text>
+            <text x="380" y="145" text-anchor="middle" font-size="11" fill="#1c4468">اتجاه الانسياب نحو البئر</text>
+          </svg>
+        </div>
+        <p class="diagram-note">مكمن أسطواني نصف قطره r<sub>e</sub> يُحيط ببئر نصف قطره r<sub>w</sub> في مركزه؛ الضغط الابتدائي p<sub>i</sub> موحّد قبل بدء الإنتاج، ولا يوجد انسياب عبر الحد الخارجي.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>حلول معادلة الانتشارية الأربعة</h2><span class="eq">Section 1.3</span></div>
+        <p>حل معادلة 1.1 يتطلب تحديد شرطين حديّين وشرطًا ابتدائيًا. أربعة حلول تحظى بأكبر أهمية عملية في تحليل اختبارات الآبار، يختلف كل منها في افتراض الحد الخارجي وسلوك البئر:</p>
+
+        <h3>1. المكمن الأسطواني المحدود (Bounded Cylindrical Reservoir)</h3>
+        <p>يفترض إنتاجًا بمعدّل ثابت qB في وجه بئر نصف قطره r<sub>w</sub> في مركز مكمن أسطواني نصف قطره r<sub>e</sub> بلا انسياب عبر حدوده الخارجية، وضغطًا ابتدائيًا موحّدًا p<sub>i</sub>. حلّه الكامل والدقيق تمامًا ضمن هذه الفرضيات:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.6</span></div>
+          <span class="katex-eq" data-tex="p_{wf}=p_i-141.2\dfrac{qB\mu}{kh}\left\{\dfrac{2t_D}{r_{eD}^2}+\ln r_{eD}-\dfrac{3}{4}+2\sum_{n=1}^{\infty}\dfrac{e^{-\alpha_n^2 t_D}J_1^2(\alpha_n r_{eD})}{\alpha_n^2\left[J_1^2(\alpha_n r_{eD})-J_1^2(\alpha_n)\right]}\right\}"></span>
+        </div>
+        <p>يتضمن هذا الحل دوال بسل J₁ وسلسلة لا نهائية، ولا يُستخدم مباشرة في الحسابات العملية، لكنه يُعامَل كمعيار مرجعي دقيق تُقارَن به الحلول التقريبية الأبسط (خط المصدر والحل شبه المستقر) لتحديد نوافذ صلاحيتها الزمنية.</p>
+
+        <h3>2. مكمن لانهائي مع بئر كمصدر خطي — حل Ei</h3>
+        <p>يفترض بئرًا بلا نصف قطر (مصدر خطي) في مكمن يمتد إلى ما لا نهاية، بحيث تبقى p → p<sub>i</sub> عند r → ∞. هذا الحل — أساس الحاسبة الأولى في هذه المنصّة — يُعبَّر عنه بدالة التكامل الأسي Ei:</p>
+        <div class="formula-box">
+          <div class="fb-label">حل Ei للمكمن اللانهائي <span class="eqn-tag">Eq. 1.7</span></div>
+          <span class="katex-eq" data-tex="p=p_i+70.6\dfrac{qB\mu}{kh}\,Ei\!\left(\dfrac{-948\,\phi\mu c_t r^2}{kt}\right)"></span>
+        </div>
+        <p>لا يُعطي هذا الحل تقريبًا مقبولًا إلا ضمن نافذة زمنية محددة: عند أزمنة أقصر من <code>3.79×10⁵ φμc<sub>t</sub>r<sub>w</sub>²/k</code> يفشل افتراض المصدر النقطي في تمثيل نصف قطر البئر الحقيقي بدقة، وعند أزمنة أطول من <code>948 φμc<sub>t</sub>r<sub>e</sub>²/k</code> تبدأ حدود المكمن بالتأثير على توزيع الضغط فيبطل افتراض المكمن اللانهائي.</p>
+
+        <div class="example-box">
+          <div class="ex-title">مثال محلول — Example 1.1</div>
+          <p>بئر ينتج 20 STB/D فقط من النفط، بخواص: μ = 0.72 cp، k = 0.1 md، c<sub>t</sub> = 1.5×10⁻⁵ psi⁻¹، p<sub>i</sub> = 3,000 psi، r<sub>e</sub> = 3,000 ft، r<sub>w</sub> = 0.5 ft، B<sub>o</sub> = 1.475 RB/STB، h = 150 ft، φ = 0.23، s = 0. المطلوب: الضغط عند نصف قطر 1 قدم بعد 3 ساعات إنتاج.</p>
+          <p>يُتحقَّق أولًا من صلاحية حل Ei: الحد الأدنى للزمن = 2.35 hr &lt; 3 hr، والحد الأعلى = 211,900 hr — إذن المكمن لا يزال لانهائي الأثر عند t = 3 hr، ويصح استخدام المعادلة 1.7 مباشرة.</p>
+          <p>بالتعويض: x = 948×0.23×0.72×1.5×10⁻⁵×1² / (0.1×3) = 0.007849، وEi(−0.007849) ≈ ln(1.781×0.007849) = −4.27 (بالتقريب اللوغاريتمي لأن x &lt; 0.02). إذن p = 3,000 + 100×(−4.27) = <strong>2,573 psi</strong>. وبالمثل عند r = 10 ft تكون p = 2,968 psi، وعند r = 100 ft تكون p = 3,000 psi تقريبًا (الاضطراب لم يصل بعد إلى هذا القطر خلال 3 ساعات فقط).</p>
+        </div>
+
+        <h3>3. الحل شبه المستقر (Pseudosteady-State Solution)</h3>
+        <p>صيغة نهائية للحل 1.6 عند الأزمنة الطويلة، حيث يصبح الحد الذي يتضمن الأسّيات ودوال بسل مهملًا:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.12</span></div>
+          <span class="katex-eq" data-tex="p_{wf}=p_i-141.2\dfrac{qB\mu}{kh}\left[\dfrac{0.000527\,kt}{\phi\mu c_t r_e^2}+\ln\!\left(\dfrac{r_e}{r_w}\right)-\dfrac{3}{4}\right]"></span>
+        </div>
+        <p>تتميز هذه الفترة بأن ضغط قاع البئر يصبح دالة خطية في الزمن (وليس في لوغاريتم الزمن كما في الفترة الانتقالية)، إذ إن معدّل الانخفاض:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.13 – 1.14</span></div>
+          <span class="katex-eq" data-tex="\dfrac{\partial p_{wf}}{\partial t}=-\dfrac{0.234\,qB}{c_t V_p}\ ,\qquad V_p=\pi r_e^2 h\phi"></span>
+        </div>
+        <p>يتناسب عكسيًا مع الحجم المسامي المشبع بالسائل V<sub>p</sub> — وهذا أساس ما يُعرف باختبارات حدود المكمن (Reservoir Limits Testing)، حيث يُستدل من ميل انخفاض الضغط مع الزمن على حجم المكمن نفسه.</p>
+
+        <h3>4. الحل الذي يتضمن سعة الخزن في البئر (Wellbore Storage)</h3>
+        <p>عند فتح بئر مغلق أو إغلاقه، لا يتساوى معدّل الانسياب من التكوين q<sub>sf</sub> فورًا مع معدّل الإنتاج على السطح q، بسبب انضغاط أو تمدد السائل المخزون داخل أنبوب البئر (أو حركة السطح البيني سائل/غاز فيه). من موازنة الكتلة في البئر يُشتق ثابت سعة الخزن C<sub>s</sub>:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.26 – 1.28</span></div>
+          <span class="katex-eq" data-tex="C_s=\dfrac{144\,A_{wb}}{5.615\rho}\cdot\dfrac{g_c}{g}\ ,\qquad q_{sf}=q+\dfrac{24\,C_s}{B}\dfrac{dp_w}{dt}"></span>
+        </div>
+        <p>وبصورته اللابعدية C<sub>sD</sub> = 0.894 C<sub>s</sub>/φc<sub>t</sub>hr<sub>w</sub>²، يصبح الشرط الحدي الداخلي للانسياب بمعدّل ثابت q<sub>i</sub>:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.35</span></div>
+          <span class="katex-eq" data-tex="\dfrac{q_{sf}}{q}=1-C_{sD}\dfrac{dp_D}{dt_D}"></span>
+        </div>
+        <p>عند الأزمنة الباكرة جدًا، يأتي كل الإنتاج من تفريغ سعة الخزن نفسها (q<sub>sf</sub> = 0)، فيسلك المنحنى اللوغاريتمي p<sub>D</sub> مقابل t<sub>D</sub> ميلًا وحدويًا (45°) يُعرف بـ"خط الميل الواحد" (Unit-Slope Line) طالما C<sub>sD</sub>p<sub>D</sub> = t<sub>D</sub>. ينتهي تأثير سعة الخزن تجريبيًا بعد نحو دورة ونصف لوغاريتمية من زوال هذا الخط، عند الزمن اللابعدي التقريبي t<sub>D</sub> = (60 + 3.5s)C<sub>sD</sub>.</p>
+
+        <h3>الانسياب الخطي في الكسور الهيدروليكية</h3>
+        <p>لتكوينات تحتوي كسورًا هيدروليكية طويلة وعالية التوصيل، يكون الانسياب خطيًا لا شعاعيًا بالقرب من الكسر. الحل عند x = 0 (وجه الكسر):</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.45 – 1.46</span></div>
+          <span class="katex-eq" data-tex="p_i-p_{wf}=16.26\dfrac{qB}{A_f}\left(\dfrac{\mu t}{k\phi c_t}\right)^{1/2} \ ,\qquad p_i-p_{wf}=4.064\dfrac{qB}{hL_f}\left(\dfrac{\mu t}{k\phi c_t}\right)^{1/2}"></span>
+        </div>
+        <p>حيث A<sub>f</sub> = 4hL<sub>f</sub> مساحة الكسر (جناحان بطول L<sub>f</sub> وسماكة h لكل منهما، مع دخول السائل من جهتي كل جناح).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>دالة التكامل الأسي Ei والتقريب اللوغاريتمي</h2><span class="eq">Eq. 1.8 · Eq. 1.11</span></div>
+        <p>تُعرَّف الدالة رياضيًا بالتكامل <code>Ei(−x) = −∫ₓ^∞ (e⁻ᵘ/u) du</code>، وتُقدَّر عمليًا بجداول رقمية (كالجدول 1.1 في المرجع، الذي يغطي مجال 0 &lt; x &lt; 10.9). غير أن أهم خاصية عملية لها هي أنها، عند قيم x صغيرة (أي عند أزمنة كافية أو أنصاف أقطار صغيرة قريبة من البئر)، تُقارَب بدقة معقولة (خطأ أقل من 0.6% عند x أقل من 0.02) بالصيغة اللوغاريتمية:</p>
+        <div class="formula-box">
+          <div class="fb-label">التقريب اللوغاريتمي <span class="eqn-tag">Eq. 1.8</span></div>
+          <span class="katex-eq" data-tex="Ei(-x) \approx \ln(1.781x), \qquad x < 0.02"></span>
+        </div>
+        <p>وعند x أكبر من 10.9، تُهمل Ei(−x) عمليًا (قيمتها متناهية الصغر) — وهذا هو الأساس الذي تبرَّر به معادلة نصف قطر الاستقصاء في القسم اللاحق. بتطبيق التقريب اللوغاريتمي عند نصف قطر البئر وإضافة حدّ عامل الأذى s، يُختصر حل Ei إلى الصيغة الأكثر استخدامًا في حسابات ضغط قاع البئر خلال الفترة الانتقالية:</p>
+        <div class="formula-box">
+          <div class="fb-label">انخفاض الضغط عند البئر — التقريب اللوغاريتمي مع عامل الأذى <span class="eqn-tag">Eq. 1.11</span></div>
+          <span class="katex-eq" data-tex="p_i-p_{wf}=-70.6\dfrac{qB\mu}{kh}\left[\ln\!\left(\dfrac{1{,}688\,\phi\mu c_t r_w^2}{kt}\right)-2s\right]"></span>
+        </div>
+        <p>هذه الصيغة تُبيّن أن p<sub>wf</sub> دالة خطية في لوغاريتم الزمن — وهي الخاصية التي تُبنى عليها طرق التحليل شبه اللوغاريتمي لاختبارات الهبوط والبناء التقليدية. لاحظ أن الحاسبة الأولى في هذه المنصّة تعتمد صيغة مكافئة فيزيائيًا: حل Ei الأساسي (بلا أذى) لتوزيع الضغط في التكوين، مع إضافة انخفاض إضافي منفصل Δp<sub>skin</sub> = 141.2qBμS/kh يُطبَّق فقط عند وجه البئر (r = r<sub>w</sub>) تمثيلًا مباشرًا لموضع الأذى الفيزيائي، بدلًا من دمج s داخل الحد اللوغاريتمي كما في المعادلة 1.11 — والنتيجتان متكافئتان عمليًا عند r = r<sub>w</sub>.</p>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>عامل الأذى — التفسير الفيزيائي</h2><span class="eq">Fig. 1.1 · Eq. 1.9 – 1.11</span></div>
+        <div class="diagram-wrap" style="text-align:center;">
+          <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" style="max-width:620px; width:100%;">
+            <line x1="60" y1="270" x2="680" y2="270" stroke="#5c6b78" stroke-width="1.5"/>
+            <line x1="80" y1="30" x2="80" y2="270" stroke="#5c6b78" stroke-width="1.5"/>
+            <text x="700" y="274" font-size="13" fill="#13202b" font-family="Space Grotesk">r</text>
+            <text x="68" y="24" font-size="13" fill="#13202b" font-family="Space Grotesk">P</text>
+            <rect x="130" y="30" width="70" height="240" fill="#f6d9d0" opacity="0.55"/>
+            <text x="165" y="284" text-anchor="middle" font-size="10.5" fill="#b5432d" font-family="IBM Plex Mono">rw</text>
+            <text x="230" y="284" text-anchor="middle" font-size="10.5" fill="#5c6b78" font-family="IBM Plex Mono">rs</text>
+            <path d="M200 205 C 320 150, 480 95, 650 70" fill="none" stroke="#1c4468" stroke-width="2" stroke-dasharray="5 5"/>
+            <path d="M130 250 C 165 232, 200 205, 320 150 C 480 95, 650 70, 650 70" fill="none" stroke="#0a1e33" stroke-width="2.6"/>
+            <line x1="130" y1="250" x2="130" y2="205" stroke="#b5432d" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <line x1="130" y1="205" x2="200" y2="205" stroke="#b5432d" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="108" y="230" text-anchor="middle" font-size="11" fill="#b5432d" font-family="IBM Plex Mono">Δps</text>
+            <text x="118" y="262" text-anchor="middle" font-size="10.5" fill="#13202b" font-family="IBM Plex Mono">Pw</text>
+            <line x1="130" y1="270" x2="130" y2="30" stroke="#8493a0" stroke-width="1" stroke-dasharray="2 3"/>
+            <line x1="200" y1="270" x2="200" y2="30" stroke="#8493a0" stroke-width="1" stroke-dasharray="2 3"/>
+            <text x="400" y="105" text-anchor="middle" font-size="11.5" fill="#1c4468">التوزّع بلا أذى (k ثابتة حتى rw)</text>
+            <text x="230" y="235" font-size="11" fill="#13202b">منطقة متضررة نفاذيتها k<sub>s</sub></text>
+          </svg>
+        </div>
+        <p class="diagram-note">انخفاض الضغط الإضافي Δp<sub>s</sub> ينشأ من فرق النفاذية بين المنطقة القريبة من البئر (نصف قطرها r<sub>s</sub> ونفاذيتها k<sub>s</sub>) وبقية التكوين (نفاذيته k)، وليس من تغيّر حقيقي في هندسة الانسياب.</p>
+        <p>يفترض هوكينز أن هذا الانخفاض الإضافي يكافئ منطقة أسطوانية موحدة النفاذية k<sub>s</sub> ونصف قطرها الخارجي r<sub>s</sub>؛ بجمع معادلة الحالة المستقرة داخل المنطقة المتضررة مع معادلة الحالة المستقرة للتكوين غير المتضرر:</p>
+        <div class="formula-box">
+          <div class="fb-label">الانخفاض الإضافي بالضغط <span class="eqn-tag">Eq. 1.9</span></div>
+          <span class="katex-eq" data-tex="\Delta p_s = 141.2\dfrac{qB\mu}{kh}\left(\dfrac{k}{k_s}-1\right)\ln\!\left(\dfrac{r_s}{r_w}\right)"></span>
+        </div>
+        <div class="formula-box">
+          <div class="fb-label">عامل الأذى s <span class="eqn-tag">Eq. 1.10</span></div>
+          <span class="katex-eq" data-tex="s=\left(\dfrac{k}{k_s}-1\right)\ln\!\left(\dfrac{r_s}{r_w}\right)"></span>
+        </div>
+        <p>إشارة s تحمل دلالة فيزيائية مباشرة: إذا كان البئر متضررًا (k<sub>s</sub> &lt; k) فإن s موجب ولا حدّ أعلى له نظريًا — وقد يقترب من اللانهاية لبئر مسدود تمامًا قبل التحفيز (k<sub>s</sub> ≈ 0)؛ أما إذا كان البئر محفَّزًا (k<sub>s</sub> &gt; k، كما في التكسير الهيدروليكي أو التحميض) فإن s سالب، ونادرًا ما يقل عن −7 أو −8 إلا في الآبار ذات الكسور الهيدروليكية العالية التوصيل. إذا لم يكن البئر متضررًا ولا محفَّزًا (k = k<sub>s</sub>) فإن s = 0. ومن المهم التنبيه إلى أن المنطقة المتضررة تؤثر فقط على الضغط بالقرب من البئر نفسه؛ الضغط في التكوين غير المتضرر بعيدًا عن البئر لا يتأثر بوجودها — لذلك يُستخدم حل Ei (معادلة 1.7) لحساب الضغط خارج المنطقة المتضررة، وتُضاف Δp<sub>s</sub> فقط عند حساب الضغط عند وجه البئر ذاته.</p>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>أنظمة الانسياب الثلاثة</h2><span class="eq">Fig. 1.2 · Section 1.3</span></div>
+        <div class="diagram-wrap" style="text-align:center;">
+          <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" style="max-width:640px; width:100%;">
+            <line x1="60" y1="250" x2="680" y2="250" stroke="#5c6b78" stroke-width="1.5"/>
+            <line x1="60" y1="250" x2="60" y2="30" stroke="#5c6b78" stroke-width="1.5"/>
+            <text x="695" y="254" font-size="12" fill="#13202b" font-family="Space Grotesk">log t</text>
+            <text x="48" y="24" font-size="12" fill="#13202b" font-family="Space Grotesk">Pwf</text>
+            <path d="M90 60 C 220 90, 260 150, 330 178 C 430 210, 560 225, 650 232" fill="none" stroke="#0a1e33" stroke-width="2.6"/>
+            <line x1="255" y1="35" x2="255" y2="245" stroke="#c9a227" stroke-width="1.3" stroke-dasharray="4 3"/>
+            <line x1="420" y1="35" x2="420" y2="245" stroke="#c9a227" stroke-width="1.3" stroke-dasharray="4 3"/>
+            <text x="160" y="45" text-anchor="middle" font-size="11.5" fill="#1c4468" font-family="Tajawal">المنطقة الانتقالية</text>
+            <text x="160" y="60" text-anchor="middle" font-size="9.5" fill="#5c6b78" font-family="IBM Plex Mono">Transient</text>
+            <text x="335" y="45" text-anchor="middle" font-size="11" fill="#1c4468" font-family="Tajawal">انتقالية متأخرة</text>
+            <text x="335" y="60" text-anchor="middle" font-size="9" fill="#5c6b78" font-family="IBM Plex Mono">Late-transient</text>
+            <text x="545" y="45" text-anchor="middle" font-size="11.5" fill="#1c4468" font-family="Tajawal">شبه المستقر</text>
+            <text x="545" y="60" text-anchor="middle" font-size="9.5" fill="#5c6b78" font-family="IBM Plex Mono">Pseudosteady-state</text>
+          </svg>
+        </div>
+        <p class="diagram-note">في المنطقة الانتقالية يبقى المكمن سلوكه كأنه لانهائي، ويتناسب p<sub>wf</sub> خطيًا مع log t وفق المعادلة 1.11. في المنطقة شبه المستقرة يتناسب p<sub>wf</sub> خطيًا مع t نفسه، وفق المعادلة 1.12. بين المنطقتين توجد منطقة انتقالية متأخرة لا تتوفر لها معادلة بسيطة.</p>
+        <div class="example-box">
+          <div class="ex-title">مثال محلول — Example 1.3 (ملخّص)</div>
+          <p>لمكمن مساحته 40 فدانًا (17.42×10⁶ ft²)، بخواص φ=0.2، μ=1 cp، c<sub>t</sub>=1×10⁻⁵ psi⁻¹، k=100 md، تختلف مدة بقاء المكمن "لانهائي الأثر" ووصوله للحالة شبه المستقرة اختلافًا كبيرًا بحسب موقع البئر: لبئر مركزي في دائرة، ينتهي الأثر اللانهائي عند نحو 132 ساعة وتبدأ الحالة شبه المستقرة الدقيقة عند نفس الزمن تقريبًا. أما لبئر في زاوية ربع منطقة مربعة الشكل، يمتد الأثر اللانهائي حتى 33 ساعة فقط، لكن الحالة شبه المستقرة الدقيقة لا تتحقق إلا بعد 792 ساعة — أي أن المنطقة الانتقالية المتأخرة تمتد لفترة طويلة جدًا لبئر غير مركزي، بعكس البئر المركزي حيث تكاد تنعدم.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>الانسياب شبه المستقر والهندسة العامة لمنطقة الصرف</h2><span class="eq">Eq. 1.15 – 1.21</span></div>
+        <p>تعمم المعادلة 1.20 الحل شبه المستقر ليشمل أشكال مناطق صرف غير دائرية، من خلال عامل الشكل C<sub>A</sub> (Dietz Shape Factor):</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.20</span></div>
+          <span class="katex-eq" data-tex="\bar p-p_{wf}=141.2\dfrac{qB\mu}{kh}\left[\dfrac{1}{2}\ln\!\left(\dfrac{10.06A}{C_A r_w^2}\right)-\dfrac{3}{4}+s\right]"></span>
+        </div>
+        <p>حيث A مساحة منطقة الصرف بالقدم المربع. لكل هندسة صرف — دائرية، مربعة، مستطيلة، بئر في زاوية منطقة الصرف، أو مكمن مكسور هيدروليكيًا — قيمة C<sub>A</sub> مجدولة (الجدول 1.2 في المرجع)، إلى جانب ثلاث حدود زمنية لكل هندسة: (أ) الزمن الذي يبقى قبله المكمن لانهائي الأثر، (ب) الزمن الذي يصبح بعده الحل شبه المستقر التقريبي دقيقًا ضمن 1%، و(ج) الزمن الذي يصبح عنده الحل شبه المستقر تامّ الدقة. تتراوح قيم C<sub>A</sub> من نحو 31.6 لبئر مركزي في دائرة أو سداسي منتظم، إلى قيم صغيرة جدًا (أقل من 1) لهندسات بعيدة التماثل كبئر في ركن مستطيل طويل نسبة طوله إلى عرضه 5:1 — وكلما صغرت C<sub>A</sub> طالت المنطقة الانتقالية المتأخرة اللازمة قبل بلوغ الحالة شبه المستقرة.</p>
+        <p>يُعرَّف معامل الإنتاجية العام بالمثل:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.21</span></div>
+          <span class="katex-eq" data-tex="J=\dfrac{q}{\bar p - p_{wf}}=\dfrac{0.00708\,kh}{B\mu\left[\tfrac{1}{2}\ln\!\left(\tfrac{10.06A}{C_A r_w^2}\right)-\tfrac{3}{4}+s\right]}"></span>
+        </div>
+        <p>ولبئر مركزي في منطقة صرف دائرية أو مربعة، يمكن التبسيط باستخدام الصيغة الخاصة بدلالة r<sub>e</sub> و r<sub>w</sub> مباشرة (معادلتا 1.18، 1.19)، وهي أساس الحاسبة الثانية في هذه المنصّة.</p>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>نصف قطر الاستقصاء</h2><span class="eq">Section 1.4 · Eq. 1.47</span></div>
+        <div class="diagram-wrap" style="text-align:center;">
+          <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; width:100%;">
+            <circle cx="350" cy="160" r="20" fill="#0a1e33"/>
+            <circle cx="350" cy="160" r="20" fill="none" stroke="#c9a227" stroke-width="2"/>
+            <circle cx="350" cy="160" r="60" fill="none" stroke="#1c4468" stroke-width="1.6" stroke-dasharray="4 3"/>
+            <circle cx="350" cy="160" r="105" fill="none" stroke="#2a5a86" stroke-width="1.6" stroke-dasharray="4 3"/>
+            <circle cx="350" cy="160" r="150" fill="none" stroke="#5c6b78" stroke-width="1.6" stroke-dasharray="4 3"/>
+            <text x="350" y="105" text-anchor="middle" font-size="10.5" fill="#1c4468" font-family="IBM Plex Mono">t₁</text>
+            <text x="350" y="60" text-anchor="middle" font-size="10.5" fill="#2a5a86" font-family="IBM Plex Mono">t₂</text>
+            <text x="350" y="14" text-anchor="middle" font-size="10.5" fill="#5c6b78" font-family="IBM Plex Mono">t₃ &gt; t₂ &gt; t₁</text>
+          </svg>
+        </div>
+        <p class="diagram-note">مع تقدّم زمن الإنتاج، تتّسع دائرة الاضطراب الملموس في الضغط تدريجيًا داخل التكوين.</p>
+        <p>بحلّ معادلة الانتشارية لمصدر لحظي في وسط لانهائي (حقن حجم سائل لحظي واحد)، وتعيين الزمن الذي يبلغ عنده اضطراب الضغط أقصى قيمته عند نصف قطر معيّن، يُشتق:</p>
+        <div class="formula-box">
+          <div class="fb-label">نصف قطر الاستقصاء <span class="eqn-tag">Eq. 1.47</span></div>
+          <span class="katex-eq" data-tex="r_i=\left(\dfrac{kt}{948\,\phi\mu c_t}\right)^{1/2}"></span>
+        </div>
+        <p>هذا المفهوم ذو قيمة نوعية وكمّية معًا: يساعد على تفسير شكل منحنيات الهبوط والبناء عندما يصل نصف قطر الاستقصاء إلى منطقة متضررة قريبة من البئر أو إلى حدود المكمن أو عدم تجانس بعيد، كما يُستخدم في تصميم مدة اختبارات الآبار لضمان استقصاء عمق محدد من التكوين.</p>
+        <div class="example-box">
+          <div class="ex-title">مثال محلول — Example 1.4</div>
+          <p>لبئر استكشافي بخواص k=100 md، φ=0.2، c<sub>t</sub>=2×10⁻⁵ psi⁻¹، μ=0.5 cp، والهدف استقصاء نصف قطر لا يقل عن 1,000 قدم (أي التصميم على ضِعف هذه المسافة للأمان = 2,000 قدم). بحل معادلة 1.47 عكسيًا: t = 948φμc<sub>t</sub>r<sub>i</sub>²/k = (948×0.2×0.5×2×10⁻⁵×2000²)/100 = <strong>75.8 ساعة</strong> كمدة دنيا مقترحة للاختبار. من حيث المبدأ، أي معدّل إنتاج يحقق هذا الاستقصاء (الزمن اللازم مستقل عن معدّل الانسياب)؛ لكن عمليًا يُختار معدّل كبير بما يكفي لتسجيل تغيّر الضغط بدقة كافية للتحليل اللاحق.</p>
+        </div>
+        <p>عند تعيين نصف القطر مساويًا لنصف قطر منطقة الصرف r<sub>e</sub>، يُعطى زمن استقرار الانسياب (بداية الحالة شبه المستقرة) بالعلاقة:</p>
+        <div class="formula-box">
+          <div class="fb-label">زمن الاستقرار <span class="eqn-tag">Eq. 1.48</span></div>
+          <span class="katex-eq" data-tex="t_s=948\,\phi\mu c_t r_e^2 / k"></span>
+        </div>
+        <p class="diagram-note">ملاحظة منهجية مهمة: معادلة 1.47 صحيحة تمامًا فقط لمكمن متجانس متماثل الخواص أسطواني الشكل، وللحظة بلوغ الاضطراب الأقصى الناتج عن نبضة حقن أو إنتاج لحظية — لا عن تغيّر معدّل مستمر. رغم ذلك تبقى تقريبًا نافعًا وموثوقًا في أغلب حالات التصميم والتفسير النوعي.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>مبدأ التراكب (Superposition)</h2><span class="eq">Section 1.5 · Eq. 1.49 – 1.51</span></div>
+        <p>حل Ei بصورته الأساسية يقتصر ظاهريًا على مكمن لانهائي فيه بئر واحد ينتج بمعدّل ثابت بدءًا من الزمن صفر — وهذا قيد شديد التبسيط. يزيل مبدأ التراكب هذا القيد: <strong>مجموع انخفاض الضغط الكلي عند أي نقطة في المكمن يساوي مجموع انخفاضات الضغط الناتجة عن كل بئر منتج على حدة عند تلك النقطة</strong>.</p>
+
+        <h3>أنظمة الآبار المتعددة</h3>
+        <p>لثلاثة آبار (A، B، C) تبدأ الإنتاج معًا من الزمن صفر في مكمن لانهائي، يُحسب انخفاض الضغط الكلي عند البئر A بجمع مساهمة كل بئر:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.49</span></div>
+          <span class="katex-eq" data-tex="(p_i-p_{wf})_{A}=-70.6\dfrac{q_AB\mu}{kh}\!\left[\ln\!\left(\dfrac{1{,}688\phi\mu c_t r_{wA}^2}{kt}\right)-2s_A\right]-70.6\dfrac{q_BB\mu}{kh}Ei\!\left(\dfrac{-948\phi\mu c_t r_{AB}^2}{kt}\right)-70.6\dfrac{q_CB\mu}{kh}Ei\!\left(\dfrac{-948\phi\mu c_t r_{AC}^2}{kt}\right)"></span>
+        </div>
+        <p>حيث r<sub>AB</sub> وr<sub>AC</sub> المسافات الفاصلة بين البئر A والبئرين B وC. يُلاحَظ أن حدّ البئر A يتضمن عامل أذى s<sub>A</sub> خاصًا به، بينما لا يظهر عاملا أذى B وC في هذه المعادلة أصلًا — لأن تأثير الأذى محصور داخل منطقة كل بئر المتضررة الخاصة، ولا يمتد أثره إلى الآبار المجاورة. هذا الأسلوب هو الأساس النظري لاختبارات التداخل (Interference Tests) واختبارات النبض (Pulse Tests) التي تُستخدم لتقدير خواص المكمن بين الآبار.</p>
+
+        <h3>محاكاة الحدود بطريقة الصور (Imaging)</h3>
+        <p>بئر يقع على مسافة L من حد مانع للانسياب (كصدع مُغلِق) يُكافئ رياضيًا نظام بئرين في مكمن لانهائي: البئر الفعلي وبئر خيالي (صورة) على نفس المسافة من الحد لكن خلفه، بنفس تاريخ الإنتاج. الخط المنصّف بين البئرين يمثّل بالضبط الحد عديم الانسياب، لأن تدرج الضغط عليه معدوم تراكميًا:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.50</span></div>
+          <span class="katex-eq" data-tex="p_i-p_{wf}=-70.6\dfrac{qB\mu}{kh}\left(\ln\dfrac{1{,}688\phi\mu c_t r_w^2}{kt}-2s\right)-70.6\dfrac{qB\mu}{kh}\,Ei\!\left(\dfrac{-948\phi\mu c_t (2L)^2}{kt}\right)"></span>
+        </div>
+        <p>لاحظ أن عامل أذى البئر الخيالي لا يظهر في هذه المعادلة أبدًا — إذ إن تأثيره خارج منطقته المتضررة الخاصة مستقل تمامًا عن وجودها. توسّع هذه الطريقة لتشمل حالات أكثر تعقيدًا: بئر بين حدين متعامدين، بئر بين حدين متوازيين، أو بئر محاط بالكامل بحدود عديمة الانسياب في مكمن مستطيل الشكل.</p>
+
+        <h3>نمذجة الآبار متغيّرة المعدّل</h3>
+        <p>الاستخدام الأهم عمليًا لمبدأ التراكب هو تمثيل بئر ينتج بمعدلات متعددة متعاقبة زمنيًا: q₁ من t=0، ثم q₂ من t₁، ثم q₃ من t₂. كل تغيّر في المعدّل يُمثَّل ببئر إضافي وهمي في نفس موقع البئر الحقيقي، ينتج بمقدار الفرق بين المعدّل الجديد والسابق، ويبدأ إنتاجه عند لحظة التغيير فعليًا:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.51</span></div>
+          <span class="katex-eq" data-tex="p_i-p_{wf}=-70.6\dfrac{\mu q_1B}{kh}\!\left[\ln\!\left(\dfrac{1{,}688\phi\mu c_t r_w^2}{kt}\right)-2s\right]-70.6\dfrac{\mu(q_2-q_1)B}{kh}\!\left[\ln\!\left(\dfrac{1{,}688\phi\mu c_t r_w^2}{k(t-t_1)}\right)-2s\right]-70.6\dfrac{\mu(q_3-q_2)B}{kh}\!\left[\ln\!\left(\dfrac{1{,}688\phi\mu c_t r_w^2}{k(t-t_2)}\right)-2s\right]"></span>
+        </div>
+        <p>جمع مساهمات هذه الآبار الوهمية المتعاقبة يعطي انخفاض الضغط الكلي الصحيح لتاريخ إنتاج متغيّر بالكامل، ويصح تعميمه لأي عدد من تغيّرات المعدّل — بشرط أن يبقى نصف قطر الاستقصاء المحسوب من الزمن الكلي منذ بدء الإنتاج أصغر من أو يساوي r<sub>e</sub>.</p>
+
+        <div class="diagram-wrap" style="text-align:center; margin-top:16px;">
+          <svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" style="max-width:560px; width:100%;">
+            <line x1="50" y1="220" x2="660" y2="220" stroke="#5c6b78" stroke-width="1.5"/>
+            <line x1="50" y1="220" x2="50" y2="20" stroke="#5c6b78" stroke-width="1.5"/>
+            <text x="675" y="224" font-size="11.5" fill="#13202b" font-family="Space Grotesk">t</text>
+            <text x="38" y="16" font-size="11.5" fill="#13202b" font-family="Space Grotesk">q</text>
+            <path d="M50 170 L250 170 L250 110 L430 110 L430 55 L620 55" fill="none" stroke="#0a1e33" stroke-width="2.6"/>
+            <line x1="250" y1="220" x2="250" y2="20" stroke="#8493a0" stroke-width="1" stroke-dasharray="2 3"/>
+            <line x1="430" y1="220" x2="430" y2="20" stroke="#8493a0" stroke-width="1" stroke-dasharray="2 3"/>
+            <text x="150" y="190" text-anchor="middle" font-size="11" fill="#1c4468" font-family="IBM Plex Mono">q₁</text>
+            <text x="340" y="130" text-anchor="middle" font-size="11" fill="#1c4468" font-family="IBM Plex Mono">q₂</text>
+            <text x="525" y="75" text-anchor="middle" font-size="11" fill="#1c4468" font-family="IBM Plex Mono">q₃</text>
+            <text x="250" y="234" text-anchor="middle" font-size="10" fill="#5c6b78" font-family="IBM Plex Mono">t₁</text>
+            <text x="430" y="234" text-anchor="middle" font-size="10" fill="#5c6b78" font-family="IBM Plex Mono">t₂</text>
+          </svg>
+          <p class="diagram-note">جدول إنتاج نموذجي بثلاث فترات متعاقبة (شبيه بالشكل 1.10 في المرجع) — الأساس العملي لحاسبة مبدأ التراكب في هذه المنصّة (الحاسبة 3)، التي تعمم هذا المخطط لأي عدد من فترات الإنتاج.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>تقريب هورنر لزمن الإنتاج المكافئ</h2><span class="eq">Section 1.6 · Eq. 1.52</span></div>
+        <p>نمذجة تاريخ إنتاج متغيّر بالكامل عبر التراكب، رغم دقتها، تصبح مرهقة حسابيًا كلما تعدّدت تغيّرات المعدّل. اقترح هورنر (1951) تقريبًا عمليًا يستبدل سلسلة دوال Ei بدالة Ei واحدة، تُستخدم فيها أحدث قيمة غير صفرية للمعدّل q<sub>last</sub>، وزمن إنتاج مكافئ واحد t<sub>p</sub> يحفظ التوازن المادي للإنتاج التراكمي:</p>
+        <div class="formula-box">
+          <div class="fb-label">زمن الإنتاج المكافئ (شبه-الإنتاج) <span class="eqn-tag">Eq. 1.52</span></div>
+          <span class="katex-eq" data-tex="t_p=\dfrac{24\,N_p}{q_{last}}"></span>
+        </div>
+        <p>حيث N<sub>p</sub> الإنتاج التراكمي بالبرميل، وq<sub>last</sub> آخر معدّل إنتاج ثابت (STB/D). عندئذ يُحسب انخفاض الضغط عند أي نقطة بالصيغة المبسّطة:</p>
+        <div class="formula-box">
+          <div class="fb-label"><span class="eqn-tag">Eq. 1.53</span></div>
+          <span class="katex-eq" data-tex="p_i-p=-70.6\dfrac{\mu q_{last}B}{kh}\,Ei\!\left(\dfrac{-948\,\phi\mu c_t r^2}{k\,t_p}\right)"></span>
+        </div>
+        <h3>متى يكون التقريب كافيًا؟</h3>
+        <p>لا يوجد أساس رياضي صارم للتقريب، بل قاعدتان عمليتان استُدلّ عليهما: الأولى محافظة تمامًا — إذا استمر آخر معدّل فترة كافية ليبلغ نصف قطر الاستقصاء عندها نصف قطر منطقة الصرف، فإن تقريب هورنر دقيق دومًا. الثانية أكثر عملية للآبار الجديدة ذات تغيّرات المعدّل السريعة: يكفي عادةً أن يستمر آخر معدّل ثابت لفترة لا تقل عن ضعف مدة استمرار المعدّل السابق:</p>
+        <div class="formula-box">
+          <div class="fb-label">معيار الكفاية التقريبي</div>
+          <span class="katex-eq" data-tex="\dfrac{\Delta t_{last}}{\Delta t_{next\text{-}to\text{-}last}} > 2"></span>
+        </div>
+        <div class="example-box">
+          <div class="ex-title">مثال محلول — Example 1.6</div>
+          <p>بئر أُنتِج بأربع فترات متعاقبة: 25 ساعة (52 STB)، ثم 12 ساعة (0 STB، إغلاق مؤقت)، ثم 26 ساعة (46 STB)، ثم 72 ساعة (68 STB) قبل إغلاقه لاختبار البناء. آخر معدّل ثابت q<sub>last</sub> = 68/72×24 = 22.7 STB/D، والإنتاج التراكمي الكلي 166 STB، فيكون t<sub>p</sub> = 24×166/22.7 = <strong>176 ساعة</strong>. وبما أن نسبة آخر فترتين Δt<sub>last</sub>/Δt<sub>next-to-last</sub> = 72/26 = 2.77 &gt; 2، فإن تقريب هورنر يُعدّ كافيًا لهذه الحالة، ولا حاجة لاستخدام التراكب الكامل.</p>
+        </div>
+        <p>عند الشك في تحقق هذين المعيارين، يبقى الأسلوب الآمن هو الرجوع إلى التراكب الكامل لنمذجة تاريخ الإنتاج.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>مرجع سريع للمعادلات</h2><span class="eq">Quick Reference</span></div>
+        <table class="eqref">
+          <tr><th>رقم المعادلة</th><th>الاسم</th><th>الاستخدام</th></tr>
+          <tr><td class="eqno">Eq. 1.1</td><td>معادلة الانتشارية</td><td>الوصف التفاضلي الأساسي لتغيّر الضغط بالزمن ونصف القطر</td></tr>
+          <tr><td class="eqno">Eq. 1.6</td><td>حل المكمن الأسطواني المحدود</td><td>المعيار الدقيق المرجعي (دوال بسل)</td></tr>
+          <tr><td class="eqno">Eq. 1.7</td><td>حل Ei للمكمن اللانهائي</td><td>حساب الضغط عند أي r وt — الحاسبة 1</td></tr>
+          <tr><td class="eqno">Eq. 1.8</td><td>التقريب اللوغاريتمي لـ Ei</td><td>تبسيط الحل عند x صغير (x &lt; 0.02)</td></tr>
+          <tr><td class="eqno">Eq. 1.9 – 1.11</td><td>الانخفاض الإضافي وعامل الأذى</td><td>تمثيل تلف أو تحفيز البئر — الحاسبة 2 (تبويب الأذى)</td></tr>
+          <tr><td class="eqno">Eq. 1.12 – 1.14</td><td>الحل شبه المستقر واختبار حدود المكمن</td><td>سلوك p<sub>wf</sub> الخطي مع الزمن</td></tr>
+          <tr><td class="eqno">Eq. 1.20 – 1.21</td><td>هندسة الصرف العامة وعامل الشكل</td><td>مناطق صرف غير دائرية</td></tr>
+          <tr><td class="eqno">Eq. 1.18 – 1.19</td><td>معامل الإنتاجية والنفاذية المتوسطة</td><td>تحليل بيانات اختبار PI — الحاسبة 2</td></tr>
+          <tr><td class="eqno">Eq. 1.26 – 1.43</td><td>سعة الخزن في البئر</td><td>خط الميل الواحد ونهاية تشويه سعة الخزن</td></tr>
+          <tr><td class="eqno">Eq. 1.45 – 1.46</td><td>الانسياب الخطي</td><td>آبار ذات كسور هيدروليكية طويلة</td></tr>
+          <tr><td class="eqno">Eq. 1.47 – 1.48</td><td>نصف قطر الاستقصاء وزمن الاستقرار</td><td>تصميم مدة الاختبار — الحاسبة 2</td></tr>
+          <tr><td class="eqno">Eq. 1.49 – 1.51</td><td>مبدأ التراكب</td><td>آبار متعددة، حدود المكمن، معدّلات متغيّرة — الحاسبة 3</td></tr>
+          <tr><td class="eqno">Eq. 1.52 – 1.53</td><td>تقريب هورنر</td><td>زمن الإنتاج المكافئ — الحاسبة 2</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>قاموس المتغيرات والمصطلحات</h2><span class="eq">اضغط لعرض التفاصيل</span></div>
+        <div class="gloss-grid" id="glossaryGrid"></div>
+      </div>
+
+    </section>
+
+        <!-- ============ CALC A : Ei multi-mode (Point / Radius / Time / 2D Grid) ============ -->
+    <section class="section" id="sec-calcA">
+      <div class="card">
+        <div class="card-head"><h2>توزّع الضغط الانتقالي — حل خط المصدر (Ei-Function)</h2><span class="eq">Eq. 1.7 · Eq. 1.9</span></div>
+        <p>يحسب هذا النموذج الضغط <code>p(r,t)</code> لمكمن لانهائي ينتج منه بئر بمعدّل ثابت، عبر حل Ei الأساسي، مع تمثيل عامل الأذى بانخفاض إضافي موضعي Δp<sub>skin</sub> = 141.2qBμS/kh يُطبَّق فقط عند وجه البئر (r = r<sub>w</sub>). أدخل قيمة واحدة أو عدّة قيم مفصولة بفواصل لكل من نصف القطر r والزمن t لاختيار نمط العرض تلقائيًا.</p>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-head"><h2>البيانات</h2></div>
+        <div class="toolbar-row">
+          <button class="btn ghost sm" onclick="loadExampleA('point')">📍 مثال: نقطة واحدة</button>
+          <button class="btn ghost sm" onclick="loadExampleA('radius')">📏 مثال: مقطع بنصف القطر</button>
+          <button class="btn ghost sm" onclick="loadExampleA('time')">⏱️ مثال: مقطع بالزمن</button>
+          <button class="btn ghost sm" onclick="loadExampleA('grid')">🗺️ مثال: شبكة ثنائية الأبعاد</button>
+          <button class="btn danger sm" onclick="clearCalcA()">🗑️ مسح الحقول</button>
+        </div>
+        <div class="calc-layout">
+          <div>
+            <div class="field-group"><label>الضغط الابتدائي p<sub>i</sub> <span class="unit">psia</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_pi"></div>
+            <div class="field-group"><label>معدّل الإنتاج q <span class="unit">STB/D</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_q"></div>
+            <div class="field-group"><label>معامل الحجم الجوفي B<sub>o</sub></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_B"></div>
+            <div class="field-group"><label>اللزوجة μ <span class="unit">cp</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_mu"></div>
+            <div class="field-group"><label>النفاذية K <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_k"></div>
+            <div class="field-group"><label>سماكة التكوين h <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_h"></div>
+            <div class="field-group"><label>المسامية φ <span class="unit">fraction</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_phi"></div>
+            <div class="field-group"><label>الانضغاطية الكلية c<sub>t</sub> <span class="unit">×10⁻⁶ psi⁻¹</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_ct"></div>
+            <div class="field-group"><label>نصف قطر البئر r<sub>w</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_rw"></div>
+            <div class="field-group"><label>عامل الأذى S</label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="ca_S"></div>
+            <div class="field-group"><label>نصف القطر r <span class="unit">ft — قيمة أو عدّة قيم مفصولة بفاصلة</span></label><input type="text" lang="en" dir="ltr" id="ca_r"></div>
+            <div class="field-group"><label>الزمن t <span class="unit">hr — قيمة أو عدّة قيم مفصولة بفاصلة</span></label><input type="text" lang="en" dir="ltr" id="ca_t"></div>
+            <button class="calc-btn" onclick="calcARun()">⚡ احسب وارسم</button>
+          </div>
+          <div class="result-panel">
+            <h2>النتائج</h2>
+            <div id="ca_status"></div>
+            <div class="kpi-row" id="ca_kpiRow"></div>
+            <div class="plot-box"><div id="ca_plot" style="height:440px;"></div></div>
+            <div class="data-table-wrap" id="ca_tableWrap"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card no-print" id="ca_exportCard" style="display:none;">
+        <div class="card-head"><h2>📥 تصدير النتائج والتقارير</h2></div>
+        <div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_A()">📄 تحميل النتائج كملف CSV</button>
+          <button class="btn ghost" onclick="exportExcel_A()">📊 تحميل النتائج كملف Excel</button>
+          <button class="btn gold" onclick="printReportA()">📕 طباعة / حفظ كتقرير PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+        <div class="formula-panel">
+          <div class="fp-title">Governing Equation — Line Source (Ei-Function) Solution</div>
+          <div class="fp-eq"><span class="katex-eq" data-tex="P(r,t) = P_i - \dfrac{70.6\,qB\mu}{kh}\,E_1\!\left(\dfrac{948\,\phi\mu c_t r^2}{k\,t}\right) - \Delta P_{skin}"></span></div>
+          <div class="fp-title" style="margin-top:14px;">Skin Pressure Drop (localized at r = r<sub>w</sub>)</div>
+          <div class="fp-eq"><span class="katex-eq" data-tex="\Delta P_{skin} = \dfrac{141.2\,qB\mu}{kh}\,S"></span></div>
+          <div class="fp-title" style="margin-top:14px;">Exponential Integral &amp; Dimensionless Argument</div>
+          <div class="fp-eq"><span class="katex-eq" data-tex="E_1(x) = \int_{x}^{\infty} \dfrac{e^{-u}}{u}\,du \ , \qquad x = \dfrac{948\,\phi\mu c_t\,r^2}{k\,t}"></span></div>
+          <div class="fp-note">70.6، 948، و141.2 ثوابت تحويل قياسية للوحدات الحقلية في معادلة الانتشارية الشعاعية (q: STB/D، k: md، h: ft، t: hr، r: ft، μ: cp، c<sub>t</sub>: psi⁻¹).</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CALC B : Well & Reservoir Characterization (tabbed) ============ -->
+    <section class="section" id="sec-calcB">
+      <div class="card">
+        <div class="card-head"><h2>توصيف البئر والمكمن</h2><span class="eq">Eq. 1.9 – 1.19 · Eq. 1.47 – 1.52</span></div>
+        <p>أربع أدوات تحليلية مبنية على المعادلات الجبرية للفصل، مجمّعة في صفحة واحدة: عامل الأذى والانخفاض الإضافي في الضغط، معامل الإنتاجية والنفاذية المتوسطة، نصف قطر الاستقصاء وزمن الاستقرار، وأخيرًا زمن الإنتاج المكافئ حسب تقريب هورنر.</p>
+      </div>
+
+      <div class="tabbar no-print" id="tabbarB">
+        <button class="tab-btn active" data-tab="b1">عامل الأذى Δp<sub>s</sub></button>
+        <button class="tab-btn" data-tab="b2">معامل الإنتاجية J</button>
+        <button class="tab-btn" data-tab="b3">نصف قطر الاستقصاء</button>
+        <button class="tab-btn" data-tab="b4">تقريب هورنر</button>
+      </div>
+
+      <!-- TAB B1 — Skin -->
+      <div class="tab-panel active" id="tab-b1">
+        <div class="card no-print">
+          <div class="toolbar-row">
+            <button class="btn ghost sm" onclick="loadExampleB1()">🔄 إدخال بيانات تجريبية</button>
+            <button class="btn danger sm" onclick="clearB1()">🗑️ مسح الحقول</button>
+          </div>
+          <div class="calc-layout">
+            <div>
+              <div class="field-group"><label>نفاذية التكوين الأصلية k <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_k"></div>
+              <div class="field-group"><label>نفاذية المنطقة المتضررة/المحفَّزة k<sub>s</sub> <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_ks"></div>
+              <div class="field-group"><label>نصف قطر المنطقة المتضررة r<sub>s</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_rs"></div>
+              <div class="field-group"><label>نصف قطر البئر r<sub>w</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_rw"></div>
+              <div class="divider-label" style="margin:18px 0 10px;">لحساب Δp<sub>s</sub> (اختياري)</div>
+              <div class="field-group"><label>معدّل الإنتاج q <span class="unit">STB/D</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_q" placeholder="اختياري"></div>
+              <div class="field-group"><label>معامل الحجم الجوفي B <span class="unit">RB/STB</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_B" placeholder="اختياري"></div>
+              <div class="field-group"><label>اللزوجة μ <span class="unit">cp</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_mu" placeholder="اختياري"></div>
+              <div class="field-group"><label>سماكة التكوين h <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b1_h" placeholder="اختياري"></div>
+              <button class="calc-btn" onclick="calcB1Run()">احسب عامل الأذى</button>
+            </div>
+            <div class="result-panel">
+              <h2>النتائج</h2>
+              <div id="b1_status"></div>
+              <div class="kpi-row">
+                <div class="kpi"><div class="kpi-label">عامل الأذى s</div><div class="kpi-value" id="b1_out_s">—</div><div class="kpi-sub">—</div></div>
+                <div class="kpi"><div class="kpi-label">الانخفاض الإضافي Δp<sub>s</sub></div><div class="kpi-value" id="b1_out_dps">—</div><div class="kpi-sub">psi</div></div>
+                <div class="kpi"><div class="kpi-label">حالة البئر</div><div class="kpi-value" id="b1_out_state" style="font-size:14px;">—</div><div class="kpi-sub">—</div></div>
+              </div>
+              <div class="steps-box" id="b1_steps"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card no-print"><div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_generic('b1')">📄 تحميل النتيجة كـ CSV</button>
+          <button class="btn ghost" onclick="exportExcel_generic('b1')">📊 تحميل النتيجة كـ Excel</button>
+          <button class="btn gold" onclick="printReportGeneric('b1')">📕 طباعة / حفظ كتقرير PDF</button>
+        </div></div>
+        <div class="card">
+          <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+          <div class="formula-panel">
+            <div class="fp-title">Additional Pressure Drop &amp; Skin Factor</div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="\Delta p_s = 141.2\dfrac{qB\mu}{kh}\left(\dfrac{k}{k_s}-1\right)\ln\!\left(\dfrac{r_s}{r_w}\right)"></span></div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="s=\left(\dfrac{k}{k_s}-1\right)\ln\!\left(\dfrac{r_s}{r_w}\right)"></span></div>
+            <div class="fp-note">Eq. 1.9 – 1.10. s موجب لبئر متضرر، سالب لبئر محفَّز، صفر عند k = k<sub>s</sub>.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB B2 — PI & average permeability -->
+      <div class="tab-panel" id="tab-b2">
+        <div class="card no-print">
+          <div class="toolbar-row">
+            <button class="btn ghost sm" onclick="loadExampleB2()">🔄 إدخال بيانات تجريبية</button>
+            <button class="btn danger sm" onclick="clearB2()">🗑️ مسح الحقول</button>
+          </div>
+          <div class="calc-layout">
+            <div>
+              <div class="field-group"><label>معدّل الإنتاج q <span class="unit">STB/D</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_q"></div>
+              <div class="field-group"><label>متوسط ضغط المكمن p̄ <span class="unit">psi</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_pbar"></div>
+              <div class="field-group"><label>ضغط القاع الجاري p<sub>wf</sub> <span class="unit">psi</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_pwf"></div>
+              <div class="divider-label" style="margin:18px 0 10px;">النفاذية المتوسطة k<sub>J</sub></div>
+              <div class="field-group"><label>معامل الحجم الجوفي B <span class="unit">RB/STB</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_B"></div>
+              <div class="field-group"><label>اللزوجة μ <span class="unit">cp</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_mu"></div>
+              <div class="field-group"><label>سماكة التكوين h <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_h"></div>
+              <div class="field-group"><label>نصف قطر منطقة الصرف r<sub>e</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_re"></div>
+              <div class="field-group"><label>نصف قطر البئر r<sub>w</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_rw"></div>
+              <div class="divider-label" style="margin:18px 0 10px;">تقدير عامل الأذى (اختياري)</div>
+              <div class="field-group"><label>نفاذية اللباب k <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b2_kcore" placeholder="اختياري"></div>
+              <button class="calc-btn" onclick="calcB2Run()">احسب J و k<sub>J</sub></button>
+            </div>
+            <div class="result-panel">
+              <h2>النتائج</h2>
+              <div class="kpi-row">
+                <div class="kpi"><div class="kpi-label">معامل الإنتاجية J</div><div class="kpi-value" id="b2_out_J">—</div><div class="kpi-sub">STB/D-psi</div></div>
+                <div class="kpi"><div class="kpi-label">النفاذية المتوسطة k<sub>J</sub></div><div class="kpi-value" id="b2_out_kJ">—</div><div class="kpi-sub">md</div></div>
+                <div class="kpi"><div class="kpi-label">عامل الأذى المقدَّر s</div><div class="kpi-value" id="b2_out_s">—</div><div class="kpi-sub">—</div></div>
+              </div>
+              <div class="steps-box" id="b2_steps"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card no-print"><div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_generic('b2')">📄 تحميل النتيجة كـ CSV</button>
+          <button class="btn ghost" onclick="exportExcel_generic('b2')">📊 تحميل النتيجة كـ Excel</button>
+          <button class="btn gold" onclick="printReportGeneric('b2')">📕 طباعة / حفظ كتقرير PDF</button>
+        </div></div>
+        <div class="card">
+          <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+          <div class="formula-panel">
+            <div class="fp-title">Productivity Index &amp; Average Permeability</div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="J=\dfrac{q}{\bar p - p_{wf}}"></span></div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="k_J=\dfrac{141.2\,J\,B\mu\left[\ln(r_e/r_w)-3/4\right]}{h}"></span></div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="s=\left(\dfrac{k}{k_J}-1\right)\left[\ln\!\left(\dfrac{r_e}{r_w}\right)-\dfrac{3}{4}\right]"></span></div>
+            <div class="fp-note">Eq. 1.18 – 1.19. k<sub>J</sub> نفاذية ظاهرية تُقارَن بنفاذية اللباب لتقدير عامل الأذى.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB B3 — radius of investigation -->
+      <div class="tab-panel" id="tab-b3">
+        <div class="card no-print">
+          <div class="toolbar-row">
+            <button class="btn ghost sm" onclick="loadExampleB3()">🔄 إدخال بيانات تجريبية</button>
+            <button class="btn danger sm" onclick="clearB3()">🗑️ مسح الحقول</button>
+          </div>
+          <div class="calc-layout">
+            <div>
+              <div class="field-group"><label>النفاذية k <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_k"></div>
+              <div class="field-group"><label>المسامية φ <span class="unit">fraction</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_phi"></div>
+              <div class="field-group"><label>اللزوجة μ <span class="unit">cp</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_mu"></div>
+              <div class="field-group"><label>الانضغاطية الكلية c<sub>t</sub> <span class="unit">×10⁻⁵ psi⁻¹</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_ct"></div>
+              <div class="field-group"><label>الزمن t <span class="unit">hr</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_t"></div>
+              <div class="field-group"><label>نصف قطر منطقة الصرف r<sub>e</sub> <span class="unit">ft — لحساب زمن الاستقرار</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b3_re"></div>
+              <button class="calc-btn" onclick="calcB3Run()">احسب</button>
+            </div>
+            <div class="result-panel">
+              <h2>النتائج</h2>
+              <div class="kpi-row">
+                <div class="kpi"><div class="kpi-label">نصف قطر الاستقصاء r<sub>i</sub></div><div class="kpi-value" id="b3_out_ri">—</div><div class="kpi-sub">ft</div></div>
+                <div class="kpi"><div class="kpi-label">زمن استقرار الانسياب t<sub>s</sub></div><div class="kpi-value" id="b3_out_ts">—</div><div class="kpi-sub">hr</div></div>
+              </div>
+              <div class="steps-box" id="b3_steps"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card no-print"><div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_generic('b3')">📄 تحميل النتيجة كـ CSV</button>
+          <button class="btn ghost" onclick="exportExcel_generic('b3')">📊 تحميل النتيجة كـ Excel</button>
+          <button class="btn gold" onclick="printReportGeneric('b3')">📕 طباعة / حفظ كتقرير PDF</button>
+        </div></div>
+        <div class="card">
+          <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+          <div class="formula-panel">
+            <div class="fp-title">Radius of Investigation &amp; Stabilization Time</div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="r_i=\left(\dfrac{kt}{948\,\phi\mu c_t}\right)^{1/2}"></span></div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="t_s=948\,\phi\mu c_t r_e^2 / k"></span></div>
+            <div class="fp-note">Eq. 1.47 – 1.48.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB B4 — Horner tp -->
+      <div class="tab-panel" id="tab-b4">
+        <div class="card no-print">
+          <div class="toolbar-row">
+            <button class="btn ghost sm" onclick="loadExampleB4()">🔄 إدخال بيانات تجريبية</button>
+            <button class="btn danger sm" onclick="clearB4()">🗑️ مسح الحقول</button>
+          </div>
+          <div class="calc-layout">
+            <div>
+              <div class="field-group"><label>الإنتاج التراكمي N<sub>p</sub> <span class="unit">STB</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b4_np"></div>
+              <div class="field-group"><label>آخر معدّل إنتاج q<sub>last</sub> <span class="unit">STB/D</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b4_q"></div>
+              <div class="divider-label" style="margin:18px 0 10px;">فحص كفاية التقريب (اختياري)</div>
+              <div class="field-group"><label>مدة آخر فترة إنتاج Δt<sub>last</sub> <span class="unit">hr</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b4_dtlast"></div>
+              <div class="field-group"><label>مدة الفترة التي قبلها Δt<sub>next-to-last</sub> <span class="unit">hr</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="b4_dtprev"></div>
+              <button class="calc-btn" onclick="calcB4Run()">احسب t<sub>p</sub></button>
+            </div>
+            <div class="result-panel">
+              <h2>النتائج</h2>
+              <div id="b4_status"></div>
+              <div class="kpi-row">
+                <div class="kpi"><div class="kpi-label">زمن الإنتاج المكافئ t<sub>p</sub></div><div class="kpi-value" id="b4_out_tp">—</div><div class="kpi-sub">hr</div></div>
+                <div class="kpi"><div class="kpi-label">نسبة الفترتين</div><div class="kpi-value" id="b4_out_ratio">—</div><div class="kpi-sub">Δt_last / Δt_prev</div></div>
+              </div>
+              <div class="steps-box" id="b4_steps"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card no-print"><div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_generic('b4')">📄 تحميل النتيجة كـ CSV</button>
+          <button class="btn ghost" onclick="exportExcel_generic('b4')">📊 تحميل النتيجة كـ Excel</button>
+          <button class="btn gold" onclick="printReportGeneric('b4')">📕 طباعة / حفظ كتقرير PDF</button>
+        </div></div>
+        <div class="card">
+          <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+          <div class="formula-panel">
+            <div class="fp-title">Horner Pseudoproducing Time</div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="t_p=\dfrac{24\,N_p}{q_{last}}"></span></div>
+            <div class="fp-eq"><span class="katex-eq" data-tex="\dfrac{\Delta t_{last}}{\Delta t_{next\text{-}to\text{-}last}} > 2"></span></div>
+            <div class="fp-note">Eq. 1.52. معيار الكفاية التقريبي لتجنّب اللجوء إلى التراكب الكامل.</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ CALC C : Superposition — variable rate well ============ -->
+    <section class="section" id="sec-calcC">
+      <div class="card">
+        <div class="card-head"><h2>مبدأ التراكب — بئر متغيّر المعدّل</h2><span class="eq">Eq. 1.49 – 1.51</span></div>
+        <p>يحسب هذا النموذج انخفاض الضغط الكلي عند نصف قطر وزمن مُعيَّنين لبئر أنتج بمعدّلات متعاقبة متعددة q₁، q₂، q₃ … تبدأ عند الأزمنة t₁، t₂، t₃ … بتطبيق مبدأ التراكب: يُمثَّل كل تغيّر في المعدّل ببئر وهمي إضافي في نفس الموقع، ينتج بمقدار الفرق بين المعدّل الجديد والسابق Δq، ويبدأ إنتاجه عند لحظة التغيير الفعلية. تُجمَع مساهمات جميع الفترات عبر حل Ei الكامل (لا التقريب اللوغاريتمي) لضمان الدقة عند أي زمن، مع إضافة انخفاض عامل الأذى عند تقييم الضغط عند وجه البئر (r = r<sub>w</sub>) بالاعتماد على آخر معدّل فعّال عند زمن التقييم.</p>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-head"><h2>جدول فترات الإنتاج</h2>
+          <div class="toolbar-row" style="margin:0;">
+            <button class="btn ghost sm" onclick="addRateRow()">+ إضافة فترة</button>
+            <button class="btn ghost sm" onclick="loadExampleC()">🔄 إدخال بيانات تجريبية</button>
+            <button class="btn danger sm" onclick="clearC()">🗑️ مسح الحقول</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="dyn-table" id="rateTable">
+            <thead><tr><th>#</th><th>معدّل الإنتاج q<sub>i</sub> (STB/D)</th><th>بداية الفترة t<sub>i</sub> (hr)</th><th></th></tr></thead>
+            <tbody id="rateTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="calc-layout">
+        <div class="card">
+          <div class="field-group"><label>الضغط الابتدائي p<sub>i</sub> <span class="unit">psia</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_pi"></div>
+          <div class="field-group"><label>معامل الحجم الجوفي B</label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_B"></div>
+          <div class="field-group"><label>اللزوجة μ <span class="unit">cp</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_mu"></div>
+          <div class="field-group"><label>النفاذية k <span class="unit">md</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_k"></div>
+          <div class="field-group"><label>سماكة التكوين h <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_h"></div>
+          <div class="field-group"><label>المسامية φ <span class="unit">fraction</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_phi"></div>
+          <div class="field-group"><label>الانضغاطية الكلية c<sub>t</sub> <span class="unit">×10⁻⁶ psi⁻¹</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_ct"></div>
+          <div class="field-group"><label>نصف قطر البئر r<sub>w</sub> <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_rw"></div>
+          <div class="field-group"><label>عامل الأذى S <span class="unit">يُطبَّق فقط عند r = r_w</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_S"></div>
+          <div class="divider-label" style="margin:16px 0 8px;">نقطة التقييم</div>
+          <div class="field-group"><label>نصف القطر r <span class="unit">ft</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_r"></div>
+          <div class="field-group"><label>الزمن t <span class="unit">hr</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="cc_t"></div>
+          <button class="calc-btn" onclick="calcCRun()">⚡ احسب بالتراكب</button>
+        </div>
+        <div class="result-panel">
+          <h2>النتائج</h2>
+          <div id="cc_status"></div>
+          <div class="kpi-row" id="cc_kpiRow"></div>
+          <div class="plot-box"><div id="cc_plot" style="height:420px;"></div></div>
+          <div class="data-table-wrap" id="cc_tableWrap"></div>
+        </div>
+      </div>
+
+      <div class="card no-print" id="cc_exportCard" style="display:none;">
+        <div class="card-head"><h2>📥 تصدير النتائج والتقارير</h2></div>
+        <div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_C()">📄 تحميل النتائج كملف CSV</button>
+          <button class="btn ghost" onclick="exportExcel_C()">📊 تحميل النتائج كملف Excel</button>
+          <button class="btn gold" onclick="printReportC()">📕 طباعة / حفظ كتقرير PDF</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+        <div class="formula-panel">
+          <div class="fp-title">Superposition in Time — Variable Rate Well (General Ei Form)</div>
+          <div class="fp-eq"><span class="katex-eq" data-tex="p_i-p(r,t)=\sum_{i}70.6\dfrac{\Delta q_i B\mu}{kh}\,E_1\!\left(\dfrac{948\,\phi\mu c_t r^2}{k\,(t-t_i)}\right) \ , \qquad \Delta q_i = q_i-q_{i-1}"></span></div>
+          <div class="fp-title" style="margin-top:14px;">Skin Pressure Drop (applied only at r = r<sub>w</sub>, using the rate active at time t)</div>
+          <div class="fp-eq"><span class="katex-eq" data-tex="\Delta p_{skin}=141.2\dfrac{q_{current}B\mu}{kh}S"></span></div>
+          <div class="fp-note">تُجمَع الحدود فقط للفترات التي بدأت فعليًا قبل زمن التقييم (t &gt; t<sub>i</sub>)؛ هذه الصيغة تكافئ المعادلة 1.51 (بالتقريب اللوغاريتمي عند r = r<sub>w</sub>) لكنها تستخدم دالة Ei الكاملة فتبقى صالحة عند أي زمن أو نصف قطر ضمن نافذة صلاحية الحل اللانهائي.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<!-- ============ HIDDEN PRINT REPORT CONTAINER ============ -->
+<div id="printReport"></div>
+<script>
+/* ============================================================
+   DIGIT-SAFE PARSING (handles Arabic-Indic digits typed by users)
+   ============================================================ */
+function parseFloatSafe(v, def=NaN){
+  if(v===null || v===undefined) return def;
+  const s = String(v).trim();
+  if(s==='') return def;
+  const arabicDigits='٠١٢٣٤٥٦٧٨٩'; let clean=s;
+  for(let i=0;i<10;i++) clean = clean.split(arabicDigits[i]).join(String(i));
+  clean = clean.replace(',', '.');
+  const f = parseFloat(clean);
+  return isNaN(f) ? def : f;
+}
+function parseArrSafe(str){
+  if(!str) return [];
+  const arabicDigits='٠١٢٣٤٥٦٧٨٩'; let clean=String(str);
+  for(let i=0;i<10;i++) clean = clean.split(arabicDigits[i]).join(String(i));
+  return clean.split(',').map(s=>parseFloat(s.trim())).filter(v=>!isNaN(v) && v>0);
+}
+function gv(id){ return parseFloatSafe(document.getElementById(id).value); }
+function fmt(v, d=2){ if(!isFinite(v)) return "—"; return Number(v).toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d}); }
+function fmtSci(v){ if(!isFinite(v)) return "—"; return Number(v).toExponential(3); }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const PAGE_META = {
+  home:   {crumb:"GENERAL / OVERVIEW", title:"لوحة تحليل اختبار الآبار", tag:"Diffusivity Equation"},
+  learn:  {crumb:"GENERAL / THEORY", title:"انسياب الموائع في الوسط المسامي واختبار الآبار", tag:"Chapter 1"},
+  calcA:  {crumb:"CALCULATORS / 01", title:"توزّع الضغط الانتقالي — حل Ei", tag:"Eq. 1.7"},
+  calcB:  {crumb:"CALCULATORS / 02", title:"توصيف البئر والمكمن", tag:"Eq. 1.9 – 1.52"},
+  calcC:  {crumb:"CALCULATORS / 03", title:"مبدأ التراكب — معدّل متغيّر", tag:"Eq. 1.49 – 1.51"}
+};
+function goTo(target){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+target).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  const meta = PAGE_META[target];
+  if(meta){
+    document.getElementById('crumb').textContent = meta.crumb;
+    document.getElementById('pageTitle').textContent = meta.title;
+    document.getElementById('eqTag').textContent = meta.tag;
+  }
+  window.scrollTo({top:0, behavior:'instant'});
+}
+document.querySelectorAll('[data-target]').forEach(el=>{
+  el.addEventListener('click', ()=>goTo(el.dataset.target));
+});
+document.querySelectorAll('#tabbarB .tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#tabbarB .tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   Ei(-x)  ==  -E1(x)   (Abramowitz & Stegun 5.1.53 / 5.1.56)
+   ============================================================ */
+function E1(x){
+  if(x <= 0) return NaN;
+  if(x < 1){
+    const a0=-0.57721566, a1=0.99999193, a2=-0.24991055, a3=0.05519968, a4=-0.00976004, a5=0.00107857;
+    return -Math.log(x) + a0 + a1*x + a2*x*x + a3*x*x*x + a4*x*x*x*x + a5*x*x*x*x*x;
+  } else {
+    const a1=8.5733287401, a2=18.0590169730, a3=8.6347608925, a4=0.2677737343;
+    const b1=9.5733223454, b2=25.6329561486, b3=21.0996530827, b4=3.9584969228;
+    const num = x*x*x*x + a1*x*x*x + a2*x*x + a3*x + a4;
+    const den = x*x*x*x + b1*x*x*x + b2*x*x + b3*x + b4;
+    return (num/den) * Math.exp(-x) / x;
+  }
+}
+
+/* ============================================================
+   GENERIC EXPORT HELPERS (CSV / Excel / Print Report)
+   ============================================================ */
+function downloadCSVRows(headArr, rowsArr, filename){
+  let csv = headArr.join(',') + '\n';
+  rowsArr.forEach(r => { csv += r.join(',') + '\n'; });
+  const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+function downloadExcelRows(headArr, rowsArr, filename, sheetName){
+  const aoa = [headArr, ...rowsArr];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName||'Results');
+  XLSX.writeFile(wb, filename);
+}
+function prHTML({title, subtitle, inputsArr, kpisArr, tableHeadArr, tableRowsArr, chartImgUrl, equationsHtml}){
+  let html = `<div class="pr-headbar"><div class="pr-h1">${title}</div><div class="pr-h2">${subtitle} — ${new Date().toLocaleString('en-US')}</div></div>`;
+  if(inputsArr && inputsArr.length){
+    html += `<div class="pr-section-title">Input Parameters</div><div class="pr-infolist">` + inputsArr.map(p=>`<div><span>${p[0]}</span><b>${p[1]}</b></div>`).join('') + `</div>`;
+  }
+  if(kpisArr && kpisArr.length){
+    html += `<div class="pr-section-title">Results Summary</div><div class="pr-kpi-row">` + kpisArr.map(p=>`<div class="pr-kpi"><div class="pr-kpi-label">${p[0]}</div><div class="pr-kpi-val">${p[1]}${p[2]?(' '+p[2]):''}</div></div>`).join('') + `</div>`;
+  }
+  if(chartImgUrl){
+    html += `<div class="pr-section-title">Chart</div><img class="pr-chart" src="${chartImgUrl}">`;
+  }
+  if(tableHeadArr && tableRowsArr && tableRowsArr.length){
+    html += `<div class="pr-section-title">Data Table</div><table class="pr-table"><tr>${tableHeadArr.map(h=>`<th>${h}</th>`).join('')}</tr>` + tableRowsArr.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') + `</table>`;
+  }
+  if(equationsHtml){
+    html += `<div class="pr-section-title">Governing Equations</div>${equationsHtml}`;
+  }
+  html += `<div class="pr-footer"><span>Reservoir Flow &amp; Pressure Transient Suite — Pressure Transient Analysis</span><span>${new Date().toLocaleDateString('en-US')}</span></div>`;
+  return html;
+}
+function firePrint(html){
+  document.getElementById('printReport').innerHTML = html;
+  setTimeout(()=>window.print(), 60);
+}
+
+/* ============================================================
+   CALC A — Ei multi-mode: Point / 1D_Radius / 1D_Time / 2D_Grid
+   ============================================================ */
+const EXAMPLES_A = {
+  point:  {pi:4000,q:500,B:1.2,mu:1.5,k:50,h:30,phi:0.2,ct:15,rw:0.328,S:2, r:"0.328", t:"10"},
+  radius: {pi:4000,q:500,B:1.2,mu:1.5,k:50,h:30,phi:0.2,ct:15,rw:0.328,S:2, r:"0.328, 10, 50, 100, 500, 1000", t:"10"},
+  time:   {pi:4000,q:500,B:1.2,mu:1.5,k:50,h:30,phi:0.2,ct:15,rw:0.328,S:2, r:"0.328", t:"1, 10, 50, 100, 500, 1000"},
+  grid:   {pi:4000,q:500,B:1.2,mu:1.5,k:50,h:30,phi:0.2,ct:15,rw:0.328,S:2, r:"0.328, 10, 50, 100, 500, 1000", t:"1, 10, 50, 100, 500, 1000"}
+};
+const CA_FIELDS = ['pi','q','B','mu','k','h','phi','ct','rw','S','r','t'];
+function loadExampleA(kind){
+  const e = EXAMPLES_A[kind];
+  CA_FIELDS.forEach(f=> document.getElementById('ca_'+f).value = e[f]);
+  calcARun();
+}
+function clearCalcA(){
+  CA_FIELDS.forEach(f=> document.getElementById('ca_'+f).value = '');
+  document.getElementById('ca_status').innerHTML='';
+  document.getElementById('ca_kpiRow').innerHTML='';
+  document.getElementById('ca_tableWrap').innerHTML='';
+  document.getElementById('ca_exportCard').style.display='none';
+  Plotly.purge('ca_plot');
+  ca_lastResults = null;
+}
+let ca_lastResults = null;
+
+function calcARun(){
+  const pi=gv('ca_pi'), q=gv('ca_q'), B=gv('ca_B'), mu=gv('ca_mu'),
+        k=gv('ca_k'), h=gv('ca_h'), phi=gv('ca_phi'), ct=gv('ca_ct')*1e-6,
+        rw=gv('ca_rw'), S=gv('ca_S');
+
+  const statusEl = document.getElementById('ca_status');
+  const kpiEl = document.getElementById('ca_kpiRow');
+  const tableEl = document.getElementById('ca_tableWrap');
+  statusEl.innerHTML=""; kpiEl.innerHTML=""; tableEl.innerHTML="";
+  document.getElementById('ca_exportCard').style.display='none';
+
+  if([pi,q,B,mu,k,h,phi,S,rw].some(v=>isNaN(v)) || isNaN(ct)){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة جميع الحقول المطلوبة، أو استخدام أحد أزرار "بيانات تجريبية".</div>`;
+    return;
+  }
+  let rVals = parseArrSafe(document.getElementById('ca_r').value);
+  let tVals = parseArrSafe(document.getElementById('ca_t').value);
+  if(rVals.length===0 || tVals.length===0){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ يجب إدخال قيمة واحدة على الأقل لكل من نصف القطر والزمن، أكبر من صفر.</div>`;
+    return;
+  }
+  const tol = 0.001;
+  const nBefore = rVals.length;
+  rVals = rVals.filter(r => r >= rw - tol);
+  const rDropped = nBefore - rVals.length;
+  if(rVals.length===0){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ خطأ فيزيائي: جميع قيم نصف القطر المدخلة تقع داخل البئر (r &lt; r<sub>w</sub> = ${rw} ft).</div>`;
+    return;
+  }
+  if(rDropped>0){
+    statusEl.innerHTML += `<div class="warn-note">⚠ تم استبعاد ${rDropped} قيمة/قيم لـ r لأنها أصغر من نصف قطر البئر r<sub>w</sub> = ${rw} ft.</div>`;
+  }
+
+  const constOut = 70.6*(q*B*mu)/(k*h);
+  const constIn = (948*phi*mu*ct)/k;
+  const pSkinDrop = 141.2*(q*B*mu)/(k*h)*S;
+  function pAt(r,t){
+    const x = constIn*r*r/t;
+    const skin = (r <= rw+tol) ? pSkinDrop : 0;
+    return pi - constOut*E1(x) - skin;
+  }
+
+  let mode, hasNegative=false;
+  const inputsArr = [['Pi (psia)',fmt(pi,1)],['q (STB/D)',fmt(q,1)],['Bo',fmt(B,3)],['mu (cp)',fmt(mu,2)],
+    ['k (md)',fmt(k,2)],['h (ft)',fmt(h,1)],['phi',fmt(phi,3)],['ct (1/psi)',fmtSci(ct)],['rw (ft)',fmt(rw,3)],['Skin S',fmt(S,2)]];
+
+  if(rVals.length===1 && tVals.length===1){
+    mode='Point';
+    const r=rVals[0], t=tVals[0], p=pAt(r,t);
+    hasNegative = p<0;
+    kpiEl.innerHTML = `
+      <div class="kpi ${p<0?'warn':'ok'}"><div class="kpi-label">الضغط المحسوب</div><div class="kpi-value">${fmt(p,1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">نصف القطر</div><div class="kpi-value">${fmt(r,3)}</div><div class="kpi-sub">ft</div></div>
+      <div class="kpi"><div class="kpi-label">الزمن</div><div class="kpi-value">${fmt(t,2)}</div><div class="kpi-sub">hr</div></div>`;
+    Plotly.newPlot('ca_plot', [{
+      x:[r], y:[p], mode:'markers+text', marker:{size:16, color:'#0072BD'},
+      text:[`${fmt(p,1)} psia`], textposition:'top center'
+    }], {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Radius (ft)'}, yaxis:{title:'Pressure (psia)'}, font:{family:'IBM Plex Mono', size:11}}, {displayModeBar:false, responsive:true});
+    const head=['Radius (ft)','Time (hrs)','Pressure (psia)'];
+    const rows=[[fmt(r,3),fmt(t,2),fmt(p,2)]];
+    tableEl.innerHTML = `<table class="data-table"><tr>${head.map(h=>'<th>'+h+'</th>').join('')}</tr><tr>${rows[0].map(c=>'<td>'+c+'</td>').join('')}</tr></table>`;
+    ca_lastResults = {mode, head, rows, kpis:[['Pressure',fmt(p,1),'psia'],['Radius',fmt(r,3),'ft'],['Time',fmt(t,2),'hr']], inputsArr};
+
+  } else if(rVals.length>1 && tVals.length===1){
+    mode='1D_Radius';
+    const t=tVals[0];
+    const ps = rVals.map(r=>pAt(r,t));
+    hasNegative = ps.some(p=>p<0);
+    kpiEl.innerHTML = `
+      <div class="kpi"><div class="kpi-label">أدنى ضغط</div><div class="kpi-value">${fmt(Math.min(...ps),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">أعلى ضغط</div><div class="kpi-value">${fmt(Math.max(...ps),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">عدد النقاط</div><div class="kpi-value">${rVals.length}</div><div class="kpi-sub">at t = ${fmt(t,1)} hr</div></div>`;
+    Plotly.newPlot('ca_plot', [{
+      x:rVals, y:ps, mode:'lines+markers+text', text:rVals.map((_,i)=>String(i+1)), textposition:'top left',
+      marker:{size:11,color:'#0072BD'}, line:{color:'#0072BD', width:3}
+    }], {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Radius (ft) [Log Scale]', type:'log'}, yaxis:{title:'Pressure, P (psia)'}, font:{family:'IBM Plex Mono', size:11}}, {displayModeBar:false, responsive:true});
+    const head=['#','Radius (ft)','Pressure (psia)'];
+    const rows = rVals.map((r,i)=>[String(i+1),fmt(r,3),fmt(ps[i],2)]);
+    tableEl.innerHTML = `<table class="data-table"><tr>${head.map(h=>'<th>'+h+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</table>`;
+    ca_lastResults = {mode, head, rows, kpis:[['Min Pressure',fmt(Math.min(...ps),1),'psia'],['Max Pressure',fmt(Math.max(...ps),1),'psia'],['Time',fmt(t,2),'hr']], inputsArr};
+
+  } else if(tVals.length>1 && rVals.length===1){
+    mode='1D_Time';
+    const r=rVals[0];
+    const ps = tVals.map(t=>pAt(r,t));
+    hasNegative = ps.some(p=>p<0);
+    kpiEl.innerHTML = `
+      <div class="kpi"><div class="kpi-label">أدنى ضغط</div><div class="kpi-value">${fmt(Math.min(...ps),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">أعلى ضغط</div><div class="kpi-value">${fmt(Math.max(...ps),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">عدد النقاط</div><div class="kpi-value">${tVals.length}</div><div class="kpi-sub">at r = ${fmt(r,3)} ft</div></div>`;
+    Plotly.newPlot('ca_plot', [{
+      x:tVals, y:ps, mode:'lines+markers+text', text:tVals.map((_,i)=>String(i+1)), textposition:'top left',
+      marker:{size:11,color:'#0072BD'}, line:{color:'#0072BD', width:3}
+    }], {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Time (hrs) [Log Scale]', type:'log'}, yaxis:{title:'Pressure, P (psia)'}, font:{family:'IBM Plex Mono', size:11}}, {displayModeBar:false, responsive:true});
+    const head=['#','Time (hrs)','Pressure (psia)'];
+    const rows = tVals.map((t,i)=>[String(i+1),fmt(t,2),fmt(ps[i],2)]);
+    tableEl.innerHTML = `<table class="data-table"><tr>${head.map(h=>'<th>'+h+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</table>`;
+    ca_lastResults = {mode, head, rows, kpis:[['Min Pressure',fmt(Math.min(...ps),1),'psia'],['Max Pressure',fmt(Math.max(...ps),1),'psia'],['Radius',fmt(r,3),'ft']], inputsArr};
+
+  } else {
+    mode='2D_Grid';
+    const Z = tVals.map(t => rVals.map(r => pAt(r,t)));
+    hasNegative = Z.some(row=>row.some(p=>p<0));
+    const flat = Z.flat();
+    kpiEl.innerHTML = `
+      <div class="kpi"><div class="kpi-label">أدنى ضغط بالشبكة</div><div class="kpi-value">${fmt(Math.min(...flat),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">أعلى ضغط بالشبكة</div><div class="kpi-value">${fmt(Math.max(...flat),1)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">أبعاد الشبكة</div><div class="kpi-value">${rVals.length}×${tVals.length}</div><div class="kpi-sub">r × t</div></div>`;
+    Plotly.newPlot('ca_plot', [{
+      z:Z, x:rVals, y:tVals, type:'contour', colorscale:'Viridis',
+      colorbar:{title:'Pressure (psia)'}, contours:{showlabels:true, labelfont:{size:11,color:'white'}}
+    }], {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Radius (ft) [Log]', type:'log'}, yaxis:{title:'Time (hrs) [Log]', type:'log'}, font:{family:'IBM Plex Mono', size:11}}, {displayModeBar:false, responsive:true});
+    const head = ['t \\ r', ...rVals.map(r=>fmt(r,2))];
+    const rows = tVals.map((t,i)=>[fmt(t,2), ...Z[i].map(p=>fmt(p,1))]);
+    let headHtml = '<tr><th>t \\ r</th>' + rVals.map(r=>`<th>${fmt(r,2)}</th>`).join('') + '</tr>';
+    let rowsHtml = tVals.map((t,i)=>'<tr><td><b>'+fmt(t,2)+'</b></td>'+Z[i].map(p=>`<td>${fmt(p,1)}</td>`).join('')+'</tr>').join('');
+    tableEl.innerHTML = `<table class="data-table">${headHtml}${rowsHtml}</table>`;
+    ca_lastResults = {mode, head, rows, kpis:[['Min Pressure',fmt(Math.min(...flat),1),'psia'],['Max Pressure',fmt(Math.max(...flat),1),'psia'],['Grid',rVals.length+'×'+tVals.length,'']], inputsArr};
+  }
+
+  if(hasNegative){
+    statusEl.innerHTML += `<div class="status-line bad">⚠ تحذير فيزيائي: بعض قيم الضغط المحسوبة سالبة (اقتراب r من r<sub>w</sub>، أو t كبير جدًا خارج نطاق التدفق العابر).</div>`;
+  } else if(rDropped===0){
+    statusEl.innerHTML = `<div class="status-line ok">✓ جميع القيم المحسوبة موجبة وواقعية فيزيائيًا.</div>` + statusEl.innerHTML;
+  }
+  document.getElementById('ca_exportCard').style.display='block';
+}
+
+function exportCSV_A(){
+  if(!ca_lastResults) return;
+  downloadCSVRows(ca_lastResults.head, ca_lastResults.rows, 'ei_pressure_results.csv');
+}
+function exportExcel_A(){
+  if(!ca_lastResults) return;
+  downloadExcelRows(ca_lastResults.head, ca_lastResults.rows, 'ei_pressure_results.xlsx', 'Ei Results');
+}
+async function printReportA(){
+  if(!ca_lastResults) return;
+  let imgUrl = null;
+  try{ imgUrl = await Plotly.toImage('ca_plot', {format:'png', width:900, height:460, scale:2}); }catch(e){}
+  const eqHtml = document.querySelector('#sec-calcA .formula-panel').outerHTML;
+  const html = prHTML({
+    title:'Reservoir Flow & Pressure Transient Suite',
+    subtitle:'Ei-Function Pressure Report — Mode: '+ca_lastResults.mode,
+    inputsArr: ca_lastResults.inputsArr,
+    kpisArr: ca_lastResults.kpis,
+    tableHeadArr: ca_lastResults.head,
+    tableRowsArr: ca_lastResults.rows,
+    chartImgUrl: imgUrl,
+    equationsHtml: eqHtml
+  });
+  firePrint(html);
+}
+
+/* ============================================================
+   CALC B1 — skin factor & additional pressure drop
+   ============================================================ */
+const B1_FIELDS=['k','ks','rs','rw','q','B','mu','h'];
+function loadExampleB1(){
+  const e={k:10,ks:2,rs:2,rw:0.5,q:'',B:'',mu:'',h:''};
+  B1_FIELDS.forEach(f=>document.getElementById('b1_'+f).value=e[f]);
+  calcB1Run();
+}
+function clearB1(){
+  B1_FIELDS.forEach(f=>document.getElementById('b1_'+f).value='');
+  document.getElementById('b1_out_s').textContent='—'; document.getElementById('b1_out_dps').textContent='—';
+  document.getElementById('b1_out_state').textContent='—'; document.getElementById('b1_status').innerHTML=''; document.getElementById('b1_steps').innerHTML='';
+  b1_last=null;
+}
+let b1_last=null;
+function calcB1Run(){
+  const k=gv('b1_k'), ks=gv('b1_ks'), rs=gv('b1_rs'), rw=gv('b1_rw');
+  if([k,ks,rs,rw].some(v=>isNaN(v))){
+    document.getElementById('b1_status').innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة الحقول الأساسية (k، k<sub>s</sub>، r<sub>s</sub>، r<sub>w</sub>) أو استخدام زر البيانات التجريبية.</div>`;
+    return;
+  }
+  const s = (k/ks - 1)*Math.log(rs/rw);
+  document.getElementById('b1_out_s').textContent = fmt(s,2);
+  let state;
+  if(Math.abs(s) < 0.5){ state="غير متضرر ولا محفَّز"; }
+  else if(s>0){ state="بئر متضرر (Damaged)"; }
+  else { state="بئر محفَّز (Stimulated)"; }
+  document.getElementById('b1_out_state').textContent = state;
+
+  const q=gv('b1_q'), B=gv('b1_B'), mu=gv('b1_mu'), h=gv('b1_h');
+  let stepsHtml = `<div class="step-title">خطوات الحساب</div>
+    s = (k/k<sub>s</sub> − 1)·ln(r<sub>s</sub>/r<sub>w</sub>) = (${fmt(k/ks,3)} − 1) × ln(${fmt(rs/rw,3)}) = ${fmt(s,3)}`;
+  let dps=null;
+  if(!isNaN(q) && !isNaN(B) && !isNaN(mu) && !isNaN(h)){
+    dps = 141.2*q*B*mu/(k*h)*(k/ks - 1)*Math.log(rs/rw);
+    document.getElementById('b1_out_dps').textContent = fmt(dps,2);
+    stepsHtml += `<br><br>Δp<sub>s</sub> = 141.2·qBμ/(kh)·(k/k<sub>s</sub> − 1)·ln(r<sub>s</sub>/r<sub>w</sub>) = ${fmt(dps,2)} psi`;
+  } else {
+    document.getElementById('b1_out_dps').textContent = "—";
+    stepsHtml += `<br><br>لحساب Δp<sub>s</sub>، أدخل معدّل الإنتاج q ومعامل الحجم الجوفي B واللزوجة μ وسماكة التكوين h.`;
+  }
+  document.getElementById('b1_steps').innerHTML = stepsHtml;
+  document.getElementById('b1_status').innerHTML = s>0
+    ? `<div class="status-line bad">s موجب: نفاذية المنطقة القريبة من البئر أقل من نفاذية التكوين — أذى (تلف) في البئر.</div>`
+    : (s<0 ? `<div class="status-line ok">s سالب: نفاذية المنطقة القريبة من البئر أعلى من نفاذية التكوين — بئر محفَّز.</div>`
+            : `<div class="status-line ok">s ≈ 0: لا يوجد تلف أو تحفيز ملحوظ في البئر.</div>`);
+  b1_last = {head:['k (md)','ks (md)','rs (ft)','rw (ft)','Skin s','Delta_Ps (psi)'],
+    rows:[[fmt(k,2),fmt(ks,2),fmt(rs,2),fmt(rw,3),fmt(s,3), dps!==null?fmt(dps,2):'-']],
+    kpis:[['Skin Factor s',fmt(s,2),''],['Delta Ps', dps!==null?fmt(dps,2):'—','psi'],['Well State',state,'']],
+    inputsArr:[['k (md)',fmt(k,2)],['ks (md)',fmt(ks,2)],['rs (ft)',fmt(rs,2)],['rw (ft)',fmt(rw,3)]]};
+}
+
+/* ============================================================
+   CALC B2 — Productivity Index & average permeability
+   ============================================================ */
+const B2_FIELDS=['q','pbar','pwf','B','mu','h','re','rw','kcore'];
+function loadExampleB2(){
+  const e={q:100,pbar:2000,pwf:1500,B:1.5,mu:0.5,h:10,re:1000,rw:0.25,kcore:50};
+  B2_FIELDS.forEach(f=>document.getElementById('b2_'+f).value=e[f]);
+  calcB2Run();
+}
+function clearB2(){
+  B2_FIELDS.forEach(f=>document.getElementById('b2_'+f).value='');
+  document.getElementById('b2_out_J').textContent='—'; document.getElementById('b2_out_kJ').textContent='—';
+  document.getElementById('b2_out_s').textContent='—'; document.getElementById('b2_steps').innerHTML='';
+  b2_last=null;
+}
+let b2_last=null;
+function calcB2Run(){
+  const q=gv('b2_q'), pbar=gv('b2_pbar'), pwf=gv('b2_pwf'), B=gv('b2_B'), mu=gv('b2_mu'), h=gv('b2_h'), re=gv('b2_re'), rw=gv('b2_rw');
+  if([q,pbar,pwf,B,mu,h,re,rw].some(v=>isNaN(v))){
+    document.getElementById('b2_steps').innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة جميع الحقول الأساسية أو استخدام زر البيانات التجريبية.</div>`;
+    return;
+  }
+  const J = q/(pbar-pwf);
+  document.getElementById('b2_out_J').textContent = fmt(J,4);
+  const lnTerm = Math.log(re/rw) - 0.75;
+  const kJ = 141.2*J*B*mu*lnTerm/h;
+  document.getElementById('b2_out_kJ').textContent = fmt(kJ,2);
+  let stepsHtml = `<div class="step-title">خطوات الحساب</div>
+    J = q / (p̄ − p<sub>wf</sub>) = ${fmt(q,1)} / ${fmt(pbar-pwf,1)} = ${fmt(J,4)} STB/D-psi<br>
+    ln(r<sub>e</sub>/r<sub>w</sub>) − 3/4 = ${fmt(lnTerm,4)}<br>
+    k<sub>J</sub> = 141.2·J·Bμ·[ln(r<sub>e</sub>/r<sub>w</sub>) − 3/4] / h = ${fmt(kJ,2)} md`;
+  const kcore = gv('b2_kcore');
+  let s=null;
+  if(!isNaN(kcore) && kcore>0){
+    s = (kcore/kJ - 1)*lnTerm;
+    document.getElementById('b2_out_s').textContent = fmt(s,2);
+    stepsHtml += `<br><br>s = (k/k<sub>J</sub> − 1)·[ln(r<sub>e</sub>/r<sub>w</sub>) − 3/4] = (${fmt(kcore/kJ,3)} − 1) × ${fmt(lnTerm,3)} = ${fmt(s,2)}`;
+  } else {
+    document.getElementById('b2_out_s').textContent = "—";
+    stepsHtml += `<br><br>أدخل نفاذية اللباب k لتقدير عامل الأذى بمقارنتها مع k<sub>J</sub>.`;
+  }
+  document.getElementById('b2_steps').innerHTML = stepsHtml;
+  b2_last = {head:['q (STB/D)','pbar (psi)','pwf (psi)','J (STB/D-psi)','kJ (md)','Skin s'],
+    rows:[[fmt(q,1),fmt(pbar,1),fmt(pwf,1),fmt(J,4),fmt(kJ,2), s!==null?fmt(s,2):'-']],
+    kpis:[['Productivity Index J',fmt(J,4),'STB/D-psi'],['Average Permeability kJ',fmt(kJ,2),'md'],['Skin s', s!==null?fmt(s,2):'—','']],
+    inputsArr:[['q (STB/D)',fmt(q,1)],['pbar (psi)',fmt(pbar,1)],['pwf (psi)',fmt(pwf,1)],['B',fmt(B,3)],['mu (cp)',fmt(mu,2)],['h (ft)',fmt(h,1)],['re (ft)',fmt(re,1)],['rw (ft)',fmt(rw,3)]]};
+}
+
+/* ============================================================
+   CALC B3 — radius of investigation & stabilization time
+   ============================================================ */
+const B3_FIELDS=['k','phi','mu','ct','t','re'];
+function loadExampleB3(){
+  const e={k:100,phi:0.2,mu:0.5,ct:2,t:10,re:2000};
+  B3_FIELDS.forEach(f=>document.getElementById('b3_'+f).value=e[f]);
+  calcB3Run();
+}
+function clearB3(){
+  B3_FIELDS.forEach(f=>document.getElementById('b3_'+f).value='');
+  document.getElementById('b3_out_ri').textContent='—'; document.getElementById('b3_out_ts').textContent='—'; document.getElementById('b3_steps').innerHTML='';
+  b3_last=null;
+}
+let b3_last=null;
+function calcB3Run(){
+  const k=gv('b3_k'), phi=gv('b3_phi'), mu=gv('b3_mu'), ct=gv('b3_ct')*1e-5, t=gv('b3_t'), re=gv('b3_re');
+  if([k,phi,mu,t].some(v=>isNaN(v)) || isNaN(ct)){
+    document.getElementById('b3_steps').innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة الحقول الأساسية أو استخدام زر البيانات التجريبية.</div>`;
+    return;
+  }
+  const ri = Math.sqrt(k*t/(948*phi*mu*ct));
+  document.getElementById('b3_out_ri').textContent = fmt(ri,1);
+  let stepsHtml = `<div class="step-title">خطوات الحساب</div>
+    r<sub>i</sub> = (k·t / (948·φ·μ·c<sub>t</sub>))^0.5 = ${fmt(ri,2)} ft`;
+  let ts=null;
+  if(!isNaN(re) && re>0){
+    ts = 948*phi*mu*ct*re*re/k;
+    document.getElementById('b3_out_ts').textContent = fmt(ts,1);
+    stepsHtml += `<br><br>t<sub>s</sub> = 948·φ·μ·c<sub>t</sub>·r<sub>e</sub>² / k = ${fmt(ts,1)} hr`;
+  } else {
+    document.getElementById('b3_out_ts').textContent = "—";
+  }
+  document.getElementById('b3_steps').innerHTML = stepsHtml;
+  b3_last = {head:['k (md)','phi','mu (cp)','ct (1/psi)','t (hr)','ri (ft)','ts (hr)'],
+    rows:[[fmt(k,2),fmt(phi,3),fmt(mu,2),fmtSci(ct),fmt(t,2),fmt(ri,2), ts!==null?fmt(ts,1):'-']],
+    kpis:[['Radius of Investigation ri',fmt(ri,1),'ft'],['Stabilization Time ts', ts!==null?fmt(ts,1):'—','hr']],
+    inputsArr:[['k (md)',fmt(k,2)],['phi',fmt(phi,3)],['mu (cp)',fmt(mu,2)],['ct (1/psi)',fmtSci(ct)],['t (hr)',fmt(t,2)],['re (ft)', isNaN(re)?'—':fmt(re,1)]]};
+}
+
+/* ============================================================
+   CALC B4 — Horner pseudoproducing time
+   ============================================================ */
+const B4_FIELDS=['np','q','dtlast','dtprev'];
+function loadExampleB4(){
+  const e={np:166,q:22.7,dtlast:72,dtprev:26};
+  B4_FIELDS.forEach(f=>document.getElementById('b4_'+f).value=e[f]);
+  calcB4Run();
+}
+function clearB4(){
+  B4_FIELDS.forEach(f=>document.getElementById('b4_'+f).value='');
+  document.getElementById('b4_out_tp').textContent='—'; document.getElementById('b4_out_ratio').textContent='—';
+  document.getElementById('b4_status').innerHTML=''; document.getElementById('b4_steps').innerHTML='';
+  b4_last=null;
+}
+let b4_last=null;
+function calcB4Run(){
+  const np=gv('b4_np'), q=gv('b4_q');
+  if(isNaN(np) || isNaN(q)){
+    document.getElementById('b4_status').innerHTML = `<div class="status-line bad">⚠ الرجاء إدخال الإنتاج التراكمي وآخر معدّل إنتاج، أو استخدام زر البيانات التجريبية.</div>`;
+    return;
+  }
+  const tp = 24*np/q;
+  document.getElementById('b4_out_tp').textContent = fmt(tp,2);
+  let stepsHtml = `<div class="step-title">خطوات الحساب</div>
+    t<sub>p</sub> = 24·N<sub>p</sub> / q<sub>last</sub> = 24 × ${fmt(np,1)} / ${fmt(q,2)} = ${fmt(tp,2)} hr`;
+  const dtl=gv('b4_dtlast'), dtp=gv('b4_dtprev');
+  let statusHtml = "", ratio=null;
+  if(!isNaN(dtl) && !isNaN(dtp) && dtl>0 && dtp>0){
+    ratio = dtl/dtp;
+    document.getElementById('b4_out_ratio').textContent = fmt(ratio,2);
+    stepsHtml += `<br><br>Δt<sub>last</sub> / Δt<sub>next-to-last</sub> = ${fmt(dtl,1)} / ${fmt(dtp,1)} = ${fmt(ratio,2)}`;
+    statusHtml = ratio>2
+      ? `<div class="status-line ok">✓ النسبة أكبر من 2 — تقريب هورنر كافٍ على الأرجح.</div>`
+      : `<div class="status-line bad">⚠ النسبة أقل من 2 — يُنصح بمراجعة تاريخ الإنتاج كاملًا عبر مبدأ التراكب (الحاسبة 3).</div>`;
+  } else {
+    document.getElementById('b4_out_ratio').textContent = "—";
+  }
+  document.getElementById('b4_status').innerHTML = statusHtml;
+  document.getElementById('b4_steps').innerHTML = stepsHtml;
+  b4_last = {head:['Np (STB)','q_last (STB/D)','tp (hr)','dt_last (hr)','dt_prev (hr)','ratio'],
+    rows:[[fmt(np,1),fmt(q,2),fmt(tp,2), isNaN(dtl)?'-':fmt(dtl,1), isNaN(dtp)?'-':fmt(dtp,1), ratio!==null?fmt(ratio,2):'-']],
+    kpis:[['Pseudoproducing Time tp',fmt(tp,2),'hr'],['Ratio', ratio!==null?fmt(ratio,2):'—','']],
+    inputsArr:[['Np (STB)',fmt(np,1)],['q_last (STB/D)',fmt(q,2)]]};
+}
+
+/* ============================================================
+   GENERIC EXPORT/PRINT FOR CALC B TABS
+   ============================================================ */
+function getBLast(tab){ return {b1:b1_last,b2:b2_last,b3:b3_last,b4:b4_last}[tab]; }
+function exportCSV_generic(tab){
+  const d = getBLast(tab); if(!d) return;
+  downloadCSVRows(d.head, d.rows, tab+'_result.csv');
+}
+function exportExcel_generic(tab){
+  const d = getBLast(tab); if(!d) return;
+  downloadExcelRows(d.head, d.rows, tab+'_result.xlsx', 'Result');
+}
+function printReportGeneric(tab){
+  const d = getBLast(tab); if(!d) return;
+  const eqHtml = document.querySelector('#tab-'+tab+' .formula-panel').outerHTML;
+  const titles = {b1:'Skin Factor & Additional Pressure Drop', b2:'Productivity Index & Average Permeability', b3:'Radius of Investigation', b4:"Horner Pseudoproducing Time"};
+  const html = prHTML({
+    title:'Reservoir Flow & Pressure Transient Suite', subtitle: titles[tab],
+    inputsArr: d.inputsArr, kpisArr: d.kpis,
+    tableHeadArr: d.head, tableRowsArr: d.rows,
+    equationsHtml: eqHtml
+  });
+  firePrint(html);
+}
+
+/* ============================================================
+   CALC C — Superposition: variable-rate well
+   ============================================================ */
+let rateRowCount = 0;
+function addRateRow(q, t){
+  rateRowCount++;
+  const id = rateRowCount;
+  const tbody = document.getElementById('rateTableBody');
+  const tr = document.createElement('tr');
+  tr.id = 'rrow-'+id;
+  tr.innerHTML = `<td>${tbody.children.length+1}</td>
+    <td><input type="text" inputmode="decimal" lang="en" dir="ltr" id="rq-${id}" value="${q!==undefined?q:''}"></td>
+    <td><input type="text" inputmode="decimal" lang="en" dir="ltr" id="rt-${id}" value="${t!==undefined?t:''}"></td>
+    <td><button class="rm-row" onclick="removeRateRow(${id})">✕</button></td>`;
+  tbody.appendChild(tr);
+  renumberRateRows();
+}
+function removeRateRow(id){
+  const el = document.getElementById('rrow-'+id);
+  if(el) el.remove();
+  renumberRateRows();
+}
+function renumberRateRows(){
+  const tbody = document.getElementById('rateTableBody');
+  Array.from(tbody.children).forEach((tr,i)=>{ tr.children[0].textContent = i+1; });
+}
+function clearRateTable(){
+  document.getElementById('rateTableBody').innerHTML = '';
+  rateRowCount = 0;
+}
+const CC_FIELDS=['pi','B','mu','k','h','phi','ct','rw','S','r','t'];
+function loadExampleC(){
+  document.getElementById('cc_pi').value=2500;
+  document.getElementById('cc_B').value=1.32;
+  document.getElementById('cc_mu').value=0.44;
+  document.getElementById('cc_k').value=25;
+  document.getElementById('cc_h').value=43;
+  document.getElementById('cc_phi').value=0.16;
+  document.getElementById('cc_ct').value=18;
+  document.getElementById('cc_rw').value=0.5;
+  document.getElementById('cc_S').value=0;
+  document.getElementById('cc_r').value=0.5;
+  document.getElementById('cc_t').value=144;
+  clearRateTable();
+  addRateRow(300, 0);
+  addRateRow(0, 120);
+  addRateRow(450, 132);
+  calcCRun();
+}
+function clearC(){
+  CC_FIELDS.forEach(f=>document.getElementById('cc_'+f).value='');
+  clearRateTable();
+  document.getElementById('cc_status').innerHTML='';
+  document.getElementById('cc_kpiRow').innerHTML='';
+  document.getElementById('cc_tableWrap').innerHTML='';
+  document.getElementById('cc_exportCard').style.display='none';
+  Plotly.purge('cc_plot');
+  cc_last=null;
+}
+let cc_last=null;
+
+function readRatePeriods(){
+  const tbody = document.getElementById('rateTableBody');
+  const periods = [];
+  Array.from(tbody.children).forEach(tr=>{
+    const idSuffix = tr.id.split('-')[1];
+    const q = parseFloatSafe(document.getElementById('rq-'+idSuffix).value);
+    const t = parseFloatSafe(document.getElementById('rt-'+idSuffix).value);
+    if(!isNaN(q) && !isNaN(t)) periods.push({q, t});
+  });
+  periods.sort((a,b)=>a.t-b.t);
+  return periods;
+}
+
+function calcCRun(){
+  const pi=gv('cc_pi'), B=gv('cc_B'), mu=gv('cc_mu'), k=gv('cc_k'), h=gv('cc_h'),
+        phi=gv('cc_phi'), ct=gv('cc_ct')*1e-6, rw=gv('cc_rw'), S=gv('cc_S'),
+        r=gv('cc_r'), t=gv('cc_t');
+  const statusEl = document.getElementById('cc_status');
+  const kpiEl = document.getElementById('cc_kpiRow');
+  const tableEl = document.getElementById('cc_tableWrap');
+  statusEl.innerHTML=""; kpiEl.innerHTML=""; tableEl.innerHTML="";
+  document.getElementById('cc_exportCard').style.display='none';
+
+  if([pi,B,mu,k,h,phi,rw,S,r,t].some(v=>isNaN(v)) || isNaN(ct)){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة جميع حقول خواص المكمن ونقطة التقييم، أو استخدام زر البيانات التجريبية.</div>`;
+    return;
+  }
+  const periods = readRatePeriods();
+  if(periods.length===0){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ الرجاء إضافة فترة إنتاج واحدة على الأقل بجدول الفترات أعلاه.</div>`;
+    return;
+  }
+  const activePeriods = periods.filter(p=>t > p.t);
+  if(activePeriods.length===0){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ زمن التقييم t أصغر من بداية جميع الفترات المدخلة.</div>`;
+    return;
+  }
+
+  function pressureAt(tt){
+    let dp = 0, prevQ = 0, qCurrent = 0;
+    for(const per of periods){
+      if(tt > per.t){
+        const dq = per.q - prevQ;
+        const dtp = tt - per.t;
+        const x = 948*phi*mu*ct*r*r/(k*dtp);
+        dp += 70.6*dq*B*mu/(k*h)*E1(x);
+        qCurrent = per.q;
+      }
+      prevQ = per.q;
+    }
+    const skin = (r <= rw+0.001) ? 141.2*qCurrent*B*mu/(k*h)*S : 0;
+    return pi - dp - skin;
+  }
+
+  const pFinal = pressureAt(t);
+  const totalDrawdown = pi - pFinal;
+
+  kpiEl.innerHTML = `
+    <div class="kpi ${pFinal<0?'warn':'ok'}"><div class="kpi-label">الضغط عند نقطة التقييم</div><div class="kpi-value">${fmt(pFinal,1)}</div><div class="kpi-sub">psia</div></div>
+    <div class="kpi"><div class="kpi-label">إجمالي الانخفاض</div><div class="kpi-value">${fmt(totalDrawdown,1)}</div><div class="kpi-sub">psi</div></div>
+    <div class="kpi"><div class="kpi-label">عدد فترات الإنتاج الفعّالة</div><div class="kpi-value">${activePeriods.length}</div><div class="kpi-sub">من أصل ${periods.length}</div></div>`;
+
+  if(pFinal<0){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ الضغط المحسوب سالب — راجع نصف القطر والزمن المُدخلين نسبةً لخواص المكمن.</div>`;
+  } else {
+    statusEl.innerHTML = `<div class="status-line ok">✓ الحساب مكتمل عبر تراكب ${activePeriods.length} فترة/فترات إنتاج فعّالة.</div>`;
+  }
+
+  // trend curve across time (log-spaced) at fixed r, plus rate-schedule step trace
+  const tMaxPlot = t*1.15;
+  const tMinPlot = Math.max(periods[0].t + 0.01, tMaxPlot/500);
+  let tTrend=[], pTrend=[];
+  for(let i=0;i<=120;i++){
+    const lt = Math.log10(tMinPlot) + (Math.log10(tMaxPlot)-Math.log10(tMinPlot))*i/120;
+    const tt = Math.pow(10,lt);
+    tTrend.push(tt); pTrend.push(pressureAt(tt));
+  }
+  // rate step trace
+  let qStepX=[], qStepY=[];
+  for(let i=0;i<periods.length;i++){
+    qStepX.push(periods[i].t); qStepY.push(periods[i].q);
+    const nextT = (i<periods.length-1)? periods[i+1].t : tMaxPlot;
+    qStepX.push(nextT); qStepY.push(periods[i].q);
+  }
+
+  Plotly.newPlot('cc_plot', [
+    {x:tTrend, y:pTrend, mode:'lines', name:'p(t) عند r ثابت', line:{color:'#0072BD', width:2.6}, yaxis:'y'},
+    {x:[t], y:[pFinal], mode:'markers', name:'نقطة التقييم', marker:{color:'#c9a227', size:11, line:{color:'#0a1e33',width:1.5}}, yaxis:'y'},
+    {x:qStepX, y:qStepY, mode:'lines', name:'جدول معدّل الإنتاج q(t)', line:{color:'#b5432d', width:2, dash:'dot'}, yaxis:'y2'}
+  ], {
+    margin:{l:60,r:60,t:20,b:46},
+    xaxis:{title:'الزمن t (hr)'},
+    yaxis:{title:'الضغط p (psia)'},
+    yaxis2:{title:'معدّل q (STB/D)', overlaying:'y', side:'right'},
+    font:{family:'IBM Plex Mono', size:11}, legend:{orientation:'h', y:-0.2}
+  }, {displayModeBar:false, responsive:true});
+
+  const head=['#','q (STB/D)','t start (hr)'];
+  const rows = periods.map((p,i)=>[String(i+1), fmt(p.q,1), fmt(p.t,2)]);
+  tableEl.innerHTML = `<table class="data-table"><tr>${head.map(h=>'<th>'+h+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}
+    <tr style="background:#fdf9ec; font-weight:700;"><td colspan="3">Pressure at r=${fmt(r,3)} ft, t=${fmt(t,2)} hr → ${fmt(pFinal,2)} psia</td></tr></table>`;
+
+  document.getElementById('cc_exportCard').style.display='block';
+  cc_last = {
+    head, rows,
+    kpis:[['Pressure at evaluation point',fmt(pFinal,1),'psia'],['Total Drawdown',fmt(totalDrawdown,1),'psi'],['Active Periods', activePeriods.length+' / '+periods.length,'']],
+    inputsArr:[['Pi (psia)',fmt(pi,1)],['B',fmt(B,3)],['mu (cp)',fmt(mu,2)],['k (md)',fmt(k,2)],['h (ft)',fmt(h,1)],
+      ['phi',fmt(phi,3)],['ct (1/psi)',fmtSci(ct)],['rw (ft)',fmt(rw,3)],['Skin S',fmt(S,2)],['r (ft)',fmt(r,3)],['t (hr)',fmt(t,2)]]
+  };
+}
+
+function exportCSV_C(){ if(!cc_last) return; downloadCSVRows(cc_last.head, cc_last.rows, 'superposition_results.csv'); }
+function exportExcel_C(){ if(!cc_last) return; downloadExcelRows(cc_last.head, cc_last.rows, 'superposition_results.xlsx', 'Superposition'); }
+async function printReportC(){
+  if(!cc_last) return;
+  let imgUrl = null;
+  try{ imgUrl = await Plotly.toImage('cc_plot', {format:'png', width:900, height:440, scale:2}); }catch(e){}
+  const eqHtml = document.querySelector('#sec-calcC .formula-panel').outerHTML;
+  const html = prHTML({
+    title:'Reservoir Flow & Pressure Transient Suite',
+    subtitle:'Superposition — Variable Rate Well',
+    inputsArr: cc_last.inputsArr, kpisArr: cc_last.kpis,
+    tableHeadArr: cc_last.head, tableRowsArr: cc_last.rows,
+    chartImgUrl: imgUrl, equationsHtml: eqHtml
+  });
+  firePrint(html);
+}
+
+/* ============================================================
+   GLOSSARY
+   ============================================================ */
+const GLOSSARY = [
+  {term:'p_i', ar:'الضغط الابتدائي', text:'الضغط الموحّد في المكمن قبل بدء الإنتاج، بوحدة psi. نقطة البداية التي يُقاس منها كل انخفاض لاحق في الضغط.'},
+  {term:'p_wf', ar:'ضغط قاع البئر الجاري', text:'الضغط المقاس عند وجه التكوين داخل البئر أثناء الإنتاج، وهو محور معظم حسابات هذا الفصل.'},
+  {term:'q, B', ar:'معدّل الإنتاج ومعامل الحجم الجوفي', text:'q معدّل الإنتاج عند ظروف السطح (STB/D)، وB معامل الحجم الجوفي الذي يحوّله إلى معدّل عند ظروف المكمن (RB/STB).'},
+  {term:'k, φ', ar:'النفاذية والمسامية', text:'k مقياس لقدرة الوسط المسامي على نقل السائل (md)، وφ نسبة الحيز الفارغ في الصخر القادر على تخزين السائل (كسر بلا وحدة).'},
+  {term:'μ, c_t', ar:'اللزوجة والانضغاطية الكلية', text:'μ مقاومة السائل للانسياب (cp)، وc_t الانضغاطية الكلية للنظام صخرًا وسائلًا مجتمعين (psi⁻¹) — تحدد سرعة انتشار اضطراب الضغط.'},
+  {term:'r_w, r_e', ar:'نصف قطر البئر ومنطقة الصرف', text:'r_w نصف قطر حفر البئر الفعلي، وr_e نصف قطر منطقة الصرف التي يمتد إليها تأثير الإنتاج قبل بلوغ حدود المكمن أو الآبار المجاورة.'},
+  {term:'s', ar:'عامل الأذى (Skin Factor)', text:'رقم بلا وحدة يقيس فرق النفاذية بين منطقة قريبة من البئر وبقية التكوين — موجب للتلف، سالب للتحفيز، صفر إن لم يوجد أذى.'},
+  {term:'k_s, r_s', ar:'نفاذية ونصف قطر المنطقة المتضررة', text:'النفاذية الفعلية (k_s) ونصف القطر الخارجي (r_s) للمنطقة الأسطوانية المكافئة التي يُنسب إليها عامل الأذى.'},
+  {term:'r_i', ar:'نصف قطر الاستقصاء', text:'المسافة التي بلغها اضطراب الضغط الملموس داخل التكوين بعد زمن معيّن من بدء الإنتاج أو تغيّر المعدّل.'},
+  {term:'J', ar:'معامل الإنتاجية (Productivity Index)', text:'نسبة معدّل الإنتاج إلى انخفاض الضغط اللازم لتحقيقه (STB/D-psi) — مقياس مباشر لكفاءة البئر في الإنتاج.'},
+  {term:'k_J', ar:'النفاذية المتوسطة', text:'نفاذية ظاهرية تُشتق من بيانات معامل الإنتاجية، تختلف عن نفاذية اللباب الحقيقية إذا كان البئر متضررًا.'},
+  {term:'C_s, C_sD', ar:'سعة الخزن في البئر', text:'C_s ثابت يقيس قدرة أنبوب البئر على تخزين/تفريغ السائل قبل استقرار المعدّل عند وجه التكوين، وC_sD صورته اللابعدية.'},
+  {term:'C_A', ar:'عامل الشكل (Shape Factor)', text:'ثابت يميّز هندسة منطقة الصرف وموضع البئر ضمنها، يُستخدم في الحل شبه المستقر العام لمناطق الصرف غير الدائرية.'},
+  {term:'Δq_i, t_i', ar:'فروق المعدّل وأزمنة بدء الفترات (تراكب)', text:'أساس مبدأ التراكب: كل تغيّر في معدّل الإنتاج Δq_i يُمثَّل ببئر وهمي إضافي يبدأ إنتاجه عند اللحظة t_i الفعلية.'},
+  {term:'t_p', ar:'زمن الإنتاج المكافئ (هورنر)', text:'زمن افتراضي واحد يُستخدم بدلًا من تاريخ الإنتاج الفعلي المتغيّر، محسوب من الإنتاج التراكمي وآخر معدّل ثابت.'},
+];
+function renderGlossary(){
+  const grid=document.getElementById('glossaryGrid');
+  if(!grid) return;
+  grid.innerHTML = GLOSSARY.map((g,i)=>`
+    <div class="gloss-card" id="gc-${i}" onclick="toggleGloss(${i})">
+      <div class="gc-head">
+        <div><div class="gc-term">${g.term}</div><div class="gc-ar">${g.ar}</div></div>
+        <span class="gc-chev">▸</span>
+      </div>
+      <div class="gc-body"><p>${g.text}</p></div>
+    </div>`).join('');
+}
+function toggleGloss(i){
+  const card = document.getElementById('gc-'+i);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.gloss-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen) card.classList.add('open');
+}
+renderGlossary();
+
+/* ============================================================
+   HERO DIAGRAM — radial flow schematic
+   ============================================================ */
+(function(){
+  const svg = `
+  <svg width="230" height="230" viewBox="0 0 230 230" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arrhx" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#e6c85a"/></marker></defs>
+    <circle cx="115" cy="115" r="95" fill="none" stroke="#2a5a86" stroke-width="1.6" stroke-dasharray="4 4"/>
+    <circle cx="115" cy="115" r="60" fill="none" stroke="#2a5a86" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.6"/>
+    <circle cx="115" cy="115" r="14" fill="#0a1e33" stroke="#c9a227" stroke-width="2.4"/>
+    <g stroke="#e6c85a" stroke-width="1.8" marker-end="url(#arrhx)" opacity="0.9">
+      <line x1="115" y1="14" x2="115" y2="96"/>
+      <line x1="115" y1="216" x2="115" y2="134"/>
+      <line x1="14" y1="115" x2="96" y2="115"/>
+      <line x1="216" y1="115" x2="134" y2="115"/>
+      <line x1="43" y1="43" x2="103" y2="103"/>
+      <line x1="187" y1="43" x2="127" y2="103"/>
+      <line x1="43" y1="187" x2="103" y2="127"/>
+      <line x1="187" y1="187" x2="127" y2="127"/>
+    </g>
+    <text x="115" y="120" text-anchor="middle" font-size="9" fill="#f0d989" font-family="IBM Plex Mono">WELL</text>
+  </svg>`;
+  document.getElementById("heroSvgWrap").innerHTML = svg;
+})();
+
+/* ============================================================
+   KaTeX rendering for all formula spans
+   ============================================================ */
+function renderAllKatex(){
+  if(typeof katex === 'undefined'){ setTimeout(renderAllKatex, 150); return; }
+  document.querySelectorAll('.katex-eq').forEach(el=>{
+    const tex = el.dataset.tex;
+    try{ katex.render(tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent = tex; }
+  });
+}
+renderAllKatex();
+
+/* init: seed one default rate row for Calc C so the table isn't empty on first load */
+addRateRow();
+</script>
+</body>
+</html>
