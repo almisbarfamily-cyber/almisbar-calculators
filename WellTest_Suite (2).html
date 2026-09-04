@@ -1,0 +1,1948 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Well Test Analysis Engineering Suite | حاسبة تحليل اختبار الآبار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --navy-950:#0e1d1f; --navy-900:#183033; --navy-850:#1d3b3f; --navy-800:#224347;
+  --navy-700:#2f5d63; --navy-600:#3d7a81;
+  --gold:#f8de7e; --gold-light:#fcf1ca; --gold-dim:rgba(248,222,126,0.35);
+  --paper:#f4f2ec; --paper-line:rgba(10,30,51,0.055);
+  --ink:#13202b; --muted:#5c6b78; --muted-2:#8493a0;
+  --danger:#b5432d; --good:#2e7d53;
+  --card:#ffffff; --card-border:#e4e1d6;
+  --shadow:0 10px 30px -12px rgba(10,30,51,0.18);
+  --plot-blue:#0072BD; --plot-orange:#D2691E;
+  --region-early:rgba(255,99,71,0.14); --region-middle:rgba(46,204,113,0.12); --region-late:rgba(255,165,0,0.14);
+}
+*{box-sizing:border-box; margin:0; padding:0; font-variant-numeric:lining-nums;}
+img, svg, video, canvas{max-width:100%; height:auto; display:block;}
+.plotwrap, .pr-plot-box, .plot-box{max-width:100%; overflow-x:auto;}
+
+html, body, input, button, select, textarea, .mono{ font-variant-numeric:lining-nums !important; }
+html{scroll-behavior:smooth; height:100%; overflow:hidden;}
+body{font-family:'Tajawal','Inter',sans-serif; background:var(--paper); color:var(--ink); height:100%; overflow:hidden; direction:rtl;}
+#appShell{display:flex; width:100%; height:100%;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Space Grotesk','Tajawal',sans-serif;}
+.grid-bg{background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px); background-size:28px 28px;}
+
+/* Sidebar */
+.sidebar{width:272px; flex-shrink:0; background:linear-gradient(180deg,var(--navy-950) 0%, var(--navy-900) 55%, var(--navy-850) 100%); color:#e8edf2; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; border-left:3px solid var(--gold); transition:transform .25s ease; z-index:60;}
+.sidebar-backdrop{display:none;}
+.hamburger-btn{display:none; align-items:center; justify-content:center; width:38px; height:38px; border-radius:8px; background:var(--navy-900); border:none; cursor:pointer; flex-shrink:0;}
+.hamburger-btn svg{width:20px; height:20px;}
+@media(max-width:880px){
+  .hamburger-btn{display:flex;}
+  .sidebar{position:fixed; top:0; right:0; height:100vh; transform:translateX(100%); box-shadow:-8px 0 30px rgba(0,0,0,0.35);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-backdrop.open{display:block; position:fixed; inset:0; background:rgba(5,15,26,0.55); z-index:55;}
+  .topbar{padding:12px 14px;}
+  .topbar .ttl{font-size:16px;}
+  .content{padding:16px 14px 60px 14px;}
+  .card{padding:16px 15px;}
+}
+@media(max-width:560px){
+  .grid2,.grid3,.grid4,.example-grid{grid-template-columns:1fr !important;}
+  .topbar .eqtag{display:none;}
+  .mode-tabs{flex-direction:column;}
+  .result-grid{grid-template-columns:1fr 1fr;}
+  .curve-gallery{grid-template-columns:1fr;}
+}
+.brand{padding:26px 22px 18px 22px; border-bottom:1px solid rgba(255,255,255,0.08);}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:6px;}
+.brand h1{font-size:19px; line-height:1.35; font-weight:700; color:#fff;}
+.brand .sub{margin-top:8px; font-size:12px; color:#9db0c2; line-height:1.6;}
+.brand .chip{display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--navy-950); background:var(--gold-light); padding:3px 9px; border-radius:20px; font-weight:600;}
+nav{padding:14px 12px; flex:1;}
+.nav-group-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:#6d84a0; text-transform:uppercase; padding:14px 12px 6px 12px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; color:#c4d1de; font-size:13.5px; font-weight:500; border-right:3px solid transparent; transition:all .15s ease; margin-bottom:2px;}
+.nav-item .ic{width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.nav-item.active{background:rgba(201,162,39,0.14); color:#fff; border-right-color:var(--gold);}
+.nav-item.active .ic svg{stroke:var(--gold-light);}
+.sidebar-footer{padding:16px 22px 20px 22px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; color:#7488a0; line-height:1.7;}
+
+/* Main */
+.main{flex:1; min-width:0; height:100vh; overflow-y:auto;}
+.topbar{position:sticky; top:0; z-index:20; background:rgba(244,242,236,0.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--card-border); padding:16px 34px; display:flex; align-items:center; justify-content:space-between;}
+.topbar .crumb{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:.5px;}
+.topbar .ttl{font-size:20px; font-weight:700; margin-top:2px;}
+.topbar .eqtag{font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--navy-900); color:var(--gold-light); padding:6px 12px; border-radius:6px;}
+.content{padding:30px 34px 80px 34px; max-width:1320px;}
+.section{display:none; animation:fade .25s ease;}
+.section.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; box-shadow:var(--shadow); padding:24px 26px; margin-bottom:22px;}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid var(--navy-900); flex-wrap:wrap; gap:10px;}
+.card-head h2{font-size:16.5px; font-weight:700; color:var(--navy-900);}
+.card-head .eq{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:6px;}
+.card-sub{font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.8;}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr;}}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; color:var(--navy-800); margin-bottom:6px;}
+.field .unit{color:var(--muted-2); font-weight:400; font-size:11px;}
+.field input, .field select{width:100%; padding:10px 12px; border:1.5px solid #d8d4c6; border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; background:#fcfbf8; color:var(--ink); transition:border .15s; direction:ltr; text-align:left;}
+.field input:focus, .field select:focus{outline:none; border-color:var(--navy-700); background:#fff;}
+
+.btn{display:inline-flex; align-items:center; gap:8px; background:var(--navy-900); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .15s;}
+.btn:hover{background:var(--navy-700);}
+.btn.gold{background:var(--gold); color:var(--navy-950);}
+.btn.gold:hover{background:var(--gold-light);}
+.btn.ghost{background:#fff; color:var(--navy-900); border:1.5px solid var(--card-border);}
+.btn.ghost:hover{border-color:var(--navy-700);}
+.btn.sm{padding:9px 14px; font-size:12px;}
+.btn.block{width:100%; justify-content:center;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+
+.mode-tabs{display:flex; gap:8px; margin-bottom:18px;}
+.mode-tab{flex:1; padding:12px; text-align:center; border-radius:10px; border:1.5px solid var(--card-border); background:#fff; font-weight:700; font-size:13.5px; cursor:pointer; color:var(--muted);}
+.mode-tab.active{background:var(--navy-900); color:#fff; border-color:var(--navy-900);}
+
+.example-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:12px;}
+@media(max-width:900px){.example-grid{grid-template-columns:1fr 1fr;}}
+
+.assumptions-box{background:#fbf9f3; border-right:4px solid var(--gold); border-radius:8px; padding:14px 16px; font-size:12.5px; color:var(--muted); line-height:2;}
+.assumptions-box b{color:var(--navy-900);}
+
+table.datatable{width:100%; border-collapse:collapse; font-size:12px;}
+table.datatable th{background:var(--navy-900); color:#fff; padding:8px 6px; text-align:center; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:10.5px;}
+table.datatable td{padding:4px; text-align:center; border-bottom:1px solid var(--paper-line);}
+table.datatable td input{width:100%; border:none; background:transparent; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:6px 4px; direction:ltr;}
+table.datatable td input:focus{outline:2px solid var(--gold-dim); border-radius:4px; background:#fffdf5;}
+table.datatable tr:nth-child(even){background:#faf9f5;}
+table.datatable td.rowdel{cursor:pointer; color:var(--danger); font-weight:700;}
+table.datatable tr.region-early td{background:rgba(255,99,71,0.09);}
+table.datatable tr.region-middle td{background:rgba(46,204,113,0.09);}
+table.datatable tr.region-late td{background:rgba(255,165,0,0.11);}
+.table-scroll{max-height:420px; overflow:auto; border:1px solid var(--card-border); border-radius:10px; margin-top:14px;}
+
+.upload-drop{border:2px dashed var(--card-border); border-radius:12px; padding:18px; text-align:center; cursor:pointer; transition:all .15s; background:#fbfaf6; margin-bottom:14px;}
+.upload-drop:hover{border-color:var(--gold); background:#fdf9ee;}
+.upload-drop input{display:none;}
+
+.result-panel{margin-top:0; padding:20px; background:var(--navy-900); border-radius:12px; position:relative; overflow:hidden;}
+.result-panel::before{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size:18px 18px;}
+.result-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; position:relative;}
+.rstat{padding:12px 14px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.08);}
+.rstat .rlabel{font-size:10.5px; color:#9db0c2; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; font-family:'IBM Plex Mono',monospace;}
+.rstat .rval{font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; color:#fff;}
+.rstat .rval.gold{color:var(--gold-light);}
+.rstat .rval.bad{color:#ff8266;}
+.rstat .runit{font-size:11px; color:#8fa1b4; margin-right:4px;}
+.rstat.highlight{background:rgba(201,162,39,0.16); border-color:var(--gold-dim);}
+
+.badge{display:inline-block; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; font-family:'Tajawal',sans-serif; margin-bottom:8px;}
+.badge.ok{background:rgba(46,125,83,0.1); color:var(--good); border:1px solid rgba(46,125,83,.3);}
+.badge.warn{background:rgba(181,67,45,0.1); color:var(--danger); border:1px solid rgba(181,67,45,.3);}
+
+.slider-row{display:flex; align-items:center; gap:16px; margin-bottom:10px;}
+.slider-row label{font-size:12px; font-weight:600; color:var(--navy-800); min-width:210px;}
+.slider-row input[type="range"]{flex:1; accent-color:var(--gold);}
+.slider-row .sv{font-family:'IBM Plex Mono',monospace; font-size:12.5px; background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:6px; min-width:70px; text-align:center;}
+
+.regime-card{background:#fbfaf6; border-radius:10px; padding:14px 16px; margin-bottom:10px; font-size:12.5px; color:var(--muted); line-height:1.9; border:1px solid var(--card-border);}
+.regime-card b{color:var(--navy-800);}
+.regime-early{border-right:5px solid #FF6347;}
+.regime-middle{border-right:5px solid #2ECC71;}
+.regime-late{border-right:5px solid #FFA500;}
+
+.plotwrap{background:#fff; border:1px solid var(--card-border); border-radius:12px; padding:6px; min-height:480px; margin-top:14px;}
+.export-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+
+.hero{background:linear-gradient(135deg, var(--navy-950), var(--navy-800)); border-radius:18px; padding:38px 36px; color:#fff; position:relative; overflow:hidden; margin-bottom:26px;}
+.hero::after{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size:26px 26px;}
+.hero-inner{position:relative; z-index:2; display:flex; gap:30px; align-items:center;}
+.hero-text{flex:1.3;}
+.hero-text .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold-light); letter-spacing:2px; margin-bottom:12px;}
+.hero-text h1{font-size:29px; line-height:1.35; margin-bottom:14px;}
+.hero-text p{font-size:13.5px; color:#b9c8d6; line-height:1.9; max-width:600px;}
+@media(max-width:900px){.hero-inner{flex-direction:column;}}
+.mod-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:6px;}
+@media(max-width:760px){.mod-grid{grid-template-columns:1fr;}}
+.mod-card{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:18px; cursor:pointer; transition:all .18s; box-shadow:var(--shadow);}
+.mod-card:hover{transform:translateY(-3px); border-color:var(--gold);}
+.mod-card .num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-size:11px; font-weight:700;}
+.mod-card h3{font-size:15px; margin:8px 0 6px 0; color:var(--navy-900);}
+.mod-card p{font-size:11.5px; color:var(--muted); line-height:1.7;}
+
+.divider-label{display:flex; align-items:center; gap:12px; margin:22px 0 14px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:1.5px;}
+.divider-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+.formula-panel{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 18px; margin-bottom:16px;}
+.formula-panel .fp-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;}
+.formula-panel .fp-eq{margin:8px 0; direction:ltr; text-align:left; overflow-x:auto;}
+
+/* ===== Learn page ===== */
+.learn-intro{font-size:13.5px; color:var(--muted); line-height:2.1;}
+.diagram-wrap{width:100%; overflow-x:auto; text-align:center; background:linear-gradient(180deg,#eaf2fb 0%,#f4f2ec 38%); border-radius:12px; padding:14px; position:relative;}
+.diagram-wrap svg{max-width:100%; height:auto;}
+.gloss-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px;}
+.gloss-card{background:#fff; border:1.5px solid var(--card-border); border-radius:10px; padding:13px 15px; cursor:pointer; transition:all .15s;}
+.gloss-card:hover{border-color:var(--gold);}
+.gloss-card.open{border-color:var(--gold); background:#fffdf5;}
+.gloss-card .gc-term{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--navy-900); font-size:13.5px;}
+.gloss-card .gc-ar{font-size:11.5px; color:var(--muted-2); margin-top:2px;}
+.gloss-card .gc-body{display:none; margin-top:10px; padding-top:10px; border-top:1px dashed var(--card-border); font-size:12px; color:var(--muted); line-height:1.85;}
+.gloss-card.open .gc-body{display:block;}
+.gloss-card .gc-analogy{margin-top:8px; padding:8px 10px; background:#fbf6e7; border-radius:7px; font-size:11.5px; color:#7a6317;}
+.hl-target{transition:filter .2s ease, stroke-width .2s ease;}
+.hl-target.active{filter:drop-shadow(0 0 9px #f8de7e) drop-shadow(0 0 4px #f8de7e); stroke-width:4.5;}
+
+.regime-timeline{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+.curve-gallery{display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin-top:14px;}
+@media(max-width:760px){.curve-gallery{grid-template-columns:1fr;}}
+.curve-gallery .cg-item{background:#fbfaf6; border:1px solid var(--card-border); border-radius:10px; padding:12px;}
+.curve-gallery .cg-item h5{font-size:12.5px; color:var(--navy-900); margin-bottom:8px;}
+.curve-gallery .cg-item p{font-size:11.5px; color:var(--muted); line-height:1.75; margin-top:8px;}
+.regime-tab{flex:1; min-width:220px; background:#fff; border:1.5px solid var(--card-border); border-radius:10px; padding:14px 16px;}
+.regime-tab.rt-early{border-top:4px solid #FF6347;}
+.regime-tab.rt-middle{border-top:4px solid #2ECC71;}
+.regime-tab.rt-late{border-top:4px solid #FFA500;}
+.regime-tab h4{font-size:13px; margin-bottom:6px; color:var(--navy-900);}
+.regime-tab p{font-size:11.5px; color:var(--muted); line-height:1.8;}
+
+#printReport{display:none;}
+@page{ size:A4; margin:14mm 13mm; }
+@media print{
+  html, body{background:#fff !important; height:auto !important; overflow:visible !important;}
+  #appShell{display:none !important;}
+  #printReport{display:block !important;}
+}
+#printReport{
+  font-family:'Inter','Tajawal',sans-serif; color:#13202b; direction:ltr; text-align:left;
+  width:100%; background:#fff;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact;
+}
+#printReport .pr-page{ page-break-after:always; min-height:263mm; display:flex; flex-direction:column; position:relative; }
+#printReport .pr-body{ flex:1 0 auto; position:relative; z-index:1; }
+#printReport .pr-footer{ position:relative; z-index:1; margin-top:auto; padding-top:9px; border-top:1px solid #e4e1d6; display:flex; align-items:center; justify-content:space-between; font-size:9px; color:var(--muted-2); }
+#printReport .pr-footer .pr-foot-brand{font-weight:700; color:var(--navy-700);}
+#printReport .pr-footer a{color:var(--navy-700); font-weight:700; text-decoration:none;}
+#printReport .pr-footer .pr-pageno{font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-page:last-child{ page-break-after:auto; }
+#printReport .pr-page-header{display:flex; align-items:center; justify-content:space-between; padding-bottom:9px; margin-bottom:16px; border-bottom:2.5px solid var(--gold);}
+#printReport .pr-page-header .pr-brand{display:flex; align-items:center; gap:10px;}
+#printReport .pr-page-header .pr-mark{width:26px; height:26px; border-radius:7px; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; flex-shrink:0;}
+#printReport .pr-page-header .pr-brand-text .pr-t1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--navy-900);}
+#printReport .pr-page-header .pr-brand-text .pr-t2{font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--muted); letter-spacing:.5px;}
+#printReport .pr-page-header .pr-section-name{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:20px; font-weight:700;}
+#printReport .pr-headbar{background:linear-gradient(135deg,var(--navy-950),var(--navy-800)); color:#fff; padding:22px 26px; border-radius:12px; margin-bottom:6px; position:relative; overflow:hidden;}
+#printReport .pr-headbar::after{content:""; position:absolute; top:-30px; right:-30px; width:110px; height:110px; border-radius:50%; background:rgba(201,162,39,0.14);}
+#printReport .pr-headbar .pr-h1{font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; position:relative;}
+#printReport .pr-headbar .pr-h2{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); margin-top:5px; letter-spacing:1px; position:relative;}
+#printReport .pr-cover-title{text-align:center; margin:24px 0 4px 0;}
+#printReport .pr-cover-title h1{font-family:'Space Grotesk',sans-serif; font-size:25px; color:var(--navy-900);}
+#printReport .pr-cover-title p{font-size:12px; color:var(--muted); margin-top:6px;}
+#printReport .pr-rule{height:2px; background:var(--gold); width:110px; margin:16px auto; border:none;}
+#printReport .pr-infolist{width:72%; margin:16px auto; font-size:11.5px;}
+#printReport .pr-infolist div{display:flex; justify-content:space-between; padding:6px 2px; border-bottom:1px dotted #ddd;}
+#printReport .pr-infolist b{color:var(--navy-900);}
+#printReport .pr-kpi-row{display:flex; gap:10px; justify-content:center; margin:22px 0;}
+#printReport .pr-kpi{border:1.5px solid var(--navy-800); border-top:3px solid var(--navy-800); border-radius:8px; padding:11px 16px; min-width:105px; text-align:center; background:#eef3f8;}
+#printReport .pr-kpi.bad{border-color:var(--danger); border-top-color:var(--danger); background:#fceceb;}
+#printReport .pr-kpi.good{border-color:var(--good); border-top-color:var(--good); background:#eaf6ef;}
+#printReport .pr-kpi .pr-kpi-label{font-size:8.5px; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-kpi .pr-kpi-value{font-family:'IBM Plex Mono',monospace; font-size:16px; font-weight:700; color:var(--navy-900); margin-top:5px;}
+#printReport .pr-check{text-align:center; margin:16px auto 6px auto; padding:11px; border-radius:8px; font-weight:700; font-size:12px; max-width:82%; border:1.5px solid;}
+#printReport .pr-check.ok{color:var(--good); border-color:var(--good); background:#eaf6ef;}
+#printReport .pr-check.bad{color:var(--danger); border-color:var(--danger); background:#fceceb;}
+#printReport .pr-section-title{background:#eef3f8; color:var(--navy-900); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13.5px; padding:9px 12px; border-radius:6px; border-right:4px solid var(--gold); margin:18px 0 12px 0;}
+#printReport table.pr-table{width:100%; border-collapse:collapse; font-size:9.5px;}
+#printReport table.pr-table th{background:var(--navy-900); color:#fff; padding:5px 4px; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:8.5px;}
+#printReport table.pr-table td{padding:4px; text-align:center; border:1px solid #e7e4d8; font-family:'IBM Plex Mono',monospace;}
+#printReport table.pr-table tr:nth-child(even){background:#f8f7f2;}
+#printReport table.pr-table tr.pr-early td{background:rgba(255,99,71,0.12) !important;}
+#printReport table.pr-table tr.pr-middle td{background:rgba(46,204,113,0.12) !important;}
+#printReport table.pr-table tr.pr-late td{background:rgba(255,165,0,0.14) !important;}
+#printReport table.pr-table thead{display:table-header-group;}
+#printReport table.pr-table tr{page-break-inside:avoid;}
+#printReport .pr-summary{font-size:11.5px; line-height:1.9; text-align:justify; color:#2a3742;}
+#printReport .pr-plots{display:flex; flex-direction:column; gap:12px; margin-top:10px;}
+#printReport .pr-plot-box{border:1px solid #e4e1d6; border-radius:8px; padding:6px; height:225mm; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(10,30,51,0.06);}
+#printReport .pr-plot-box img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;}
+#printReport .pr-eq-box{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:8px; padding:12px 16px; margin-bottom:12px;}
+#printReport .pr-eq-box .pr-eq-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;}
+#printReport .pr-eq-row{display:flex; align-items:center; gap:10px; margin:8px 0; min-width:0;}
+.pr-table-wrap{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.katex-eq{max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; display:inline-block;}
+#printReport .pr-eq-num{flex-shrink:0; width:24px; height:24px; border-radius:6px; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700;}
+#printReport .pr-regime-row{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+#printReport .pr-regime{border-radius:8px; padding:10px 12px; font-size:10px; line-height:1.8;}
+@media(max-width:900px){ table:not(.pr-table){display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;} }
+.katex-eq::-webkit-scrollbar, .pr-table-wrap::-webkit-scrollbar{ display:none; height:0; }
+.katex-eq, .pr-table-wrap{ scrollbar-width:none; -ms-overflow-style:none; }
+@media print{ .katex-eq, .pr-table-wrap{ overflow:visible !important; } }
+</style>
+</head>
+<body>
+<div id="appShell">
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow">Well Testing · Pressure Transient Analysis</div>
+    <h1>Well Test Analysis<br>Engineering Suite</h1>
+    <div class="sub">حاسبة تفاعلية لتحليل اختبارات الآبار — Drawdown وBuildup (Horner)، تشخيص أنظمة الجريان عبر مشتقة Bourdet، وتحليل شبه لوغاريتمي (Semilog).</div>
+    <span class="chip">Al-Misbar Engineering Solutions</span>
+  </div>
+  <nav>
+    <div class="nav-group-label">General</div>
+    <div class="nav-item active" data-target="home">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      الرئيسية
+    </div>
+    <div class="nav-group-label">Learn</div>
+    <div class="nav-item" data-target="learn">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M7 10.5V16c0 1.5 2 3 5 3s5-1.5 5-3v-5.5"/></svg></span>
+      🎓 كيف يعمل تحليل اختبار الآبار؟
+    </div>
+    <div class="nav-group-label">Calculator</div>
+    <div class="nav-item" data-target="calc">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M4 19V9l6-6 6 6v10"/><path d="M9 22V13h6v9"/></svg></span>
+      حاسبة تحليل الاختبار
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    مبني على مشتقة Bourdet القياسية (1989) للتشخيص اللوغاريتمي، وتحليل الانحدار شبه اللوغاريتمي (Horner / MDH) لتقدير النفاذية والسكِن.
+  </div>
+</aside>
+
+<main class="main grid-bg">
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div>
+        <div class="crumb" id="crumb">GENERAL / OVERVIEW</div>
+        <div class="ttl" id="pageTitle">لوحة تحليل اختبار الآبار</div>
+      </div>
+    </div>
+    <div class="eqtag" id="eqTag">PTA</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ============ HOME ============ -->
+    <section class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="eyebrow">PRESSURE TRANSIENT ANALYSIS · WELL TESTING</div>
+            <h1>حاسبة تحليل اختبار الآبار</h1>
+            <p>تحليل بيانات اختبار البئر (Drawdown أو Buildup) لتقدير النفاذية (k)، عامل السكِن (S)، متوسط ضغط المكمن (P*/Pi)، وكفاءة الجريان (FE) — عبر مشتقة Bourdet للتشخيص اللوغاريتمي، وانحدار شبه لوغاريتمي على منطقة الجريان القطري المستقر التي تحددها بنفسك. تقرير هندسي كامل جاهز للطباعة.</p>
+          </div>
+          <div id="heroSvgWrap"></div>
+        </div>
+      </div>
+      <div class="divider-label">ابدأ</div>
+      <div class="mod-grid">
+        <div class="mod-card" data-target="learn" style="border-color:var(--gold);"><div class="num">01 / START HERE</div><h3>🎓 كيف يعمل تحليل اختبار الآبار؟</h3><p>شرح مصوَّر لفكرة الاختبار، مشتقة Bourdet، أنظمة الجريان الثلاثة، والفرق بين Drawdown وBuildup — مع رسوم توضيحية تفاعلية.</p></div>
+        <div class="mod-card" data-target="calc"><div class="num">02 / CALCULATOR</div><h3>حاسبة تحليل الاختبار</h3><p>أدخل بيانات الوقت والضغط، حدد منطقة الجريان القطري، واحصل على k، S، وكفاءة الجريان فورًا.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ CALCULATOR ============ -->
+    <section class="section" id="sec-calc">
+
+      <div class="card">
+        <div class="card-head"><h2>💡 أمثلة جاهزة (Load Example Dataset)</h2></div>
+        <div class="example-grid">
+          <button class="btn ghost sm block" onclick="loadDummyDrawdown()">📘 Drawdown — حد صدّي (k=80, S=-2)</button>
+          <button class="btn ghost sm block" onclick="loadDummyBuildup()">📗 Buildup — حد صدّي (k=50, S=5)</button>
+          <button class="btn ghost sm block" onclick="loadDummyAquifer()">📙 Buildup — دعم مائي (k=65, S=1)</button>
+          <button class="btn ghost sm block" onclick="clearWtData()">🗑️ مسح البيانات</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Test Type</h2></div>
+        <div class="mode-tabs">
+          <div class="mode-tab active" data-mode="Drawdown Test" onclick="setTestMode('Drawdown Test')">Drawdown Test</div>
+          <div class="mode-tab" data-mode="Buildup Test" onclick="setTestMode('Buildup Test')">Buildup Test</div>
+        </div>
+
+        <div class="card-head"><h2>⚙️ RESERVOIR, FLUID &amp; WELL PROPERTIES</h2></div>
+        <div class="grid2">
+          <div class="field"><label>Initial Pressure, Pi <span class="unit">psia</span></label><input type="text" id="wt_pi"></div>
+          <div class="field"><label>Flow Rate, q <span class="unit">STB/D</span></label><input type="text" id="wt_q"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>FVF, Bo <span class="unit">bbl/STB</span></label><input type="text" id="wt_B"></div>
+          <div class="field"><label>Viscosity, μ <span class="unit">cp</span></label><input type="text" id="wt_mu"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Thickness, h <span class="unit">ft</span></label><input type="text" id="wt_h"></div>
+          <div class="field"><label>Porosity, φ <span class="unit">fraction</span></label><input type="text" id="wt_phi"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Total Compressibility, ct <span class="unit">1/psi</span></label><input type="text" id="wt_ct"></div>
+          <div class="field"><label>Wellbore Radius, rw <span class="unit">ft</span></label><input type="text" id="wt_rw"></div>
+        </div>
+
+        <div id="buildupFieldsWrap" style="display:none;">
+          <div class="card-head" style="margin-top:6px;"><h2>🔁 BUILDUP-SPECIFIC PARAMETERS</h2></div>
+          <div class="grid2">
+            <div class="field"><label>Producing Time before shut-in, tp <span class="unit">hr</span></label><input type="text" id="wt_tp"></div>
+            <div class="field"><label>Pwf at shut-in, Δt=0 <span class="unit">psia</span></label><input type="text" id="wt_pwf0"></div>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--navy-900); cursor:pointer; margin-top:6px;">
+            <input type="checkbox" id="wt_compareMDH" onchange="runAndRender()" style="width:16px; height:16px;"> قارن مع طريقة MDH التقريبية (Horner مقابل MDH)
+          </label>
+          <p style="font-size:11.5px; color:var(--muted); margin-top:4px;">تُحلَّل نفس بيانات Buildup مرتين: بطريقة Horner الكاملة (المعتمدة أصلًا)، وبطريقة MDH المبسّطة (الرسم مباشرة مقابل log Δt، بافتراض tp ≫ Δt). راجع <a href="javascript:void(0)" onclick="goTo('learn')" style="color:var(--navy-700); font-weight:700;">لماذا قد تختلف الطريقتان هنا ↗</a>.</p>
+        </div>
+
+        <div class="card-head" style="margin-top:6px;"><h2>📋 TIME-PRESSURE DATA</h2></div>
+        <div class="upload-drop" onclick="document.getElementById('wtFileUpload').click()">
+          <input type="file" id="wtFileUpload" accept=".csv" onchange="handleWtFileUpload(event)">
+          <div style="font-size:13px; color:var(--muted); font-weight:600;">📁 اضغط لرفع ملف CSV (أعمدة: dt, P)</div>
+        </div>
+        <div id="wtUploadMsg" style="margin-bottom:10px; font-size:12.5px;"></div>
+
+        <div class="table-scroll" style="max-height:280px;">
+          <table class="datatable" id="wtInputTable">
+            <thead><tr><th>#</th><th>dt (hr)</th><th>P (psia)</th><th></th></tr></thead>
+            <tbody id="wtInputBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost sm" style="margin-top:10px;" onclick="addWtRow()">+ إضافة صف</button>
+
+        <button class="btn gold block" style="margin-top:18px;" onclick="calcWellTest()">⚡ CALCULATE &amp; ANALYZE</button>
+
+        <div class="divider-label">Model Assumptions</div>
+        <div class="assumptions-box">
+          <b>📌 الفرضيات:</b> جريان قطري غير محدود (Infinite-acting radial flow) خلال نافذة الانحدار الوسطى المحددة؛ مائع أحادي الطور قابل للانضغاط بشكل طفيف؛ مكمن متجانس. حدود المناطق أدناه تُقترح تلقائيًا لكن يجب تأكيدها/تعديلها من قبل المهندس قبل الوثوق بقيم k/S.
+        </div>
+      </div>
+
+      <div class="card" id="regionSelectCard" style="display:none;">
+        <div class="card-head"><h2>🔍 FLOW-REGIME REGION SELECTION</h2><button class="btn ghost sm" onclick="autoSuggestRegions()">↺ اقتراح تلقائي</button></div>
+        <div class="slider-row">
+          <label>End of Early Region (dt, hr)</label>
+          <input type="range" id="sliderEarly" step="0.01">
+          <span class="sv" id="sliderEarlyVal">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Start of Late Region (dt, hr)</label>
+          <input type="range" id="sliderLate" step="0.01">
+          <span class="sv" id="sliderLateVal">—</span>
+        </div>
+      </div>
+
+      <div id="wtResultsWrap" style="display:none;">
+        <div class="card">
+          <div class="card-head"><h2>📊 RESULTS</h2><span class="eq" id="wtQualityTag">—</span></div>
+          <div id="wtAlerts" style="margin-bottom:12px;"></div>
+          <div class="result-panel">
+            <div class="result-grid">
+              <div class="rstat"><div class="rlabel">Permeability, k</div><div class="rval" id="o_wt_k">—</div><span class="runit">md</span></div>
+              <div class="rstat"><div class="rlabel">Skin, S</div><div class="rval" id="o_wt_s">—</div></div>
+              <div class="rstat highlight"><div class="rlabel" id="o_wt_pstar_label">P* (psia)</div><div class="rval gold" id="o_wt_pstar">—</div></div>
+              <div class="rstat"><div class="rlabel">Flow Efficiency</div><div class="rval" id="o_wt_fe">—</div></div>
+              <div class="rstat"><div class="rlabel">R²</div><div class="rval" id="o_wt_r2">—</div></div>
+              <div class="rstat"><div class="rlabel">ΔP Skin</div><div class="rval" id="o_wt_dpskin">—</div><span class="runit">psi</span></div>
+              <div class="rstat"><div class="rlabel">Radius of Investigation</div><div class="rval" id="o_wt_rinv">—</div><span class="runit">ft</span></div>
+              <div class="rstat"><div class="rlabel">Points in Regression</div><div class="rval" id="o_wt_npts">—</div></div>
+              <div class="rstat"><div class="rlabel">Effective Wellbore Radius, rwa</div><div class="rval" id="o_wt_rwa">—</div><span class="runit">ft</span></div>
+              <div class="rstat"><div class="rlabel">Wellbore Storage Coeff., Cs</div><div class="rval" id="o_wt_cs">—</div><span class="runit">bbl/psi</span></div>
+            </div>
+          </div>
+          <div id="wtPstarNote" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>📊 Log-Log Diagnostic Plot</h2></div>
+          <div class="card-sub" style="background:#fbf9f3; border-right:3px solid var(--gold); border-radius:8px; padding:10px 14px; margin-bottom:0;">
+            ℹ️ من الطبيعي أن يبدو خط |ΔP| (الأزرق) شبه مستقيم هنا — هذا مقياس <b>لوغاريتمي مزدوج</b> وليس شبه لوغاريتمي، فالنمو اللوغاريتمي الطبيعي لـΔP يظهر شبه مستقيم عند رسمه على محور لوغاريتمي أيضًا. المعلومة التشخيصية الحقيقية هنا هي <b>شكل المشتقة البرتقالية</b> (استواء = جريان قطري، ارتفاع/انخفاض = حد). أما منحنى الـS الكلاسيكي فسيظهر في بطاقة <b>"Semilog Plot"</b> أدناه، حيث المحور الصادي هو الضغط مباشرة على مقياس خطي.
+          </div>
+          <div class="plotwrap" id="diagPlot"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Flow Regimes</h2></div>
+          <div class="regime-card regime-early"><b>1) Early Time — Wellbore Storage:</b> سائل الأنبوب نفسه يستمر بالتدفق لحظيًا فيخفي استجابة المكمن — البصمة: Δp والمشتقة يتبعان خطًا بميل 45° شبه متطابقين. <b>يُحسب هنا:</b> معامل تخزين البئر C فقط — لا تُستخدم في حساب k أو S.</div>
+          <div class="regime-card regime-middle"><b>2) Middle Time — Radial Flow:</b> موجة الضغط تجاوزت تأثيرات البئر ووصلت لجريان قطري مستقر — البصمة: المشتقة تستوي أفقيًا. <b>يُحسب هنا:</b> k (من ميل الخط شبه اللوغاريتمي)، S، وP*/Pi — هذه هي المنطقة الوحيدة الصالحة للتحليل.</div>
+          <div class="regime-card regime-late"><b>3) Late Time — Boundary Effects:</b> موجة الضغط وصلت لحد المكمن (صدع أو دعم مائي) — البصمة: المشتقة ترتفع (حد مانع) أو تنخفض (دعم مائي). <b>يُحسب هنا:</b> تشخيص نوعي لنوع الحد فقط — تُستبعد من انحدار k/S.</div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>🚧 Reservoir Limits Test — تقدير المسافة إلى حد صدّي</h2><span class="eq">Eq. 2.28 / 2.29</span></div>
+          <div class="card-sub">يستخدم هذا التحليل تلقائيًا نقاط "Late Region" المحددة أعلاه بالشريط لفحص ما إذا تضاعف ميل الخط شبه اللوغاريتمي (بصمة حد صدّي/مانع واحد Sealing Fault)، وإن كان كذلك، يقدّر المسافة التقريبية L إلى هذا الحد.</div>
+          <div id="reservoirLimitsBody"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>📈 Semilog Plot</h2></div>
+          <div class="plotwrap" id="semiPlot"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>📋 Data Table</h2></div>
+          <div class="table-scroll"><table class="datatable" id="wtResultsTable"></table></div>
+        </div>
+
+        <div class="card" id="wtMdhCompareWrap" style="display:none;">
+          <div class="card-head"><h2>🔀 مقارنة Horner مقابل MDH</h2></div>
+          <div id="wtMdhValidityNote" style="margin-bottom:10px;"></div>
+          <div class="table-scroll">
+            <table class="datatable">
+              <thead><tr><th></th><th>Horner</th><th>MDH (تقريبي)</th><th>الفرق %</th></tr></thead>
+              <tbody id="wtMdhCompareBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card no-print">
+          <div class="card-head"><h2>📥 Download Options</h2></div>
+          <div class="export-row">
+            <button class="btn ghost" onclick="exportWtCSV()">📄 تحميل كـ CSV</button>
+            <button class="btn ghost" onclick="exportWtExcel()">📊 تحميل كـ Excel</button>
+            <button class="btn gold" onclick="printWtReport(event)">📕 تحميل تقرير PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+        <div id="wtFormulaPanel"></div>
+      </div>
+    </section>
+
+    <!-- ============ LEARN ============ -->
+    <section class="section" id="sec-learn">
+
+      <div class="card">
+        <div class="card-head"><h2>🎓 نظرة عامة على تحليل اختبار الآبار</h2></div>
+        <div class="learn-intro">
+          حين تُغلق أو تُفتح صمامات بئر منتج، لا يستقر الضغط داخل المكمن فورًا — بل تنتشر "موجة ضغط" تدريجيًا عبر الصخر المسامي، وشكل انتشار هذه الموجة عبر الزمن يحمل معلومات دقيقة عن خصائص المكمن نفسه: نفاذيته (k)، مدى تضرر أو تحسّن المنطقة القريبة من البئر (عامل السكِن S)، ومتوسط ضغطه الحالي.
+          <br><br>
+          اختبار الآبار (Well Test) يستغل هذا المبدأ مباشرة: يُغيَّر معدل الإنتاج تغييرًا مضبوطًا (فتح البئر من السكون = Drawdown، أو إغلاقه بعد إنتاج مستمر = Buildup)، ثم يُسجَّل الضغط لحظيًا مقابل الزمن. تحليل هذه العلاقة — عبر مشتقة Bourdet للتشخيص، وانحدار شبه لوغاريتمي على النطاق الصحيح — هو ما تقوم به الحاسبة في هذا الموقع.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>⏱️ Drawdown مقابل Buildup — تاريخ المعدل والضغط</h2></div>
+        <div class="diagram-wrap" id="rateHistoryWrap"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          <b>Drawdown Test:</b> البئر ساكن (لا إنتاج) عند الضغط الأصلي Pi، ثم يُفتح فجأة بمعدل ثابت q — يُقاس هبوط الضغط Pwf(t) منذ لحظة الفتح مباشرة (t=0).
+          <br>
+          <b>Buildup Test:</b> البئر ينتج بمعدل ثابت q لمدة معروفة (tp)، ثم يُغلق فجأة — يُقاس تعافي الضغط Pws(Δt) منذ لحظة الإغلاق، حيث Δt هو الزمن منذ الإغلاق (وليس منذ بداية الإنتاج). ولأن تأثير فترة الإنتاج السابقة (tp) لا يزال حاضرًا فيزيائيًا، يُستخدم "زمن Horner" المعدَّل — (tp+Δt)/Δt — بدل Δt مباشرة في الرسم شبه اللوغاريتمي، لتصحيح هذا الأثر.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📊 المخطط التشخيصي (Log-Log) — كيف نقرأ أنظمة الجريان الثلاثة</h2></div>
+        <div class="card-sub">هذا رسم توضيحي عام (غير مبني على بيانات فعلية) يُظهر الشكل النمطي لمنحنيَي |Δp| ومشتقة Bourdet معًا على مقياس لوغاريتمي مزدوج — وهو "بصمة" كل نظام جريان.</div>
+        <div class="diagram-wrap" id="diagTypeCurveWrap"></div>
+
+        <div class="regime-timeline">
+          <div class="regime-tab rt-early">
+            <h4>🔴 Early Time — Wellbore Storage</h4>
+            <p>سائل الأنبوب نفسه (وليس المكمن) هو من يمتص/يطلق التغيّر الأول في المعدل. البصمة المميزة: <b>خطّا |Δp| والمشتقة متطابقان تقريبًا بميل 45° (وحدة الميل)</b> على المقياس اللوغاريتمي المزدوج.</p>
+          </div>
+          <div class="regime-tab rt-middle">
+            <h4>🟢 Middle Time — Radial Flow (IARF)</h4>
+            <p>موجة الضغط تجاوزت البئر ووصلت لجريان قطري شبه مستقر في مكمن يبدو غير محدود. البصمة: <b>المشتقة تستوي في خط أفقي مسطّح</b> — هذا هو النطاق الوحيد الصالح لحساب k وS.</p>
+          </div>
+          <div class="regime-tab rt-late">
+            <h4>🟠 Late Time — Boundary Effects</h4>
+            <p>الموجة وصلت لحد حقيقي في المكمن. المشتقة <b>ترتفع</b> عن الخط المسطّح إذا كان الحد صدًا مانعًا (Sealing Fault)، أو <b>تنخفض</b> إذا كان دعمًا بضغط ثابت (مياه جوفية/حقن).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>1️⃣ اشتقاق معادلة Horner من مبدأ التراكب</h2><span class="eq">Eq. 2.1</span></div>
+        <div class="learn-intro">
+          معادلة Horner ليست قاعدة جاهزة — بل نتيجة مباشرة لمبدأ فيزيائي يُسمى <b>التراكب (Superposition)</b>. لحساب الضغط أثناء الإغلاق، نتعامل معه رياضيًا وكأن البئر <b>ما زال ينتج</b> بمعدل q، لكن أُضيف إليه في لحظة الإغلاق بئر وهمي ثانٍ في نفس الموقع يحقن بمعدل مساوٍ ومعاكس (−q). مجموع تأثيرَي "الإنتاج المستمر" و"الحقن الوهمي" يُلغي الإنتاج فعليًا بعد لحظة الإغلاق — وهو بالضبط ما يحدث فعليًا.
+          <br><br>
+          بجمع حلَّي معادلة الانتشار الشعاعي لكلا "البئرين" (باستخدام تقريب دالة Ei اللوغاريتمي)، تتبسّط الحدود المشتركة رياضيًا لتعطي مباشرة:
+        </div>
+        <div class="formula-panel" style="margin-top:14px;">
+          <div class="fp-eq"><span class="katex-eq" data-tex="P_%7Bws%7D%20%3D%20P_i%20-%20162.6%5Cdfrac%7BqB%5Cmu%7D%7Bkh%7D%5Clog%5C!%5Cleft%5B%5Cdfrac%7Bt_p%2B%5CDelta%20t%7D%7B%5CDelta%20t%7D%5Cright%5D"></span></div>
+        </div>
+        <div class="learn-intro">
+          هذا الشكل يوضّح <b>لماذا</b> نرسم الضغط مقابل نسبة Horner تحديدًا: لأن الاشتقاق نفسه أنتج هذه النسبة كمتغيّر طبيعي، وليس كاختيار عشوائي. العلاقة خطية في log[(tp+Δt)/Δt] فقط لأن هذا هو الشكل الذي "خرج" من عملية التراكب.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>2️⃣ الاختبار المثالي (Ideal Test) — خطوة بخطوة</h2><span class="eq">Example 2.1</span></div>
+        <div class="card-sub">في الاختبار المثالي (مكمن متجانس، بلا Afterflow، بلا حدود)، يقع كل الاختبار على خط مستقيم واحد من أول نقطة حتى آخرها. هذا نادر الحدوث فعليًا، لكنه الأساس الذي تُبنى عليه كل الطرق العملية.</div>
+        <div class="diagram-wrap" id="idealTestWrap"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          <b>الخطوات الثلاث لاستخراج النتائج من هذا الخط المستقيم:</b>
+          <br>① <b>الميل m</b> = فرق الضغط بين أي نقطتين على الخط تفصل بينهما دورة لوغاريتمية كاملة (عامل 10) على المحور — يُستخدم مباشرة في k = 162.6qBμ/(mh).
+          <br>② <b>الاستقراء إلى Horner ratio = 1</b> (أي مد الخط حتى نهاية يمين الرسم، حيث (tp+Δt)/Δt=1، وهو ما يعادل نظريًا زمن إغلاق لا نهائي) يعطي Pi مباشرة.
+          <br>③ <b>قراءة p1hr</b>: نقطة الضغط على الخط المستقيم (أو استقرائه) عند Horner ratio المقابل لـ Δt = 1 ساعة بالضبط — وهذه القيمة، وليست قراءة البيانات الفعلية عند Δt=1، هي ما يدخل في معادلة السكِن (Eq. 2.4).
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>3️⃣ من "المثالي" إلى "الواقعي" — لماذا لا نحصل أبدًا على خط مستقيم واحد</h2><span class="eq">Fig. 2.4</span></div>
+        <div class="card-sub">في اختبار حقيقي، يأخذ منحنى Horner شكل حرف S كسول (Lazy S-Shape) بدل خط مستقيم واحد. مفهوم "نصف قطر الاستقصاء" (Radius of Investigation) — أي المسافة التي وصلتها موجة الضغط حتى لحظة معينة — يفسّر لماذا ينقسم كل اختبار حقيقي إلى ثلاث مناطق زمنية.</div>
+        <div class="diagram-wrap" id="realCurveWrap"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          <b>ETR (Early Time Region):</b> نصف قطر الاستقصاء لا يزال داخل المنطقة القريبة من البئر المتضررة/المتأثرة — لا علاقة منطقية بين شكل المنحنى هنا وبين نفاذية المكمن الحقيقية.
+          <br><b>MTR (Middle Time Region):</b> الموجة تجاوزت المنطقة القريبة ودخلت الصخر السليم — <u>هذا هو الخط المستقيم الوحيد ذو المعنى الهندسي</u>، وهو ما تُبنى عليه كل حسابات k وS.
+          <br><b>LTR (Late Time Region):</b> نصف قطر الاستقصاء وصل لحدود منطقة الصرف نفسها — الشكل هنا يعكس هندسة الحدود لا خصائص الصخر.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>4️⃣ لماذا لا يبدأ الخط المستقيم من أول نقطة؟ — Afterflow وتخزين البئر</h2><span class="eq">§2.6</span></div>
+        <div class="learn-intro">
+          المعادلة المثالية تفترض أن معدل التدفق عند سطح البئر يتغيّر <b>لحظيًا</b> من q إلى صفر عند الإغلاق. الواقع مختلف: عند إغلاق الصمام على السطح، يستمر السائل الموجود بالفعل داخل الأنبوب (نفط، غاز، ماء) بالتدفق إلى داخل البئر من الأسفل لبعض الوقت — لأن هذا السائل ينضغط تدريجيًا بدل أن يتوقف فورًا. هذه الظاهرة تُسمى <b>Afterflow</b>، وأثرها التخزيني على الأنبوب يُسمى <b>Wellbore Storage</b>.
+        </div>
+        <div class="diagram-wrap" id="afterflowWrap" style="margin-top:14px;"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          البصمة التشخيصية لهذه الظاهرة على المخطط اللوغاريتمي المزدوج (الذي رأيته أعلاه) هي <b>خط الميل الوحدوي (45°)</b> — حيث يتبع كلٌّ من |Δp| والمشتقة نفس الخط المستقيم بميل واحد تمامًا، لأن كل التغيّر بالضغط في هذه اللحظات ناتج فقط عن انضغاط السائل داخل الأنبوب، لا عن استجابة المكمن. بمجرد أن يتوقف الـAfterflow فعليًا، تنفصل المشتقة عن هذا الخط وتبدأ بالهبوط نحو الاستواء (بداية MTR).
+          <br><br>
+          يمكن حساب <b>معامل تخزين البئر Cs</b> مباشرة من أي نقطة تقع على خط الميل الوحدوي — الحاسبة أعلاه تحسبه تلقائيًا من نقاط منطقتك المبكرة (Early Region) المحددة بالشريط:
+        </div>
+        <div class="formula-panel" style="margin-top:10px;">
+          <div class="fp-eq"><span class="katex-eq" data-tex="C_s%20%3D%20%5Cdfrac%7BqB%7D%7B24%7D%5Ccdot%5Cdfrac%7B%5CDelta%20t%7D%7B%5CDelta%20p%7D%5Cquad%5Ctext%7B(evaluated%20at%20a%20point%20on%20the%20unit-slope%20line)%7D"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>5️⃣ معرض أشكال المنحنى الحقيقية — كيف تبدو المشاكل الشائعة</h2><span class="eq">Fig. 2.6–2.9</span></div>
+        <div class="card-sub">نفس مبدأ الأشكال الثلاثة أعلاه، لكن بأشكال مختلفة جذريًا حسب حالة البئر والمكمن — التعرّف البصري على هذه الأنماط جزء أساسي من عمل محلل اختبارات الآبار.</div>
+        <div class="curve-gallery" id="curveGalleryWrap"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>6️⃣ نصف القطر الفعّال للبئر — تفسير مادي مباشر لعامل السكِن</h2><span class="eq">Eq. 2.14</span></div>
+        <div class="learn-intro">
+          عامل السكِن S رقم مجرّد نوعًا ما — لكن معادلة نصف القطر الفعّال تترجمه لصورة مادية ملموسة تمامًا: بئر متضرر (S موجب) <b>يتصرف تمامًا كأنه بئر أضيق فعليًا</b> من قطره الحقيقي، وبئر محفَّز (S سالب، كما في تكسير هيدروليكي) يتصرف <b>كأنه أوسع بكثير</b> من قطره الحقيقي.
+        </div>
+        <div class="diagram-wrap" id="rwaWrap" style="margin-top:14px;"></div>
+        <div class="formula-panel" style="margin-top:10px;">
+          <div class="fp-eq"><span class="katex-eq" data-tex="r_%7Bwa%7D%20%3D%20r_w%5C%2Ce%5E%7B-S%7D"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>7️⃣ P* ليس دائمًا متوسط ضغط المكمن</h2><span class="eq">§2.9</span></div>
+        <div class="diagram-wrap" id="pstarWrap"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          P* هو ببساطة القيمة الناتجة عن <b>استقراء رياضي</b> للخط المستقيم إلى Horner ratio = 1 — وهو إجراء صحيح تمامًا في مكمن جديد لم يُستنزف بعد (حيث P* = Pi فعليًا). لكن في مكمن أُنتج منه لفترة طويلة، تكون منطقة الصرف حول البئر قد انخفض ضغطها فعليًا عن بقية المكمن، والاستقراء الرياضي البسيط <b>يتجاهل</b> هذا الاستنزاف الفعلي، فيعطي قيمة أعلى من متوسط الضغط الحقيقي p̄.
+          <br><br>
+          التصحيح الدقيق يحتاج طريقة MBH (Matthews-Brons-Hazebroek) أو طريقة Muskat المعدّلة، وكلتاهما تحتاجان معرفة هندسة منطقة الصرف (شكلها ومساحتها) — لذا لم تُدرجا كحساب مباشر في هذه النسخة، لكن الحاسبة تنبّهك دائمًا بهذا الفرق عند تحليل اختبار Buildup.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>7️⃣.5 لماذا تختلف طريقة MDH عن Horner لنفس بيانات Buildup؟</h2><span class="eq">Horner vs MDH</span></div>
+        <div class="learn-intro">
+          طريقة <b>MDH (Miller-Dyes-Hutchinson)</b> هي تبسيط لطريقة Horner: بدل رسم الضغط مقابل نسبة Horner المعقدة log[(tp+Δt)/Δt]، تُرسَم مباشرة مقابل log(Δt) فقط — تمامًا مثل تحليل اختبار Drawdown. هذا التبسيط له افتراض ضمني واحد: <b>أن فترة الإنتاج السابقة tp طويلة جدًا مقارنة بمدة الإغلاق Δt</b> (tp ≫ Δt).
+        </div>
+        <p style="margin-top:10px;">رياضيًا، عندما tp ≫ Δt: نسبة Horner (tp+Δt)/Δt ≈ tp/Δt، وبالتالي log[(tp+Δt)/Δt] ≈ log(tp) − log(Δt) — أي أن التغيّر في نسبة Horner مع Δt يصبح تقريبًا مطابقًا (بإشارة معكوسة) للتغيّر في log(Δt) وحده. في هذه الحالة، ميل الخطين (Horner وMDH) يتقاربان عدديًا، وتُصبح النفاذية k والسكِن S المحسوبان من الطريقتين متطابقين تقريبًا.</p>
+        <p><b>لكن عندما tp ليست كبيرة بما يكفي</b> مقارنة بـ Δt (مثلًا اختبار إغلاق قصير بعد فترة إنتاج قصيرة نسبيًا)، هذا التقريب ينهار: نسبة Horner تحمل معلومة إضافية عن تأثير الإنتاج السابق لا يلتقطها log(Δt) وحده، فيميل خط MDH وينحرف ميله عن الميل الحقيقي — وينتج عن ذلك نفاذية وسكِن غير دقيقين. القاعدة العملية الشائعة: يُعتبر تقريب MDH مقبولًا هندسيًا عندما tp/Δt<sub>max</sub> ≥ 10 تقريبًا؛ وكلما قلّت هذه النسبة عن ذلك، كبر الانحراف المتوقع بين الطريقتين.</p>
+        <p>وضع المقارنة في الحاسبة يحسب الطريقتين معًا على نفس البيانات ويعرض نسبة الفرق في m وk وS، مع تنبيه تلقائي إذا كانت نسبة tp/Δt<sub>max</sub> صغيرة بما يكفي لتوقّع انحراف ملحوظ.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>8️⃣ اختبار حدود المكمن — كيف "نرى" حدًا صديًا من شكل المنحنى</h2><span class="eq">Eq. 2.28 / 2.29</span></div>
+        <div class="learn-intro">
+          حين تصل موجة الضغط فعليًا إلى حد صدّي واحد (Sealing Fault) قريب نسبيًا من البئر، يحدث شيء مميز رياضيًا: <b>ميل الخط شبه اللوغاريتمي يتضاعف تمامًا (×2)</b> مقارنة بميل منطقة الجريان القطري (MTR) الأصلي. هذا لأن الحد المانع يُجبر التدفق على أن يسلك مسارًا مكافئًا لبئر "متخيّل" يعكس تأثير الحد (طريقة الصور - Method of Images)، فيتضاعف تأثير التراكم رياضيًا.
+        </div>
+        <div class="diagram-wrap" id="boundaryWrap" style="margin-top:14px;"></div>
+        <div class="learn-intro" style="margin-top:14px;">
+          الحاسبة أعلاه تفحص هذا تلقائيًا: تقارن ميل منطقتك المتأخرة (Late Region) بميل منطقة الجريان القطري، وإن كانت النسبة قريبة من 2، تحسب زمن تقاطع الخطين (Δtx) ثم المسافة التقريبية للحد باستخدام Eq. 2.29.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>9️⃣ ماذا عن آبار الغاز والجريان متعدد الأطوار؟</h2><span class="eq">§2.11 / §2.12</span></div>
+        <div class="learn-intro">
+          نفس منهجية هذا الفصل بالكامل (Horner، ETR/MTR/LTR، Bourdet) تنطبق على آبار الغاز والجريان متعدد الأطوار، لكن بمعادلات معدَّلة:
+          <br><br>
+          <b>آبار الغاز:</b> عند ضغوط أعلى من 3000 psi تقريبًا تُستخدم معادلات مطابقة تمامًا لمعادلات النفط (بدلالة P مباشرة)، بينما عند ضغوط أقل من 2000 psi تُستخدم معادلات بدلالة <b>مربع الضغط (P²)</b> بدل P نفسه، لأن انضغاطية الغاز الكبيرة تُبطل تقريب "الميوعة طفيفة الانضغاط" الذي تعتمد عليه معادلات النفط. النطاق المتوسط (2000–3000 psi) يحتاج نظريًا دالة الضغط الوهمي للغاز (Gas Pseudopressure) لدقة كاملة.
+          <br><br>
+          <b>الجريان متعدد الأطوار (نفط + ماء + غاز معًا):</b> بدل نفاذية واحدة k، يمكن استخراج <b>نفاذية كل طور على حدة</b> (ko، kw، kg) من نفس الميل m باستخدام معادلات Perrine، بشرط معرفة معدل إنتاج كل طور والخصائص البترولية الفيزيائية لكل منها عند ضغط المكمن المتوسط.
+          <br><br>
+          <i>هذه الحالات (الغاز والجريان متعدد الأطوار) خارج نطاق الحاسبة الحالية المخصصة لجريان نفط أحادي الطور — لكن من المهم معرفة أن المنهجية الأساسية نفسها قابلة للتوسعة إليها.</i>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📖 قاموس المصطلحات التفاعلي</h2><span class="eq">اضغط لعرض الشرح</span></div>
+        <div class="gloss-grid" id="wtGlossaryGrid"></div>
+      </div>
+
+    </section>
+
+  </div>
+</main>
+</div><!-- /appShell -->
+
+<div id="printReport"></div>
+
+<script>
+/* ============================================================
+   CONSTANTS & HELPERS
+   ============================================================ */
+const UNIFIED_COLOR = '#0072BD';
+const DERIV_COLOR = '#D2691E';
+const REGION_EARLY = 'rgba(255,99,71,0.14)';
+const REGION_MIDDLE = 'rgba(46,204,113,0.12)';
+const REGION_LATE = 'rgba(255,165,0,0.14)';
+
+let testMode = 'Drawdown Test';
+let wtRows = [];
+let wtResultsState = null; // {res, mode, inputsRaw, inputsNumeric}
+
+function parseFloatSafe(v, def=null){
+  if(v===null || v===undefined) return def;
+  const s=String(v).trim();
+  if(s==='') return def;
+  const arDigits='٠١٢٣٤٥٦٧٨٩'; let clean=s;
+  for(let i=0;i<10;i++) clean=clean.split(arDigits[i]).join(String(i));
+  clean=clean.replace(',', '.').replace('،','.');
+  const f=parseFloat(clean);
+  return isNaN(f)?def:f;
+}
+function fmt(n,d=2){ if(n===null||n===undefined||!isFinite(n)) return "—"; return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+/* Seeded RNG (mulberry32) + Box-Muller gaussian — used only for the "load example" synthetic datasets */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function makeGaussian(rng){
+  let spare=null;
+  return function(mean=0, std=1){
+    if(spare!==null){ const v=spare; spare=null; return mean+std*v; }
+    let u,v,s;
+    do{ u=rng()*2-1; v=rng()*2-1; s=u*u+v*v; } while(s>=1||s===0);
+    const mul=Math.sqrt(-2*Math.log(s)/s);
+    spare=v*mul;
+    return mean+std*u*mul;
+  };
+}
+
+/* ============================================================
+   CORE MATH ENGINE (ported 1:1 from Python, verified for exact parity)
+   ============================================================ */
+function bourdetDerivative(dt, dp){
+  const n = dt.length;
+  const lnDt = dt.map(Math.log);
+  const deriv = new Array(n).fill(0);
+  if(n<3) return dp.map(Math.abs);
+  for(let i=1;i<n-1;i++){
+    const w1 = lnDt[i]-lnDt[i-1], w2 = lnDt[i+1]-lnDt[i];
+    if(w1<=0 || w2<=0){ deriv[i]=NaN; continue; }
+    const d1=(dp[i]-dp[i-1])/w1, d2=(dp[i+1]-dp[i])/w2;
+    deriv[i]=(w2*d1+w1*d2)/(w1+w2);
+  }
+  deriv[0]=deriv[1]; deriv[n-1]=deriv[n-2];
+  return deriv;
+}
+function linfit(x,y){
+  const n=x.length;
+  const mx=x.reduce((a,b)=>a+b,0)/n, my=y.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ num+=(x[i]-mx)*(y[i]-my); den+=(x[i]-mx)**2; }
+  const slope=num/den, intercept=my-slope*mx;
+  return {slope,intercept};
+}
+function rSquared(x,y,slope,intercept){
+  const yfit=x.map(xi=>slope*xi+intercept);
+  const ssRes=y.reduce((s,yi,i)=>s+(yi-yfit[i])**2,0);
+  const my=y.reduce((a,b)=>a+b,0)/y.length;
+  const ssTot=y.reduce((s,yi)=>s+(yi-my)**2,0);
+  return ssTot>0 ? 1-ssRes/ssTot : 0;
+}
+
+function suggestRegions(dt, deriv){
+  const validIdx=[];
+  for(let i=0;i<dt.length;i++) if(isFinite(deriv[i]) && deriv[i]>0 && dt[i]>0) validIdx.push(i);
+  if(validIdx.length<5) return [Math.min(...dt), Math.max(...dt)];
+  const dtv = validIdx.map(i=>dt[i]);
+  const logDt = dtv.map(d=>Math.log10(d));
+  const logDeriv = validIdx.map(i=>Math.log10(deriv[i]));
+  const n = dtv.length;
+  const slopes = new Array(n).fill(0);
+  for(let i=0;i<n;i++){
+    const lo=Math.max(0,i-1), hi=Math.min(n,i+2);
+    if(hi-lo<2){ slopes[i]=0; continue; }
+    const {slope} = linfit(logDt.slice(lo,hi), logDeriv.slice(lo,hi));
+    slopes[i]=slope;
+  }
+  const flatMask = slopes.map(s=>Math.abs(s)<0.35);
+  const minStart = Math.min(2,n-1);
+  let bestLen=0, bestStart=minStart, bestEnd=minStart, runStart=null;
+  for(let i=minStart;i<n;i++){
+    if(flatMask[i] && runStart===null) runStart=i;
+    else if(!flatMask[i] && runStart!==null){
+      if(i-runStart>bestLen){ bestLen=i-runStart; bestStart=runStart; bestEnd=i-1; }
+      runStart=null;
+    }
+  }
+  if(runStart!==null && (n-runStart)>bestLen){ bestLen=n-runStart; bestStart=runStart; bestEnd=n-1; }
+  if(bestLen<3) return [dtv[Math.floor(n/3)], dtv[Math.floor(2*n/3)]];
+  const earlyEnd = bestStart>0 ? dtv[bestStart-1] : dtv[bestStart]*0.9;
+  const lateStart = bestEnd<n-1 ? dtv[bestEnd+1] : dtv[bestEnd]*1.1;
+  return [earlyEnd, lateStart];
+}
+
+function runAnalysis(rows, mode, pi,q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart){
+  rows = rows.slice().sort((a,b)=>a.dt-b.dt);
+  const dtArr = rows.map(r=>r.dt), Parr = rows.map(r=>r.P);
+  let dp, xplot;
+  if(mode==='Buildup Test'){
+    dp = Parr.map(P=>P-pwf0);
+    xplot = dtArr.map(dt=>Math.log10((tp+dt)/dt));
+  } else {
+    dp = Parr.map(P=>pi-P);
+    xplot = dtArr.map(dt=>Math.log10(dt));
+  }
+  const dpAbs = dp.map(v=>Math.max(Math.abs(v), 1e-6));
+  const derivative = bourdetDerivative(dtArr, dp);
+  const region = dtArr.map(dt=> dt<=earlyEnd ? 'Early (Wellbore Storage)' : (dt>=lateStart ? 'Late (Boundary Effects)' : 'Middle (Radial Flow)'));
+
+  const df = rows.map((r,i)=>({dt:dtArr[i], P:Parr[i], dp:dp[i], dp_abs:dpAbs[i], derivative:derivative[i], x_plot:xplot[i], region:region[i]}));
+
+  const maskIdx = df.map((r,i)=>i).filter(i=> dtArr[i]>earlyEnd && dtArr[i]<lateStart);
+  const nPts = maskIdx.length;
+  const result = {df, n_pts:nPts, early_end:earlyEnd, late_start:lateStart};
+  if(nPts<2){ result.valid=false; result.msg='نقاط غير كافية ضمن المنطقة الوسطى المحددة (يلزم نقطتان على الأقل).'; return result; }
+
+  const x = maskIdx.map(i=>xplot[i]), y = maskIdx.map(i=>Parr[i]);
+  const {slope, intercept} = linfit(x,y);
+  const r2 = rSquared(x,y,slope,intercept);
+  const m = Math.abs(slope);
+  if(m<=0){ result.valid=false; result.msg='تعذر حساب الميل (m<=0) — تحقق من بيانات النطاق المختار.'; return result; }
+
+  const k = 162.6*q*B*mu/(m*h);
+  let P_1hr, P_star, S, pRefForFE;
+  if(mode==='Buildup Test'){
+    const x1hr = Math.log10((tp+1)/1);
+    P_1hr = slope*x1hr+intercept;
+    P_star = slope*0+intercept;
+    S = 1.151*((P_1hr-pwf0)/m - Math.log10(k/(phi*mu*ct*rw*rw)) + 3.23);
+    pRefForFE = pwf0;
+  } else {
+    const x1hr = Math.log10(1.0);
+    P_1hr = slope*x1hr+intercept;
+    P_star = null;
+    S = 1.151*((pi-P_1hr)/m - Math.log10(k/(phi*mu*ct*rw*rw)) + 3.23);
+    pRefForFE = Parr[Parr.length-1];
+  }
+  const dP_skin = 0.87*m*S;
+  const denom = pi-pRefForFE;
+  const FE = Math.abs(denom)>1e-9 ? (pi-pRefForFE-dP_skin)/denom : NaN;
+  const tLast = Math.max(...dtArr);
+  const r_investigation = Math.sqrt(k*tLast/(948*phi*mu*ct));
+  const rwa = rw*Math.exp(-S);
+
+  // Wellbore storage coefficient Cs — Eq. 2.11, estimated from points in the early (wellbore-storage) region
+  const earlyIdx = df.map((r,i)=>i).filter(i=> dtArr[i]<=earlyEnd && dpAbs[i]>0);
+  let Cs=null, Cs_n=0;
+  if(earlyIdx.length>=1){
+    const csVals = earlyIdx.map(i=> q*B*dtArr[i]/(24*dpAbs[i]));
+    Cs = csVals.reduce((a,b)=>a+b,0)/csVals.length;
+    Cs_n = csVals.length;
+  }
+
+  Object.assign(result, {valid:true, m,k,S,P_1hr,P_star,dP_skin,FE,r_investigation,rwa,Cs,Cs_n,slope,intercept,r_squared:r2});
+  return result;
+}
+
+/* ============================================================
+   MDH APPROXIMATE METHOD — for comparison against Horner on the
+   SAME buildup dataset. Valid when tp >> Δt: plots Pws directly
+   against log10(Δt) instead of log10((tp+Δt)/Δt). Standard
+   buildup skin equation form applies with pwf0 as reference
+   (Lee, "Well Testing", SPE Textbook Series).
+   ============================================================ */
+function runMDHCompare(rows, q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart){
+  const dtArr = rows.map(r=>r.dt), Parr = rows.map(r=>r.P);
+  const xMdh = dtArr.map(dt=>Math.log10(dt));
+  const maskIdx = dtArr.map((dt,i)=>i).filter(i=> dtArr[i]>earlyEnd && dtArr[i]<lateStart);
+  if(maskIdx.length<2) return {valid:false, msg:'نقاط غير كافية ضمن المنطقة الوسطى لتحليل MDH.'};
+  const x = maskIdx.map(i=>xMdh[i]), y = maskIdx.map(i=>Parr[i]);
+  const {slope, intercept} = linfit(x,y);
+  const r2 = rSquared(x,y,slope,intercept);
+  const m = Math.abs(slope);
+  if(m<=0) return {valid:false, msg:'تعذر حساب ميل MDH (m<=0).'};
+  const k = 162.6*q*B*mu/(m*h);
+  const x1hr = Math.log10(1.0);
+  const P_1hr = slope*x1hr+intercept;
+  const S = 1.151*((P_1hr-pwf0)/m - Math.log10(k/(phi*mu*ct*rw*rw)) + 3.23);
+  const tpOverMax = tp/Math.max(...dtArr);
+  return {valid:true, m,k,S,P_1hr,r_squared:r2, validity_ratio:tpOverMax};
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const titles = {
+  home:["GENERAL / OVERVIEW","لوحة تحليل اختبار الآبار","PTA"],
+  calc:["CALCULATOR / WELL TEST","حاسبة تحليل الاختبار","Drawdown / Buildup"],
+  learn:["LEARN / PRESSURE TRANSIENT ANALYSIS","كيف يعمل تحليل اختبار الآبار؟","PTA Basics"],
+};
+function goTo(target){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+target).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  const t=titles[target];
+  document.getElementById('crumb').textContent=t[0];
+  document.getElementById('pageTitle').textContent=t[1];
+  document.getElementById('eqTag').textContent=t[2];
+  document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+  toggleSidebar(false);
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+document.querySelectorAll('.mod-card').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+
+function toggleSidebar(force){
+  const sb = document.querySelector('.sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const shouldOpen = force!==undefined ? force : !sb.classList.contains('open');
+  sb.classList.toggle('open', shouldOpen);
+  backdrop.classList.toggle('open', shouldOpen);
+}
+
+/* ============================================================
+   TEST MODE TOGGLE
+   ============================================================ */
+function setTestMode(mode){
+  testMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t=>t.classList.toggle('active', t.dataset.mode===mode));
+  document.getElementById('buildupFieldsWrap').style.display = mode==='Buildup Test' ? 'block' : 'none';
+  renderFormulaPanel();
+}
+
+/* ============================================================
+   INPUT TABLE MANAGEMENT
+   ============================================================ */
+function newWtRow(dt,P){ return {dt, P}; }
+function renderWtInputTable(){
+  const tbody=document.getElementById('wtInputBody');
+  tbody.innerHTML = wtRows.map((r,i)=>`
+    <tr>
+      <td class="mono">${i+1}</td>
+      <td><input type="text" value="${r.dt!==null?r.dt:''}" onchange="wtRows[${i}].dt=this.value"></td>
+      <td><input type="text" value="${r.P!==null?r.P:''}" onchange="wtRows[${i}].P=this.value"></td>
+      <td class="rowdel" onclick="deleteWtRow(${i})">✕</td>
+    </tr>`).join('');
+}
+function addWtRow(){ wtRows.push(newWtRow(null,null)); renderWtInputTable(); }
+function deleteWtRow(i){ wtRows.splice(i,1); renderWtInputTable(); }
+function clearWtData(){
+  wtRows = Array.from({length:8}, ()=>newWtRow(null,null));
+  renderWtInputTable();
+
+  // Clear all reservoir/fluid/well property fields
+  ['wt_pi','wt_q','wt_B','wt_mu','wt_h','wt_phi','wt_ct','wt_rw','wt_tp','wt_pwf0'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+
+  // Reset to Drawdown mode
+  setTestMode('Drawdown Test');
+
+  // Clear upload message and file input
+  const uploadMsg=document.getElementById('wtUploadMsg'); if(uploadMsg) uploadMsg.innerHTML='';
+  const fileInput=document.getElementById('wtFileUpload'); if(fileInput) fileInput.value='';
+
+  // Hide/reset results
+  document.getElementById('regionSelectCard').style.display='none';
+  document.getElementById('wtResultsWrap').style.display='none';
+  document.getElementById('wtAlerts').innerHTML='';
+  wtResultsState=null;
+}
+clearWtData();
+
+function handleWtFileUpload(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const msg = document.getElementById('wtUploadMsg');
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(l=>l.trim()!=='');
+      const headers = lines[0].split(',').map(h=>h.trim());
+      const colMap={};
+      headers.forEach(h=>{
+        const hu=h.toUpperCase();
+        if(['DT','TIME','DELTA_T','DT (HR)'].includes(hu)) colMap[h]='dt';
+        else if(['P','PRESSURE','PWF','PWS','P (PSIA)'].includes(hu)) colMap[h]='P';
+      });
+      const rows=[];
+      for(let i=1;i<lines.length;i++){
+        const vals=lines[i].split(',');
+        const obj={dt:null,P:null};
+        headers.forEach((h,idx)=>{ if(colMap[h]) obj[colMap[h]]=vals[idx]; });
+        if(obj.dt!==null && obj.P!==null) rows.push(obj);
+      }
+      if(rows.length>0){
+        wtRows = rows;
+        renderWtInputTable();
+        msg.innerHTML = `<span class="badge ok">✅ تم تحميل ${rows.length} صف بنجاح!</span>`;
+      } else {
+        msg.innerHTML = `<span class="badge warn">⚠️ الملف يجب أن يحتوي على أعمدة dt و P.</span>`;
+      }
+    } catch(ex){
+      msg.innerHTML = `<span class="badge warn">حدث خطأ أثناء قراءة الملف: ${ex.message}</span>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   EXAMPLE DATASETS — derivative-first synthetic construction.
+   Instead of building a noisy pressure curve and hoping the derivative
+   looks textbook, we construct the TARGET Bourdet derivative shape
+   directly (unit-slope early / flat middle / rising-or-falling late),
+   then integrate it analytically to get a physically consistent Δp(t).
+   This guarantees a clean, clearly-staged diagnostic plot and lets the
+   auto-region-suggestion algorithm find the true boundaries reliably.
+   ============================================================ */
+function setField(id,val){ const el=document.getElementById(id); if(el) el.value=val; }
+
+function buildStagedSeries(m, t1, t2, boundaryType, C0){
+  const Dmid = m/2.302585093; // flat middle-region derivative level (natural-log basis)
+  const A = Dmid/t1;          // early unit-slope coefficient: deriv(t)=A*t, matches Dmid exactly at t1
+  function derivAt(t){
+    if(t < t1) return A*t;
+    if(t < t2) return Dmid;
+    const x = (t-t2)/t2;
+    if(boundaryType==='fault') return Dmid*(1+1.3*x);
+    return Dmid*Math.max(0.15, 1-0.85*x); // aquifer support: derivative declines, floored to stay positive
+  }
+  // numerically integrate derivative d(ln t) on a fine log-spaced grid, then interpolate
+  const tMin = t1/50, tMax = t2*20;
+  const N = 3000;
+  const lnMin = Math.log(tMin), lnMax = Math.log(tMax);
+  const grid = Array.from({length:N}, (_,i)=> Math.exp(lnMin + (lnMax-lnMin)*i/(N-1)));
+  const dp = [A*grid[0]];
+  for(let i=1;i<N;i++){
+    const dln = Math.log(grid[i])-Math.log(grid[i-1]);
+    const avgDeriv = (derivAt(grid[i])+derivAt(grid[i-1]))/2;
+    dp.push(dp[i-1] + avgDeriv*dln);
+  }
+  // Closed-form offset: shifts the whole curve (zero effect on the derivative, since it's a constant)
+  // so that the middle-region line, extrapolated to t=1hr, passes exactly through the target C0 —
+  // i.e. through the skin factor implied by (k, S, phi, mu, ct, rw). This is what makes the recovered
+  // S from the example match the intended target value.
+  const offset = C0 - Dmid + m*Math.log10(t1);
+  function interp(t){
+    let lo=0, hi=N-1;
+    while(hi-lo>1){ const mid=(lo+hi)>>1; if(grid[mid]<t) lo=mid; else hi=mid; }
+    const f=(Math.log(t)-Math.log(grid[lo]))/(Math.log(grid[hi])-Math.log(grid[lo]));
+    return dp[lo] + f*(dp[hi]-dp[lo]) + offset;
+  }
+  return {interp, Dmid};
+}
+function logSpacedTimes(tMin, tMax, n){
+  const lnMin=Math.log(tMin), lnMax=Math.log(tMax);
+  return Array.from({length:n}, (_,i)=> Math.exp(lnMin + (lnMax-lnMin)*i/(n-1)));
+}
+
+function loadDummyDrawdown(){
+  const k=80.0, S=-2.0;
+  const phi=0.18, ct=1.2e-5, h=25.0, mu=1.0, B=1.1, q=300.0, rw=0.328, pi=3800.0;
+  const m = 162.6*q*B*mu/(k*h);
+  const C0 = m*(Math.log10(k/(phi*mu*ct*rw*rw)) - 3.23 + 0.87*S);
+  const t1=1.0, t2=24.0;
+  const model = buildStagedSeries(m, t1, t2, 'fault', C0);
+  const ts = logSpacedTimes(0.05, 72, 24).map(t=>Math.round(t*1000)/1000);
+  const rng=mulberry32(42), gauss=makeGaussian(rng);
+  const Pwf = ts.map(t=>{
+    const dp = model.interp(t) + gauss(0, Math.max(0.06, 0.003*model.interp(t)));
+    return Math.round((pi-dp)*100)/100;
+  });
+  wtRows = ts.map((t,i)=>newWtRow(t,Pwf[i]));
+  renderWtInputTable();
+  setTestMode('Drawdown Test');
+  setField('wt_pi',pi); setField('wt_q',q); setField('wt_B',B); setField('wt_mu',mu);
+  setField('wt_h',h); setField('wt_phi',phi); setField('wt_ct',ct); setField('wt_rw',rw);
+  document.getElementById('regionSelectCard').style.display='none';
+  document.getElementById('wtResultsWrap').style.display='none';
+  wtResultsState=null;
+}
+
+function loadDummyBuildup(){
+  const k=50.0, S=5.0;
+  const phi=0.20, ct=1.5e-5, h=30.0, mu=1.5, B=1.2, q=400.0, rw=0.30, pi=4500.0, tp=300.0;
+  const m = 162.6*q*B*mu/(k*h);
+  const C0 = m*(Math.log10(k/(phi*mu*ct*rw*rw)) - 3.23 + 0.87*S);
+  const t1=0.5, t2=20.0;
+  const model = buildStagedSeries(m, t1, t2, 'fault', C0);
+  const Pwf0 = pi - (m*Math.log10(tp)+C0);
+  const dts = logSpacedTimes(0.1, 48, 22).map(t=>Math.round(t*1000)/1000);
+  const rng=mulberry32(7), gauss=makeGaussian(rng);
+  const pws = dts.map(dt=>{
+    const dp = model.interp(dt) + gauss(0, Math.max(0.06, 0.003*model.interp(dt)));
+    return Math.round((Pwf0+dp)*100)/100;
+  });
+  wtRows = dts.map((dt,i)=>newWtRow(dt,pws[i]));
+  renderWtInputTable();
+  setTestMode('Buildup Test');
+  setField('wt_pi',pi); setField('wt_q',q); setField('wt_B',B); setField('wt_mu',mu);
+  setField('wt_h',h); setField('wt_phi',phi); setField('wt_ct',ct); setField('wt_rw',rw);
+  setField('wt_tp',tp); setField('wt_pwf0', Math.round(Pwf0*100)/100);
+  document.getElementById('regionSelectCard').style.display='none';
+  document.getElementById('wtResultsWrap').style.display='none';
+  wtResultsState=null;
+}
+
+function loadDummyAquifer(){
+  const k=65.0, S=1.0;
+  const phi=0.22, ct=1.0e-5, h=40.0, mu=0.9, B=1.15, q=350.0, rw=0.35, pi=5200.0, tp=250.0;
+  const m = 162.6*q*B*mu/(k*h);
+  const C0 = m*(Math.log10(k/(phi*mu*ct*rw*rw)) - 3.23 + 0.87*S);
+  const t1=0.3, t2=15.0;
+  const model = buildStagedSeries(m, t1, t2, 'aquifer', C0);
+  const Pwf0 = pi - (m*Math.log10(tp)+C0);
+  const dts = logSpacedTimes(0.05, 42, 22).map(t=>Math.round(t*1000)/1000);
+  const rng=mulberry32(19), gauss=makeGaussian(rng);
+  const pws = dts.map(dt=>{
+    const dp = model.interp(dt) + gauss(0, Math.max(0.06, 0.003*model.interp(dt)));
+    return Math.round((Pwf0+dp)*100)/100;
+  });
+  wtRows = dts.map((dt,i)=>newWtRow(dt,pws[i]));
+  renderWtInputTable();
+  setTestMode('Buildup Test');
+  setField('wt_pi',pi); setField('wt_q',q); setField('wt_B',B); setField('wt_mu',mu);
+  setField('wt_h',h); setField('wt_phi',phi); setField('wt_ct',ct); setField('wt_rw',rw);
+  setField('wt_tp',tp); setField('wt_pwf0', Math.round(Pwf0*100)/100);
+  document.getElementById('regionSelectCard').style.display='none';
+  document.getElementById('wtResultsWrap').style.display='none';
+  wtResultsState=null;
+}
+
+/* ============================================================
+   MAIN CALCULATE HANDLER
+   ============================================================ */
+function readInputsRaw(){
+  return {
+    pi:document.getElementById('wt_pi').value, q:document.getElementById('wt_q').value,
+    B:document.getElementById('wt_B').value, mu:document.getElementById('wt_mu').value,
+    h:document.getElementById('wt_h').value, phi:document.getElementById('wt_phi').value,
+    ct:document.getElementById('wt_ct').value, rw:document.getElementById('wt_rw').value,
+    tp:document.getElementById('wt_tp').value, pwf0:document.getElementById('wt_pwf0').value
+  };
+}
+function calcWellTest(){
+  const raw = readInputsRaw();
+  const pi=parseFloatSafe(raw.pi), q=parseFloatSafe(raw.q), B=parseFloatSafe(raw.B), mu=parseFloatSafe(raw.mu);
+  const h=parseFloatSafe(raw.h), phi=parseFloatSafe(raw.phi), ct=parseFloatSafe(raw.ct), rw=parseFloatSafe(raw.rw);
+  const tp = testMode==='Buildup Test' ? parseFloatSafe(raw.tp) : null;
+  const pwf0 = testMode==='Buildup Test' ? parseFloatSafe(raw.pwf0) : null;
+
+  const rows = wtRows.map(r=>({dt:parseFloatSafe(r.dt,NaN), P:parseFloatSafe(r.P,NaN)})).filter(r=>!isNaN(r.dt) && !isNaN(r.P) && r.dt>0);
+  if(rows.length<3){ alert('الرجاء إدخال 3 نقاط بيانات صالحة على الأقل (dt > 0).'); return; }
+  if([pi,q,B,mu,h,phi,ct,rw].includes(null)){ alert('الرجاء إدخال جميع خصائص المكمن والموائع بشكل صحيح.'); return; }
+  if(testMode==='Buildup Test' && (tp===null || pwf0===null)){ alert('الرجاء إدخال tp و Pwf عند الإغلاق لاختبار Buildup.'); return; }
+
+  wtResultsState = {rows, mode:testMode, pi,q,B,mu,h,phi,ct,rw,tp,pwf0, raw};
+
+  // compute derivative with a neutral region just to auto-suggest
+  const dtArr = rows.map(r=>r.dt);
+  const dpTmp = testMode==='Buildup Test' ? rows.map(r=>r.P-pwf0) : rows.map(r=>pi-r.P);
+  const sortedIdx = rows.map((r,i)=>i).sort((a,b)=>dtArr[a]-dtArr[b]);
+  const dtSorted = sortedIdx.map(i=>dtArr[i]), dpSorted = sortedIdx.map(i=>dpTmp[i]);
+  const derivTmp = bourdetDerivative(dtSorted, dpSorted);
+  const [sugEarly, sugLate] = suggestRegions(dtSorted, derivTmp);
+
+  const dtMin = Math.min(...dtArr), dtMax = Math.max(...dtArr);
+  const sliderEarly = document.getElementById('sliderEarly');
+  const sliderLate = document.getElementById('sliderLate');
+  sliderEarly.min = dtMin; sliderEarly.max = dtMax; sliderEarly.value = sugEarly;
+  sliderLate.min = dtMin; sliderLate.max = dtMax; sliderLate.value = sugLate;
+  document.getElementById('regionSelectCard').style.display='block';
+
+  runAndRender();
+}
+
+function autoSuggestRegions(){
+  if(!wtResultsState) return;
+  const {rows, mode, pi, pwf0} = wtResultsState;
+  const dtArr = rows.map(r=>r.dt);
+  const dpTmp = mode==='Buildup Test' ? rows.map(r=>r.P-pwf0) : rows.map(r=>pi-r.P);
+  const sortedIdx = rows.map((r,i)=>i).sort((a,b)=>dtArr[a]-dtArr[b]);
+  const dtSorted = sortedIdx.map(i=>dtArr[i]), dpSorted = sortedIdx.map(i=>dpTmp[i]);
+  const derivTmp = bourdetDerivative(dtSorted, dpSorted);
+  const [sugEarly, sugLate] = suggestRegions(dtSorted, derivTmp);
+  document.getElementById('sliderEarly').value = sugEarly;
+  document.getElementById('sliderLate').value = sugLate;
+  runAndRender();
+}
+
+document.getElementById('sliderEarly').addEventListener('input', runAndRender);
+document.getElementById('sliderLate').addEventListener('input', runAndRender);
+
+function runAndRender(){
+  if(!wtResultsState) return;
+  const {rows, mode, pi,q,B,mu,h,phi,ct,rw,tp,pwf0} = wtResultsState;
+  let earlyEnd = parseFloat(document.getElementById('sliderEarly').value);
+  let lateStart = parseFloat(document.getElementById('sliderLate').value);
+  if(lateStart <= earlyEnd) lateStart = earlyEnd + 1e-6;
+  document.getElementById('sliderEarlyVal').textContent = fmt(earlyEnd,2);
+  document.getElementById('sliderLateVal').textContent = fmt(lateStart,2);
+
+  const res = runAnalysis(rows, mode, pi,q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart);
+  wtResultsState.res = res;
+  wtResultsState.earlyEnd = earlyEnd;
+  wtResultsState.lateStart = lateStart;
+
+  document.getElementById('wtResultsWrap').style.display='block';
+  const alerts = document.getElementById('wtAlerts');
+
+  if(!res.valid){
+    alerts.innerHTML = `<div class="badge warn">⚠️ ${res.msg}</div>`;
+    document.getElementById('diagPlot').innerHTML='';
+    document.getElementById('semiPlot').innerHTML='';
+    document.getElementById('wtResultsTable').innerHTML='';
+    document.getElementById('wtQualityTag').textContent='—';
+    return;
+  }
+
+  const engineeringOk = res.r_squared>=0.95 && res.k>0;
+  document.getElementById('wtQualityTag').textContent = engineeringOk ? '✅ Strong Fit' : '⚠️ Review Fit';
+  alerts.innerHTML = engineeringOk
+    ? `<div class="badge ok">✅ ENGINEERING CHECK: Regression fit is strong (R² ≥ 0.95) and k is physical.</div>`
+    : `<div class="badge warn">⚠️ ENGINEERING ALERT: Weak regression fit or non-physical k — review region selection.</div>`;
+
+  document.getElementById('o_wt_k').textContent = fmt(res.k,1);
+  document.getElementById('o_wt_s').textContent = fmt(res.S,2);
+  const sEl = document.getElementById('o_wt_s'); sEl.className = 'rval ' + (res.S<3 ? '' : 'bad');
+  document.getElementById('o_wt_pstar_label').textContent = mode==='Buildup Test' ? 'P* (psia)' : 'Pi (psia)';
+  document.getElementById('o_wt_pstar').textContent = fmt(mode==='Buildup Test' ? res.P_star : pi, 0);
+  document.getElementById('o_wt_fe').textContent = fmt(res.FE,2);
+  const feEl = document.getElementById('o_wt_fe'); feEl.className = 'rval ' + (res.FE>=0.7 ? 'gold' : 'bad');
+  document.getElementById('o_wt_r2').textContent = fmt(res.r_squared,4);
+  document.getElementById('o_wt_dpskin').textContent = fmt(res.dP_skin,2);
+  document.getElementById('o_wt_rwa').textContent = fmt(res.rwa,4);
+  document.getElementById('o_wt_cs').textContent = res.Cs!==null ? fmt(res.Cs,4) + ` (n=${res.Cs_n})` : '—';
+
+  const pstarNote = document.getElementById('wtPstarNote');
+  if(mode==='Buildup Test'){
+    pstarNote.innerHTML = `<div class="badge" style="background:rgba(201,162,39,0.1); color:#8a6d10; border:1px solid var(--gold-dim);">ℹ️ P* هو ضغط استقراء الخط شبه اللوغاريتمي إلى Horner ratio = 1، وهو <b>يساوي</b> متوسط ضغط المكمن الفعلي فقط في مكمن جديد غير مُستنزف. في مكمن مُستنزف جزئيًا، الاعتماد على P* مباشرة كمتوسط ضغط دون تصحيح (طريقة MBH أو Muskat المعدّلة) قد يعطي قيمة مبالغًا فيها.</div>`;
+  } else {
+    pstarNote.innerHTML='';
+  }
+  document.getElementById('o_wt_rinv').textContent = fmt(res.r_investigation,1);
+  document.getElementById('o_wt_npts').textContent = res.n_pts;
+
+  renderDiagnosticPlot(res);
+  renderSemilogPlot(res, mode, tp);
+  renderReservoirLimits(res, mode, tp, phi, mu, ct);
+  renderResultsTable(res);
+  renderMDHCompare(res, mode, rows, q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart);
+}
+
+function renderMDHCompare(res, mode, rows, q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart){
+  const wrap = document.getElementById('wtMdhCompareWrap');
+  const on = mode==='Buildup Test' && document.getElementById('wt_compareMDH') && document.getElementById('wt_compareMDH').checked;
+  if(!on || !res.valid){ wrap.style.display='none'; return; }
+
+  const mdh = runMDHCompare(rows, q,B,mu,h,phi,ct,rw,tp,pwf0, earlyEnd, lateStart);
+  if(!mdh.valid){ wrap.style.display='block'; document.getElementById('wtMdhCompareBody').innerHTML = `<tr><td colspan="4">${mdh.msg}</td></tr>`; return; }
+
+  const pctK = 100*(mdh.k-res.k)/res.k;
+  const validityNote = mdh.validity_ratio>=10
+    ? `<span class="badge ok">✅ الشرط tp ≫ Δt متحقق (النسبة ${mdh.validity_ratio.toFixed(1)}) — يُتوقع تقارب جيد بين الطريقتين.</span>`
+    : `<span class="badge warn">⚠️ النسبة tp/Δt_max = ${mdh.validity_ratio.toFixed(2)} صغيرة نسبيًا — يُتوقع انحراف ملحوظ بين Horner وMDH (راجع صفحة الشرح).</span>`;
+
+  document.getElementById('wtMdhCompareBody').innerHTML = `
+    <tr><td>Slope, m</td><td>${fmt(res.m,3)}</td><td>${fmt(mdh.m,3)}</td><td>${fmt(100*(mdh.m-res.m)/res.m,1)}%</td></tr>
+    <tr><td>Permeability, k (md)</td><td>${fmt(res.k,1)}</td><td>${fmt(mdh.k,1)}</td><td>${fmt(pctK,1)}%</td></tr>
+    <tr><td>Skin, S</td><td>${fmt(res.S,2)}</td><td>${fmt(mdh.S,2)}</td><td>${fmt(res.S!==0?100*(mdh.S-res.S)/Math.abs(res.S):0,1)}%</td></tr>
+    <tr><td>R²</td><td>${fmt(res.r_squared,4)}</td><td>${fmt(mdh.r_squared,4)}</td><td>—</td></tr>`;
+  document.getElementById('wtMdhValidityNote').innerHTML = validityNote;
+  wrap.style.display='block';
+}
+
+function computeReservoirLimits(res, mode, tp, phi, mu, ct){
+  const df = res.df;
+  const lateIdx = df.map((r,i)=>i).filter(i=>df[i].dt>=res.late_start);
+  if(lateIdx.length<2) return {valid:false, msg:'نقاط غير كافية في المنطقة المتأخرة (Late Region) لتحليل الحدود — وسّع نطاق المنطقة المتأخرة من الشريط أعلاه.'};
+  const xLate = lateIdx.map(i=>df[i].x_plot), yLate = lateIdx.map(i=>df[i].P);
+  const {slope:slopeLate, intercept:interceptLate} = linfit(xLate,yLate);
+  const mLate = Math.abs(slopeLate);
+  const ratio = mLate/res.m;
+
+  // Intersection of the MTR line (slope,intercept) and the LTR line (slopeLate,interceptLate)
+  if(Math.abs(res.slope-slopeLate)<1e-9) return {valid:false, msg:'الخطان متوازيان تقريبًا — لا يمكن تحديد نقطة تقاطع واضحة.'};
+  const xInter = (interceptLate-res.intercept)/(res.slope-slopeLate);
+  let dtX;
+  if(mode==='Buildup Test'){
+    const ratio10 = Math.pow(10, xInter);
+    if(ratio10<=1) return {valid:false, msg:'نقطة التقاطع المحسوبة غير فيزيائية (خارج نطاق البيانات) — تحقق من حدود المناطق المختارة.'};
+    dtX = tp/(ratio10-1);
+  } else {
+    dtX = Math.pow(10, xInter);
+  }
+  if(!isFinite(dtX) || dtX<=0) return {valid:false, msg:'تعذر حساب زمن تقاطع فيزيائي صالح.'};
+
+  const L = Math.sqrt(0.000148*res.k*dtX/(phi*mu*ct));
+  const slopeDoubled = ratio>=1.5 && ratio<=2.7;
+  return {valid:true, mLate, ratio, dtX, L, slopeDoubled, n_late_pts:lateIdx.length};
+}
+
+
+function regionShapes(dtMin, dtMax, earlyEnd, lateStart){
+  return [
+    {type:'rect', xref:'x', yref:'paper', x0:dtMin, x1:earlyEnd, y0:0, y1:1, fillcolor:REGION_EARLY, line:{width:0}},
+    {type:'rect', xref:'x', yref:'paper', x0:earlyEnd, x1:lateStart, y0:0, y1:1, fillcolor:REGION_MIDDLE, line:{width:0}},
+    {type:'rect', xref:'x', yref:'paper', x0:lateStart, x1:dtMax, y0:0, y1:1, fillcolor:REGION_LATE, line:{width:0}},
+  ];
+}
+function regionAnnotations(dtMin, dtMax, earlyEnd, lateStart){
+  return [
+    {x:Math.sqrt(dtMin*earlyEnd), y:1.04, xref:'x', yref:'paper', text:'WELLBORE<br>STORAGE', showarrow:false, font:{size:10,color:'#B22222'}},
+    {x:Math.sqrt(earlyEnd*lateStart), y:1.04, xref:'x', yref:'paper', text:'RADIAL FLOW<br>(k, S)', showarrow:false, font:{size:10,color:'#1E8449'}},
+    {x:Math.sqrt(lateStart*dtMax), y:1.04, xref:'x', yref:'paper', text:'BOUNDARY<br>EFFECTS', showarrow:false, font:{size:10,color:'#B8860B'}},
+  ];
+}
+function buildDiagnosticFigure(res){
+  const df=res.df;
+  const dtMin=Math.min(...df.map(r=>r.dt)), dtMax=Math.max(...df.map(r=>r.dt));
+  // Unit-slope (45°) reference line, anchored to the earliest data point — Fig. 2.10/2.12 diagnostic
+  const anchor = df.slice().sort((a,b)=>a.dt-b.dt)[0];
+  const unitSlopeXmax = Math.max(anchor.dt*1.05, Math.min(dtMax, res.early_end*2.2));
+  const unitSlopeX = [anchor.dt, unitSlopeXmax];
+  const unitSlopeY = unitSlopeX.map(x => anchor.dp_abs*(x/anchor.dt));
+  const data=[
+    {x:df.map(r=>r.dt), y:df.map(r=>r.dp_abs), mode:'lines+markers', name:'|ΔP|', line:{color:UNIFIED_COLOR,width:1.6}, marker:{size:6,color:UNIFIED_COLOR}},
+    {x:df.filter(r=>r.derivative>0).map(r=>r.dt), y:df.filter(r=>r.derivative>0).map(r=>r.derivative), mode:'lines+markers', name:'Bourdet Derivative', line:{color:DERIV_COLOR,width:1.6}, marker:{size:6,symbol:'square',color:DERIV_COLOR}},
+    {x:unitSlopeX, y:unitSlopeY, mode:'lines', name:'Unit Slope (45°) — Wellbore Storage', line:{color:'#888888',width:1.6,dash:'dot'}},
+  ];
+  // Explicitly bound both log axes to the actual data (avoids Plotly autorange blow-up with shapes/annotations)
+  const allY = df.map(r=>r.dp_abs).concat(df.filter(r=>r.derivative>0).map(r=>r.derivative)).concat(unitSlopeY).filter(v=>v>0 && isFinite(v));
+  const yMin = Math.min(...allY), yMax = Math.max(...allY);
+  const xRange = [Math.log10(dtMin*0.7), Math.log10(dtMax*1.4)];
+  const yRange = [Math.log10(yMin*0.6), Math.log10(yMax*1.6)];
+  const layout={
+    xaxis:{title:'Δt (hr) [log]', type:'log', range:xRange, autorange:false},
+    yaxis:{title:'ΔP and Derivative (psi) [log]', type:'log', range:yRange, autorange:false},
+    shapes:regionShapes(dtMin,dtMax,res.early_end,res.late_start),
+    annotations:regionAnnotations(dtMin,dtMax,res.early_end,res.late_start),
+    legend:{x:1, y:0, xanchor:'right', yanchor:'bottom'}, margin:{l:60,r:20,t:50,b:50}, height:480
+  };
+  return {data,layout};
+}
+function renderDiagnosticPlot(res){
+  const {data,layout} = buildDiagnosticFigure(res);
+  Plotly.newPlot(document.getElementById('diagPlot'), data, layout, {responsive:true, displaylogo:false});
+}
+
+function buildSemilogFigure(res, mode, tp){
+  const df=res.df;
+  const maskedX = df.filter(r=>r.dt>res.early_end && r.dt<res.late_start).map(r=>r.x_plot);
+  const excludedX = df.filter(r=>!(r.dt>res.early_end && r.dt<res.late_start)).map(r=>r.x_plot);
+  const excludedY = df.filter(r=>!(r.dt>res.early_end && r.dt<res.late_start)).map(r=>r.P);
+  const maskedY = df.filter(r=>r.dt>res.early_end && r.dt<res.late_start).map(r=>r.P);
+  const xAll = df.map(r=>r.x_plot);
+  const xMin=Math.min(...xAll), xMax=Math.max(...xAll);
+  const xRange=[]; for(let i=0;i<=50;i++) xRange.push(xMin+(xMax-xMin)*i/50);
+  const yFullFit = xRange.map(x=>res.slope*x+res.intercept);
+  const xFitOnly = maskedX.length>0 ? (()=>{ const mn=Math.min(...maskedX), mx=Math.max(...maskedX); const arr=[]; for(let i=0;i<=20;i++) arr.push(mn+(mx-mn)*i/20); return arr; })() : [];
+  const yFitOnly = xFitOnly.map(x=>res.slope*x+res.intercept);
+
+  const data=[
+    {x:excludedX, y:excludedY, mode:'markers', name:'Excluded', marker:{size:8,color:'#999999',line:{color:'white',width:0.6}}},
+    {x:maskedX, y:maskedY, mode:'markers', name:'Radial Flow (used)', marker:{size:8,color:'#2ECC71',line:{color:'white',width:0.6}}},
+    {x:xRange, y:yFullFit, mode:'lines', name:'Fitted line (extrapolated)', line:{color:UNIFIED_COLOR,width:2,dash:'dash'}},
+    {x:xFitOnly, y:yFitOnly, mode:'lines', name:'Fit range', line:{color:UNIFIED_COLOR,width:3.4}, showlegend:false},
+  ];
+  const xlabel = mode==='Buildup Test' ? 'log10[(tp+Δt)/Δt]  (Horner)' : 'log10(Δt)';
+
+  // Region shading — Horner x decreases with Δt, while log10(Δt) increases with Δt, so
+  // we compute each boundary's x-coordinate directly and sort min/max per rectangle.
+  const dtMin = Math.min(...df.map(r=>r.dt)), dtMax = Math.max(...df.map(r=>r.dt));
+  const xOf = dt => mode==='Buildup Test' ? Math.log10((tp+dt)/dt) : Math.log10(dt);
+  const xB = [xOf(dtMin), xOf(res.early_end), xOf(res.late_start), xOf(dtMax)];
+  const shapes = [
+    {type:'rect', xref:'x', yref:'paper', x0:Math.min(xB[0],xB[1]), x1:Math.max(xB[0],xB[1]), y0:0, y1:1, fillcolor:REGION_EARLY, line:{width:0}, layer:'below'},
+    {type:'rect', xref:'x', yref:'paper', x0:Math.min(xB[1],xB[2]), x1:Math.max(xB[1],xB[2]), y0:0, y1:1, fillcolor:REGION_MIDDLE, line:{width:0}, layer:'below'},
+    {type:'rect', xref:'x', yref:'paper', x0:Math.min(xB[2],xB[3]), x1:Math.max(xB[2],xB[3]), y0:0, y1:1, fillcolor:REGION_LATE, line:{width:0}, layer:'below'},
+  ];
+  const annotations = [
+    {x:(xB[0]+xB[1])/2, y:1.04, xref:'x', yref:'paper', text:'ETR', showarrow:false, font:{size:10,color:'#B22222'}},
+    {x:(xB[1]+xB[2])/2, y:1.04, xref:'x', yref:'paper', text:'MTR', showarrow:false, font:{size:10,color:'#1E8449'}},
+    {x:(xB[2]+xB[3])/2, y:1.04, xref:'x', yref:'paper', text:'LTR', showarrow:false, font:{size:10,color:'#B8860B'}},
+  ];
+
+  const layout={
+    xaxis:{title:xlabel, autorange: mode==='Buildup Test' ? 'reversed' : true},
+    yaxis:{title:'Pressure (psia)'},
+    title:{text:'Semilog Analysis' + (mode==='Buildup Test' ? ' — Horner Plot':' — MDH Plot'), font:{size:13}},
+    shapes, annotations,
+    legend:{x:0,y:1}, margin:{l:60,r:20,t:50,b:50}, height:480
+  };
+  return {data,layout};
+}
+function renderSemilogPlot(res, mode, tp){
+  const {data,layout} = buildSemilogFigure(res, mode, tp);
+  Plotly.newPlot(document.getElementById('semiPlot'), data, layout, {responsive:true, displaylogo:false});
+}
+
+function renderReservoirLimits(res, mode, tp, phi, mu, ct){
+  const wrap = document.getElementById('reservoirLimitsBody');
+  const rl = computeReservoirLimits(res, mode, tp, phi, mu, ct);
+  if(!rl.valid){
+    wrap.innerHTML = `<div class="badge" style="background:rgba(133,147,160,0.12); color:var(--muted); border:1px solid var(--card-border);">ℹ️ ${rl.msg}</div>`;
+    return;
+  }
+  const badge = rl.slopeDoubled
+    ? `<div class="badge ok">✅ سلوك متسق مع حد صدّي واحد (Sealing Fault) — نسبة الميل m_late/m ≈ ${fmt(rl.ratio,2)} (قريبة من 2)</div>`
+    : `<div class="badge" style="background:rgba(201,162,39,0.1); color:#8a6d10; border:1px solid var(--gold-dim);">⚠️ نسبة الميل m_late/m ≈ ${fmt(rl.ratio,2)} — ليست قريبة بما يكفي من 2 لتأكيد حد صدّي بسيط بثقة (قد يكون الحد أكثر تعقيدًا، أو دعم مائي، أو نطاق متأخر غير كافٍ)</div>`;
+  wrap.innerHTML = `
+    ${badge}
+    <div class="result-grid" style="margin-top:12px;">
+      <div class="rstat" style="background:#fbfaf6; border-color:var(--card-border);"><div class="rlabel" style="color:var(--muted)">Late-Region Slope, m_late</div><div class="rval" style="color:var(--ink)">${fmt(rl.mLate,2)}</div></div>
+      <div class="rstat" style="background:#fbfaf6; border-color:var(--card-border);"><div class="rlabel" style="color:var(--muted)">m_late / m</div><div class="rval" style="color:var(--ink)">${fmt(rl.ratio,2)}</div></div>
+      <div class="rstat" style="background:#fbfaf6; border-color:var(--card-border);"><div class="rlabel" style="color:var(--muted)">Intersection Time, Δtx</div><div class="rval" style="color:var(--ink)">${fmt(rl.dtX,2)}</div><span class="runit" style="color:var(--muted)">hr</span></div>
+      <div class="rstat highlight"><div class="rlabel">Estimated Distance to Boundary, L</div><div class="rval gold">${fmt(rl.L,0)}</div><span class="runit">ft</span></div>
+    </div>
+    <div class="learn-intro" style="margin-top:12px; font-size:11.5px;">هذا تقدير تقريبي (Eq. 2.29) يفترض حدًا صديًا مستقيمًا واحدًا فقط، ويُستخدم كمؤشر أولي — وليس بديلًا عن تحليل منحنيات نموذجية (Type-Curve Matching) لتأكيد نوع وهندسة الحد الفعلي.</div>
+  `;
+}
+
+function renderResultsTable(res){
+  const table=document.getElementById('wtResultsTable');
+  const regionClass = r => r.region.startsWith('Early') ? 'region-early' : (r.region.startsWith('Late') ? 'region-late' : 'region-middle');
+  table.innerHTML = `<thead><tr><th>dt (hr)</th><th>P (psia)</th><th>ΔP (psi)</th><th>Derivative</th><th>Flow Regime</th></tr></thead>
+    <tbody>${res.df.map(r=>`<tr class="${regionClass(r)}"><td class="mono">${fmt(r.dt,2)}</td><td class="mono">${fmt(r.P,2)}</td><td class="mono">${fmt(r.dp,2)}</td><td class="mono">${fmt(r.derivative,2)}</td><td class="mono">${r.region.split(' (')[0]}</td></tr>`).join('')}</tbody>`;
+}
+
+/* ============================================================
+   EXPORT — CSV / EXCEL
+   ============================================================ */
+function exportWtCSV(){
+  if(!wtResultsState || !wtResultsState.res || !wtResultsState.res.valid) return;
+  const cols=['dt','P','dp','derivative','region'];
+  let csv = cols.join(',')+'\n';
+  wtResultsState.res.df.forEach(r=>{ csv += cols.map(c=>r[c]).join(',')+'\n'; });
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob); link.download='well_test_results.csv'; link.target='_blank'; link.click();
+}
+function exportWtExcel(){
+  if(!wtResultsState || !wtResultsState.res || !wtResultsState.res.valid) return;
+  const ws = XLSX.utils.json_to_sheet(wtResultsState.res.df);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Results');
+  XLSX.writeFile(wb, 'well_test_results.xlsx');
+}
+
+/* ============================================================
+   FORMULA REFERENCE (KaTeX)
+   ============================================================ */
+function getEquationSet(mode){
+  const eqs = [];
+  if(mode==='Buildup Test'){
+    eqs.push(['Horner Buildup Equation', "P_{ws}(\\Delta t) = P^{*} - m\\,\\log_{10}\\!\\left(\\dfrac{t_p+\\Delta t}{\\Delta t}\\right)"]);
+  } else {
+    eqs.push(['Drawdown (MDH) Equation', "P_{wf}(t) = P_i - m\\log_{10}(t) - m\\left[\\log_{10}\\!\\left(\\dfrac{k}{\\phi\\mu c_t r_w^2}\\right) - 3.23 + 0.87S\\right]"]);
+  }
+  eqs.push(['Permeability from the semilog slope m', "k = \\dfrac{162.6\\,qB\\mu}{m\\,h}"]);
+  if(mode==='Buildup Test'){
+    eqs.push(['Skin Factor', "S = 1.151\\left[\\dfrac{P_{1hr}-P_{wf}(\\Delta t{=}0)}{m} - \\log_{10}\\!\\left(\\dfrac{k}{\\phi\\mu c_t r_w^2}\\right) + 3.23\\right]"]);
+  } else {
+    eqs.push(['Skin Factor', "S = 1.151\\left[\\dfrac{P_i - P_{1hr}}{m} - \\log_{10}\\!\\left(\\dfrac{k}{\\phi\\mu c_t r_w^2}\\right) + 3.23\\right]"]);
+  }
+  eqs.push(['Additional Pressure Drop Due to Skin & Flow Efficiency', "\\Delta P_{skin} = 0.87\\,m\\,S \\qquad FE = \\dfrac{P_i - P_{wf} - \\Delta P_{skin}}{P_i - P_{wf}}"]);
+  eqs.push(['Radius of Investigation', "r_{inv}(t) = \\sqrt{\\dfrac{k\\,t}{948\\,\\phi\\mu c_t}}"]);
+  eqs.push(['Bourdet Derivative (log-log diagnostic)', "\\left(\\dfrac{dP}{d\\ln \\Delta t}\\right)_i = \\dfrac{w_2 d_1 + w_1 d_2}{w_1+w_2}"]);
+  return eqs;
+}
+function renderFormulaPanel(){
+  const eqs = getEquationSet(testMode);
+  let html = `<div class="formula-panel"><div class="fp-title">${testMode} — Equations</div>`;
+  eqs.forEach(([name,tex])=>{
+    html += `<div style="font-size:11.5px; color:var(--muted); margin-top:10px; font-weight:600;">${name}</div>`;
+    html += `<div class="fp-eq"><span class="katex-eq" data-tex="${encodeURIComponent(tex)}"></span></div>`;
+  });
+  html += `</div>`;
+  document.getElementById('wtFormulaPanel').innerHTML = html;
+  renderKatexIn(document.getElementById('wtFormulaPanel'));
+}
+function renderKatexIn(container){
+  if(typeof katex==='undefined'){ setTimeout(()=>renderKatexIn(container),150); return; }
+  container.querySelectorAll('.katex-eq').forEach(el=>{
+    const tex=decodeURIComponent(el.dataset.tex);
+    try{ katex.render(tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent=tex; }
+  });
+}
+
+/* ============================================================
+   GLOSSARY
+   ============================================================ */
+const WT_GLOSSARY = [
+  {term:'ΔP (Delta P)', ar:'التغيّر في الضغط', text:'الفرق بين الضغط الحالي وضغط المرجع: (Pi − Pwf) في Drawdown، أو (Pws − Pwf عند الإغلاق) في Buildup.', analogy:'مقدار "الهبوط" أو "التعافي" في الضغط منذ لحظة تغيير المعدل — هذا هو ما نرسمه فعليًا في المخطط التشخيصي.'},
+  {term:'Bourdet Derivative', ar:'مشتقة بوردي', text:'مشتقة ΔP بالنسبة لِـ ln(Δt)، محسوبة بنافذة ثلاث نقاط لتقليل حساسيتها للضوضاء. هي "بصمة الإصبع" لكل نظام جريان.', analogy:'إذا كان ΔP يخبرك "كم انخفض الضغط؟"، فالمشتقة تخبرك "بأي معدل يتغيّر الانخفاض؟" — وهذا أكثر حساسية لاكتشاف التغيرات الدقيقة في سلوك المكمن.'},
+  {term:'Semilog Slope, m', ar:'الميل شبه اللوغاريتمي', text:'ميل الخط المستقيم عند رسم الضغط مقابل log(الزمن) أو log(زمن Horner) ضمن منطقة الجريان القطري فقط — المصدر المباشر لحساب النفاذية k.', analogy:'كلما كانت الصخرة أقل نفاذية، كان الضغط أكثر "مقاومة" للتغيّر، فيصبح الميل m أكبر (أكثر انحدارًا).'},
+  {term:'Permeability, k', ar:'النفاذية', text:'مدى سهولة تدفق الموائع عبر الشبكة المسامية للصخر، بوحدة الميلي دارسي (md). تُحسب مباشرة من الميل m.', analogy:'مثل قياس مدى سهولة تدفق الماء عبر إسفنجة — إسفنجة بمسامات كبيرة ومتصلة (نفاذية عالية) تسمح بتدفق أسرع من إسفنجة كثيفة.'},
+  {term:'Skin Factor, S', ar:'عامل السكِن', text:'مقياس لأي مقاومة إضافية (أو تحسّن) في التدفق عند المنطقة القريبة من البئر مباشرة، مقارنةً بالمكمن السليم. S موجب = ضرر (Damage)، S سالب = تحفيز (Stimulation).', analogy:'مثل طبقة طين انسدت بها مسام التربة حول أنبوب صرف مياه — تُبطئ التدفق بالقرب من الأنبوب فقط، دون أن تغيّر شيئًا في التربة البعيدة.'},
+  {term:'P* / Pi', ar:'الضغط الأصلي/المُستقرأ', text:'في Buildup: P* هو الضغط عند استقراء الخط المستقيم إلى Horner ratio = 1 (نظريًا زمن إغلاق لا نهائي) — أفضل تقدير لمتوسط ضغط المكمن. في Drawdown: Pi هو الضغط الأصلي المُدخَل مباشرة.', analogy:'تخيّل أنك تترك البئر مغلقًا "للأبد" — الضغط الذي سيستقر عليه نظريًا هو P*.'},
+  {term:'Flow Efficiency, FE', ar:'كفاءة الجريان', text:'نسبة الإنتاجية الفعلية للبئر إلى الإنتاجية "المثالية" لو لم يوجد أي سكِن إطلاقًا. FE = 1 يعني بئرًا سليمًا تمامًا؛ أقل من 0.7 يشير عادة لضرر يستحق المعالجة.', analogy:'مثل نسبة أداء محرك سيارة مقارنة بأدائه الأصلي دون أي انسداد في فلاتره.'},
+  {term:'Wellbore Storage', ar:'تخزين البئر', text:'في اللحظات الأولى بعد تغيير المعدل، يستمر السائل داخل أنبوب البئر نفسه بالتمدد أو الانضغاط قبل أن تبدأ استجابة المكمن الحقيقية بالظهور.', analogy:'مثل ضغطك على مكبس حقنة طبية مملوءة بالهواء قبل أن يصل الضغط فعليًا للسائل — هناك تأخير أولي يخفي الاستجابة الحقيقية.'},
+  {term:'IARF', ar:'الجريان القطري غير المحدود', text:'اختصار Infinite-Acting Radial Flow — المرحلة التي يتدفق فيها المائع بشكل قطري متماثل نحو البئر في مكمن يبدو (مؤقتًا) بلا حدود. هذه هي منطقة التحليل الصحيحة لحساب k وS.', analogy:'مثل موجة دائرية تتوسع في بركة هادئة دون أن تصطدم بحواف البركة بعد.'},
+  {term:'Horner Time', ar:'زمن Horner', text:'النسبة (tp+Δt)/Δt المستخدمة بدل Δt مباشرة في تحليل Buildup، لتصحيح أثر فترة الإنتاج السابقة (tp) على استجابة الضغط أثناء الإغلاق.', analogy:'حساب "الزمن الفعّال الكامل" منذ بدء الإنتاج، لا الزمن منذ الإغلاق فقط — لأن المكمن "يتذكر" فترة الإنتاج السابقة.'},
+  {term:'Radius of Investigation', ar:'نصف قطر الاستقصاء', text:'المسافة التقريبية التي وصلت إليها موجة الضغط داخل المكمن عند زمن معين — يزداد مع الزمن ومع النفاذية.', analogy:'مثل دائرة تتسع تدريجيًا حول حجر يُرمى في بركة — كلما مر وقت أطول، اتسعت الدائرة أكثر.'},
+];
+function renderWtGlossary(){
+  const grid=document.getElementById('wtGlossaryGrid');
+  grid.innerHTML = WT_GLOSSARY.map((g,i)=>`
+    <div class="gloss-card" id="wgc-${i}" onclick="toggleWtGloss(${i})">
+      <div class="gc-term">${g.term}</div>
+      <div class="gc-ar">${g.ar}</div>
+      <div class="gc-body">${g.text}<div class="gc-analogy">💡 ${g.analogy}</div></div>
+    </div>`).join('');
+}
+function toggleWtGloss(i){
+  const card=document.getElementById('wgc-'+i);
+  const wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.gloss-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen) card.classList.add('open');
+}
+renderWtGlossary();
+renderFormulaPanel();
+renderKatexIn(document.body);
+
+/* ============================================================
+   ILLUSTRATIVE SVG DIAGRAMS
+   ============================================================ */
+(function(){
+  document.getElementById('heroSvgWrap').innerHTML = `
+  <svg width="280" height="220" viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
+    <line x1="20" y1="170" x2="260" y2="170" stroke="#7488a0" stroke-width="1.5"/>
+    <text x="14" y="174" font-size="9" fill="#9db0c2" font-family="IBM Plex Mono" text-anchor="end">Pi</text>
+    <path d="M20,170 L120,170 L122,80 Q160,72 260,74" fill="none" stroke="#0072BD" stroke-width="2.6"/>
+    <path d="M20,170 L120,170 L122,80 Q140,76 160,74" fill="none" stroke="#fcf1ca" stroke-width="1.4" stroke-dasharray="1 5"/>
+    <line x1="122" y1="60" x2="122" y2="185" stroke="#f8de7e" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="122" y="198" font-size="9" fill="#fcf1ca" font-family="IBM Plex Mono" text-anchor="middle">shut-in</text>
+    <circle cx="122" cy="80" r="4" fill="#fff" stroke="#f8de7e" stroke-width="2"/>
+    <circle cx="260" cy="74" r="4" fill="#fff" stroke="#0072BD" stroke-width="2"/>
+    <text x="200" y="60" font-size="9" fill="#9db0c2" font-family="IBM Plex Mono">Pws(Δt)</text>
+  </svg>`;
+})();
+
+(function(){
+  const wrap = document.getElementById('rateHistoryWrap');
+  wrap.innerHTML = `
+  <svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" style="min-width:700px;">
+    <!-- DRAWDOWN PANEL -->
+    <text x="200" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#224347" font-family="Tajawal">Drawdown Test</text>
+    <!-- rate step -->
+    <line x1="40" y1="55" x2="200" y2="55" stroke="#8493a0" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M40,55 L200,55 L200,90 L360,90" fill="none" stroke="#224347" stroke-width="2.4"/>
+    <text x="30" y="59" font-size="9" text-anchor="end" fill="#5c6b78" font-family="IBM Plex Mono">0</text>
+    <text x="30" y="94" font-size="9" text-anchor="end" fill="#5c6b78" font-family="IBM Plex Mono">q</text>
+    <text x="200" y="105" font-size="9" text-anchor="middle" fill="#5c6b78" font-family="IBM Plex Mono">t=0</text>
+    <!-- pressure response -->
+    <line x1="40" y1="140" x2="360" y2="140" stroke="#dcded2" stroke-width="1"/>
+    <path d="M40,150 L200,150 L204,155 Q230,190 360,205" fill="none" stroke="#0072BD" stroke-width="2.6"/>
+    <text x="30" y="154" font-size="9" text-anchor="end" fill="#5c6b78" font-family="IBM Plex Mono">Pi</text>
+    <text x="365" y="209" font-size="9" fill="#0072BD" font-family="IBM Plex Mono">Pwf(t)</text>
+    <line x1="200" y1="145" x2="200" y2="215" stroke="#f8de7e" stroke-width="1" stroke-dasharray="4 3"/>
+
+    <line x1="450" y1="10" x2="450" y2="260" stroke="#e4e1d6" stroke-width="1.5"/>
+
+    <!-- BUILDUP PANEL -->
+    <text x="680" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#224347" font-family="Tajawal">Buildup Test</text>
+    <line x1="500" y1="90" x2="660" y2="90" stroke="#8493a0" stroke-width="1" stroke-dasharray="3 3"/>
+    <path d="M500,90 L660,90 L660,55 L820,55" fill="none" stroke="#224347" stroke-width="2.4"/>
+    <text x="490" y="94" font-size="9" text-anchor="end" fill="#5c6b78" font-family="IBM Plex Mono">q</text>
+    <text x="490" y="59" font-size="9" text-anchor="end" fill="#5c6b78" font-family="IBM Plex Mono">0</text>
+    <text x="500" y="105" font-size="9" text-anchor="middle" fill="#5c6b78" font-family="IBM Plex Mono">t=0</text>
+    <text x="660" y="105" font-size="9" text-anchor="middle" fill="#f8de7e" font-family="IBM Plex Mono">tp (shut-in)</text>
+    <!-- pressure response -->
+    <line x1="500" y1="140" x2="820" y2="140" stroke="#dcded2" stroke-width="1"/>
+    <path d="M500,150 L660,205 L664,200 Q690,165 820,152" fill="none" stroke="#0072BD" stroke-width="2.6"/>
+    <text x="820" y="148" font-size="9" fill="#0072BD" font-family="IBM Plex Mono" text-anchor="end">Pws(Δt) → P*</text>
+    <line x1="660" y1="145" x2="660" y2="215" stroke="#f8de7e" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="740" y="230" font-size="9" text-anchor="middle" fill="#5c6b78" font-family="IBM Plex Mono">Δt (since shut-in)</text>
+  </svg>`;
+})();
+
+(function(){
+  const wrap = document.getElementById('diagTypeCurveWrap');
+  wrap.innerHTML = `
+  <svg viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="min-width:700px;">
+    <rect x="70" y="20" width="150" height="360" fill="${REGION_EARLY}"/>
+    <rect x="220" y="20" width="330" height="360" fill="${REGION_MIDDLE}"/>
+    <rect x="550" y="20" width="260" height="360" fill="${REGION_LATE}"/>
+    <text x="145" y="14" text-anchor="middle" font-size="10.5" font-weight="700" fill="#B22222" font-family="IBM Plex Mono">WELLBORE STORAGE</text>
+    <text x="385" y="14" text-anchor="middle" font-size="10.5" font-weight="700" fill="#1E8449" font-family="IBM Plex Mono">RADIAL FLOW (k, S)</text>
+    <text x="680" y="14" text-anchor="middle" font-size="10.5" font-weight="700" fill="#B8860B" font-family="IBM Plex Mono">BOUNDARY EFFECTS</text>
+
+    <!-- log-log grid -->
+    <g stroke="#dcded2" stroke-width="1">
+      <line x1="70" y1="380" x2="810" y2="380"/><line x1="70" y1="290" x2="810" y2="290"/>
+      <line x1="70" y1="200" x2="810" y2="200"/><line x1="70" y1="110" x2="810" y2="110"/><line x1="70" y1="20" x2="810" y2="20"/>
+      <line x1="70" y1="20" x2="70" y2="380"/><line x1="220" y1="20" x2="220" y2="380"/><line x1="360" y1="20" x2="360" y2="380"/>
+      <line x1="500" y1="20" x2="500" y2="380"/><line x1="650" y1="20" x2="650" y2="380"/><line x1="810" y1="20" x2="810" y2="380"/>
+    </g>
+    <line x1="70" y1="380" x2="810" y2="380" stroke="#224347" stroke-width="1.6"/>
+    <line x1="70" y1="20" x2="70" y2="380" stroke="#224347" stroke-width="1.6"/>
+    <text x="440" y="405" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">Δt (hr)  [log]</text>
+    <text x="30" y="200" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono" transform="rotate(-90 30 200)">ΔP &amp; Derivative (psi)  [log]</text>
+
+    <!-- Delta P curve -->
+    <path d="M75,370 L150,270 Q190,220 220,205 Q320,155 420,140 Q560,120 650,90 Q730,72 805,55" fill="none" stroke="#0072BD" stroke-width="2.6"/>
+    <text x="812" y="55" font-size="10" fill="#0072BD" font-family="IBM Plex Mono">|ΔP|</text>
+
+    <!-- Derivative curve: unit slope, dip, flat, then rising (fault) OR falling (aquifer, dashed alt) -->
+    <path d="M75,370 L150,270 Q180,235 200,215 Q215,175 230,175 Q330,175 420,175 Q560,175 650,175 Q730,150 805,110" fill="none" stroke="#D2691E" stroke-width="2.6"/>
+    <path d="M650,175 Q730,220 805,255" fill="none" stroke="#D2691E" stroke-width="2" stroke-dasharray="5 4" opacity="0.75"/>
+    <text x="812" y="112" font-size="10" fill="#D2691E" font-family="IBM Plex Mono">deriv. (sealing fault)</text>
+    <text x="812" y="258" font-size="9.5" fill="#D2691E" font-family="IBM Plex Mono" opacity="0.75">deriv. (aquifer support)</text>
+
+    <!-- unit slope callout -->
+    <text x="110" y="255" font-size="9" fill="#8493a0" font-family="IBM Plex Mono">45° unit slope</text>
+    <!-- flat radial line callout -->
+    <line x1="230" y1="192" x2="650" y2="192" stroke="#1E8449" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="440" y="205" text-anchor="middle" font-size="9" fill="#1E8449" font-family="IBM Plex Mono">flat derivative = radial flow</text>
+  </svg>`;
+})();
+
+(function(){
+  // 2) Ideal buildup test walkthrough (Horner semilog, straight line, p1hr, Pi extrapolation)
+  document.getElementById('idealTestWrap').innerHTML = `
+  <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" style="min-width:600px;">
+    <line x1="60" y1="280" x2="700" y2="280" stroke="#224347" stroke-width="1.6"/>
+    <line x1="60" y1="20" x2="60" y2="280" stroke="#224347" stroke-width="1.6"/>
+    <text x="380" y="308" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">log [(tp+Δt)/Δt]  — decreasing to the right →</text>
+    <text x="30" y="150" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono" transform="rotate(-90 30 150)">Pws</text>
+    <path d="M100,240 L660,60" stroke="${UNIFIED_COLOR}" stroke-width="2.6" fill="none"/>
+    <circle cx="100" cy="240" r="4" fill="#fff" stroke="${UNIFIED_COLOR}" stroke-width="2"/>
+    <circle cx="660" cy="60" r="5" fill="#f8de7e" stroke="#224347" stroke-width="2"/>
+    <text x="672" y="56" font-size="11" font-weight="700" fill="#224347" font-family="IBM Plex Mono">Pi (ratio=1)</text>
+    <line x1="660" y1="60" x2="700" y2="48" stroke="#f8de7e" stroke-width="1.4" stroke-dasharray="3 3"/>
+    <circle cx="330" cy="163" r="5" fill="#2ECC71" stroke="#224347" stroke-width="2"/>
+    <line x1="330" y1="163" x2="330" y2="280" stroke="#2ECC71" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="330" y="298" text-anchor="middle" font-size="9.5" fill="#1E8449" font-family="IBM Plex Mono">Δt = 1 hr</text>
+    <text x="342" y="159" font-size="10.5" font-weight="700" fill="#1E8449" font-family="IBM Plex Mono">p1hr</text>
+    <line x1="200" y1="222" x2="330" y2="222" stroke="#8493a0" stroke-width="1"/>
+    <line x1="200" y1="222" x2="200" y2="200" stroke="#8493a0" stroke-width="1"/>
+    <text x="265" y="238" text-anchor="middle" font-size="9" fill="#8493a0" font-family="IBM Plex Mono">1 log cycle</text>
+    <text x="205" y="196" text-anchor="middle" font-size="9" fill="#8493a0" font-family="IBM Plex Mono">m = Δpressure</text>
+  </svg>`;
+})();
+
+(function(){
+  // 3) Realistic lazy-S Horner curve with ETR / MTR / LTR
+  document.getElementById('realCurveWrap').innerHTML = `
+  <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" style="min-width:600px;">
+    <rect x="60" y="20" width="180" height="260" fill="${REGION_EARLY}"/>
+    <rect x="240" y="20" width="260" height="260" fill="${REGION_MIDDLE}"/>
+    <rect x="500" y="20" width="200" height="260" fill="${REGION_LATE}"/>
+    <text x="150" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#B22222" font-family="IBM Plex Mono">ETR</text>
+    <text x="370" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#1E8449" font-family="IBM Plex Mono">MTR</text>
+    <text x="600" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#B8860B" font-family="IBM Plex Mono">LTR</text>
+    <line x1="60" y1="280" x2="700" y2="280" stroke="#224347" stroke-width="1.6"/>
+    <line x1="60" y1="20" x2="60" y2="280" stroke="#224347" stroke-width="1.6"/>
+    <text x="380" y="308" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">log [(tp+Δt)/Δt]  — decreasing to the right →</text>
+    <path d="M65,265 Q140,255 170,190 Q220,105 400,80 Q550,60 695,35" stroke="${UNIFIED_COLOR}" stroke-width="2.8" fill="none"/>
+    <text x="565" y="30" font-size="10" fill="${UNIFIED_COLOR}" font-family="IBM Plex Mono">Pws(Δt) — actual test</text>
+  </svg>`;
+})();
+
+(function(){
+  // 4) Afterflow zoomed view: unit-slope hump on the derivative, Cs point marker
+  document.getElementById('afterflowWrap').innerHTML = `
+  <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" style="min-width:560px;">
+    <line x1="60" y1="260" x2="680" y2="260" stroke="#224347" stroke-width="1.6"/>
+    <line x1="60" y1="20" x2="60" y2="260" stroke="#224347" stroke-width="1.6"/>
+    <text x="370" y="288" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">Δt (hr)  [log]</text>
+    <text x="30" y="140" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono" transform="rotate(-90 30 140)">|Δp| &amp; derivative [log]</text>
+    <path d="M70,250 L230,110 Q260,90 280,90" fill="none" stroke="${UNIFIED_COLOR}" stroke-width="2.6"/>
+    <text x="290" y="86" font-size="10" fill="${UNIFIED_COLOR}" font-family="IBM Plex Mono">|Δp|</text>
+    <path d="M70,250 L230,110 Q260,150 300,160 Q360,168 420,168" fill="none" stroke="${DERIV_COLOR}" stroke-width="2.6"/>
+    <text x="430" y="164" font-size="10" fill="${DERIV_COLOR}" font-family="IBM Plex Mono">derivative</text>
+    <circle cx="150" cy="180" r="5" fill="#fff" stroke="#8493a0" stroke-width="2"/>
+    <text x="160" y="200" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">point on unit-slope line → Cs</text>
+    <line x1="230" y1="110" x2="230" y2="260" stroke="#f8de7e" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="230" y="278" text-anchor="middle" font-size="9.5" fill="#8a6d10" font-family="IBM Plex Mono">afterflow ends here</text>
+  </svg>`;
+})();
+
+(function(){
+  // 5) Curve-shape gallery (Fig 2.6-2.9): 4 mini illustrative sketches
+  const cases = [
+    {title:'Undamaged well, no afterflow (Fig. 2.6)', color:'#2ECC71',
+     path:'M20,90 L170,20', note:'خط مستقيم واحد يكاد يمتد على كامل مدى الرسم — نادر جدًا في الواقع، لكنه المرجع النظري.'},
+    {title:'Damaged well with afterflow (Fig. 2.7)', color:'#FF6347',
+     path:'M20,90 Q60,88 75,60 L90,45 Q120,25 170,15', note:'قفزة حادة من Pwf عند الإغلاق مباشرة، بسبب السكِن الكبير — الـMTR يبدأ متأخرًا وبميل واضح.'},
+    {title:'Hydraulically fractured well (Fig. 2.8)', color:'#5b7ea3',
+     path:'M20,95 Q80,92 110,80 Q150,55 170,20', note:'صعود بطيء جدًا في البداية — الشق يهيمن على الشكل، وقد لا يظهر MTR واضح إطلاقًا.'},
+    {title:'Boundary effects: centered vs. off-center (Fig. 2.9)', color:'#B8860B',
+     path:'M20,90 Q90,55 140,35 L170,25', path2:'M20,95 Q90,75 140,68 L170,66', note:'بئر قريب من حافة منطقة الصرف (المنحنى السفلي) يُظهر انحناء LTR أبكر وأوضح من بئر في المنتصف.'},
+  ];
+  let html='';
+  cases.forEach(c=>{
+    html += `<div class="cg-item"><h5>${c.title}</h5>
+      <svg viewBox="0 0 190 110" xmlns="http://www.w3.org/2000/svg">
+        <line x1="15" y1="100" x2="185" y2="100" stroke="#224347" stroke-width="1.3"/>
+        <line x1="15" y1="5" x2="15" y2="100" stroke="#224347" stroke-width="1.3"/>
+        <path d="${c.path}" fill="none" stroke="${c.color}" stroke-width="2.4"/>
+        ${c.path2 ? `<path d="${c.path2}" fill="none" stroke="${c.color}" stroke-width="2" stroke-dasharray="4 3" opacity="0.7"/>` : ''}
+      </svg>
+      <p>${c.note}</p></div>`;
+  });
+  document.getElementById('curveGalleryWrap').innerHTML = html;
+})();
+
+(function(){
+  // 6) rwa concept: actual wellbore vs. effective (damaged/stimulated) equivalent circle
+  document.getElementById('rwaWrap').innerHTML = `
+  <svg viewBox="0 0 620 220" xmlns="http://www.w3.org/2000/svg" style="min-width:480px;">
+    <circle cx="150" cy="110" r="70" fill="none" stroke="#dcded2" stroke-width="10"/>
+    <circle cx="150" cy="110" r="18" fill="#fff" stroke="${UNIFIED_COLOR}" stroke-width="2.6"/>
+    <text x="150" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="#224347" font-family="Tajawal">Damaged (S &gt; 0)</text>
+    <text x="150" y="114" text-anchor="middle" font-size="9" fill="${UNIFIED_COLOR}" font-family="IBM Plex Mono">rw</text>
+    <text x="150" y="196" text-anchor="middle" font-size="9.5" fill="#b5432d" font-family="IBM Plex Mono">damaged zone (hatched)</text>
+    <circle cx="150" cy="110" r="44" fill="none" stroke="#b5432d" stroke-width="1.4" stroke-dasharray="3 3"/>
+
+    <circle cx="470" cy="110" r="70" fill="none" stroke="#dcded2" stroke-width="0"/>
+    <circle cx="470" cy="110" r="8" fill="#fff" stroke="#f8de7e" stroke-width="2.6" stroke-dasharray="2 2"/>
+    <text x="470" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="#224347" font-family="Tajawal">Equivalent Undamaged Well</text>
+    <text x="470" y="128" text-anchor="middle" font-size="9" fill="#8a6d10" font-family="IBM Plex Mono">rwa = rw·e⁻ˢ (smaller)</text>
+
+    <line x1="240" y1="110" x2="380" y2="110" stroke="#8493a0" stroke-width="1.5" marker-end="url(#rwaArrow)"/>
+    <text x="310" y="102" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">same drawdown, no damage</text>
+    <defs><marker id="rwaArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8493a0"/></marker></defs>
+  </svg>`;
+})();
+
+(function(){
+  // 7) P* vs p-bar concept: depleted drainage area pressure funnel
+  document.getElementById('pstarWrap').innerHTML = `
+  <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" style="min-width:560px;">
+    <circle cx="200" cy="110" r="90" fill="#f3f1ea" stroke="#dcded2" stroke-width="1.5"/>
+    <circle cx="200" cy="110" r="8" fill="#fff" stroke="${UNIFIED_COLOR}" stroke-width="2.5"/>
+    <text x="200" y="12" text-anchor="middle" font-size="11" font-weight="700" fill="#224347" font-family="Tajawal">Drainage Area (partially depleted)</text>
+    <text x="200" y="128" text-anchor="middle" font-size="9" fill="${UNIFIED_COLOR}" font-family="IBM Plex Mono">well</text>
+    <text x="200" y="150" text-anchor="middle" font-size="9.5" fill="#5c6b78" font-family="IBM Plex Mono">actual average = p̄</text>
+
+    <line x1="330" y1="60" x2="420" y2="60" stroke="#8493a0" stroke-width="1.3"/>
+    <line x1="440" y1="30" x2="440" y2="190" stroke="#224347" stroke-width="1.6"/>
+    <line x1="440" y1="190" x2="680" y2="190" stroke="#224347" stroke-width="1.6"/>
+    <path d="M450,80 L670,45" stroke="${UNIFIED_COLOR}" stroke-width="2.4" fill="none"/>
+    <circle cx="670" cy="45" r="5" fill="#f8de7e" stroke="#224347" stroke-width="2"/>
+    <text x="640" y="35" text-anchor="end" font-size="10" font-weight="700" fill="#224347" font-family="IBM Plex Mono">P* (extrapolated)</text>
+    <line x1="450" y1="105" x2="670" y2="105" stroke="#2ECC71" stroke-width="1.4" stroke-dasharray="4 3"/>
+    <text x="460" y="118" font-size="9.5" fill="#1E8449" font-family="IBM Plex Mono">p̄ (true average — lower)</text>
+    <text x="555" y="205" text-anchor="middle" font-size="10" fill="#5c6b78" font-family="Tajawal">في مكمن مُستنزف: P* &gt; p̄ الفعلي</text>
+  </svg>`;
+})();
+
+(function(){
+  // 8) Boundary / slope-doubling diagram
+  document.getElementById('boundaryWrap').innerHTML = `
+  <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" style="min-width:560px;">
+    <line x1="60" y1="230" x2="680" y2="230" stroke="#224347" stroke-width="1.6"/>
+    <line x1="60" y1="20" x2="60" y2="230" stroke="#224347" stroke-width="1.6"/>
+    <text x="370" y="252" text-anchor="middle" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">log [(tp+Δt)/Δt]</text>
+    <path d="M80,210 L400,110" stroke="${UNIFIED_COLOR}" stroke-width="2.6" fill="none"/>
+    <text x="220" y="150" font-size="10" fill="${UNIFIED_COLOR}" font-family="IBM Plex Mono">slope m (MTR)</text>
+    <path d="M400,110 L620,35" stroke="#B8860B" stroke-width="2.6" fill="none"/>
+    <text x="480" y="55" font-size="10" fill="#B8860B" font-family="IBM Plex Mono">slope ≈ 2m (LTR)</text>
+    <circle cx="400" cy="110" r="5.5" fill="#f8de7e" stroke="#224347" stroke-width="2"/>
+    <line x1="400" y1="110" x2="400" y2="230" stroke="#f8de7e" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="400" y="245" text-anchor="middle" font-size="9.5" fill="#8a6d10" font-family="IBM Plex Mono">Δtx (intersection)</text>
+    <text x="500" y="220" font-size="10" fill="#5c6b78" font-family="Tajawal">L = √(0.000148·k·Δtx / φμct)</text>
+  </svg>`;
+})();
+
+/* ============================================================
+   PRINT / PDF REPORT
+   ============================================================ */
+async function capturePlotImage(data, layout, width=1100, height=620){
+  const tmp=document.createElement('div');
+  tmp.style.position='fixed'; tmp.style.left='-9999px'; tmp.style.top='0';
+  tmp.style.width=width+'px'; tmp.style.height=height+'px';
+  document.body.appendChild(tmp);
+  await Plotly.newPlot(tmp, data, Object.assign({},layout,{width,height}), {staticPlot:true});
+  await new Promise(r=>setTimeout(r,120));
+  const url = await Plotly.toImage(tmp, {format:'png', width, height, scale:2});
+  Plotly.purge(tmp);
+  document.body.removeChild(tmp);
+  return url;
+}
+function prFooter(pageNo, totalPages){
+  return `<div class="pr-footer">
+    <div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div>
+    <div class="pr-pageno">Page ${pageNo} of ${totalPages}</div>
+  </div>`;
+}
+function prPageHeader(sectionName, dateStr){
+  return `<div class="pr-page-header">
+    <div class="pr-brand">
+      <div class="pr-mark">AM</div>
+      <div class="pr-brand-text"><div class="pr-t1">Well Test Analysis Engineering Suite</div><div class="pr-t2">${dateStr}</div></div>
+    </div>
+    <div class="pr-section-name">${sectionName}</div>
+  </div>`;
+}
+function buildEquationsHTML(mode){
+  let n=1;
+  let html = `<div class="pr-eq-box"><div class="pr-eq-title">${mode} — Governing Equations</div>`;
+  getEquationSet(mode).forEach(([name,tex])=>{
+    html += `<div style="font-size:10.5px; color:var(--muted); margin:8px 0 2px 0; font-weight:600;">${name}</div>`;
+    html += `<div class="pr-eq-row"><span class="pr-eq-num">E${n++}</span><span class="katex-eq" data-tex="${encodeURIComponent(tex)}"></span></div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+async function printWtReport(evt){
+  if(!wtResultsState || !wtResultsState.res || !wtResultsState.res.valid){ alert('الرجاء إجراء الحساب أولاً (نتيجة صالحة) قبل توليد التقرير.'); return; }
+  const btn = evt ? evt.target : null;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جارٍ تجهيز التقرير...'; }
+
+  const {res, mode, raw, pi,q,B,mu,h,phi,ct,rw,tp,pwf0} = wtResultsState;
+  const {k,S,m,r_squared:r2} = res;
+  const engineeringOk = r2>=0.95 && k>0;
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5);
+  const subtitle = mode==='Buildup Test' ? 'Buildup (Horner) Analysis' : 'Drawdown Analysis';
+
+  let diagImg='', semiImg='';
+  try{
+    const {data:d1,layout:l1} = buildDiagnosticFigure(res);
+    diagImg = await capturePlotImage(d1, Object.assign({},l1,{margin:{l:70,r:30,t:60,b:60}}), 1300, 780);
+    const {data:d2,layout:l2} = buildSemilogFigure(res, mode, tp);
+    semiImg = await capturePlotImage(d2, Object.assign({},l2,{margin:{l:70,r:30,t:60,b:60}}), 1300, 780);
+  }catch(e){ console.warn('chart capture failed', e); }
+
+  const summaryText = `The ${subtitle.toLowerCase()} was interpreted using ${res.n_pts} data point(s) selected from the infinite-acting radial flow (middle-time) region, spanning Δt = ${fmt(res.early_end,2)} to ${fmt(res.late_start,2)} hr, giving a regression fit of R² = ${fmt(r2,4)}. The estimated permeability is k = ${fmt(k,2)} md, with a skin factor of S = ${fmt(S,2)} (${S>0?'formation damage':(S<0?'stimulation':'no additional skin')}), causing an additional pressure drop of ${fmt(res.dP_skin,2)} psi and a flow efficiency of ${fmt(res.FE,2)}.` + (res.P_star!==null ? ` The extrapolated average reservoir pressure is P* = ${fmt(res.P_star,2)} psia.` : '');
+
+  const paramRows = [
+    ['Initial Pressure (Pi)', `${raw.pi} psia`, 'Flow Rate (q)', `${raw.q} STB/D`],
+    ['FVF (Bo)', `${raw.B} bbl/STB`, 'Viscosity (mu)', `${raw.mu} cp`],
+    ['Thickness (h)', `${raw.h} ft`, 'Porosity (phi)', `${raw.phi}`],
+    ['Compressibility (ct)', `${raw.ct} 1/psi`, 'Wellbore Radius (rw)', `${raw.rw} ft`],
+  ];
+  if(mode==='Buildup Test') paramRows.push(['Producing Time (tp)', `${raw.tp} hr`, 'Pwf @ shut-in', `${raw.pwf0} psia`]);
+  const paramTableHtml = paramRows.map(([l1,v1,l2,v2])=>`<tr><td style="font-weight:700; text-align:left; background:#f3f1ea;">${l1}</td><td>${v1}</td><td style="font-weight:700; text-align:left; background:#f3f1ea;">${l2}</td><td>${v2}</td></tr>`).join('');
+
+  const regionRowClass = r => r.region.startsWith('Early') ? 'pr-early' : (r.region.startsWith('Late') ? 'pr-late' : 'pr-middle');
+  const dtHead = `<tr><th>dt (hr)</th><th>P (psia)</th><th>ΔP (psi)</th><th>Derivative</th><th>Flow Regime</th></tr>`;
+  const dtBody = res.df.map(r=>`<tr class="${regionRowClass(r)}"><td>${fmt(r.dt,2)}</td><td>${fmt(r.P,2)}</td><td>${fmt(r.dp,2)}</td><td>${fmt(r.derivative,2)}</td><td>${r.region.split(' (')[0]}</td></tr>`).join('');
+
+  const REGIME_INFO = [
+    ['1. Early Time — Wellbore Storage', '#FF6347', 'Fluid inside the wellbore itself continues to flow/expand right after the rate change, masking the reservoir response. Signature: ΔP and derivative both follow a unit-slope (45°) line and nearly overlay. Used for: estimating the wellbore storage coefficient C; NOT used for k or S.'],
+    ['2. Middle Time — Infinite-Acting Radial Flow', '#2ECC71', 'The pressure wave has moved past near-well effects into radial flow in an apparently unbounded reservoir. Signature: the derivative flattens into a horizontal line. Used for: k (from the semilog slope m), skin S, and P*/Pi extrapolation — the only region valid for these results.'],
+    ['3. Late Time — Boundary Effects', '#FFA500', 'The pressure wave has reached a reservoir boundary or heterogeneity (fault, aquifer, adjacent well). Signature: derivative rises (sealing/no-flow boundary) or falls (constant-pressure/aquifer support) away from the flat line. Used for: qualitative boundary identification only; excluded from the k/S regression.'],
+  ];
+  const regimeHtml = REGIME_INFO.map(([title,color,text])=>`<div class="pr-regime" style="border-right:4px solid ${color}; background:${color}18;"><b>${title}</b><br>${text}</div>`).join('');
+
+  const TOTAL_PAGES = 6;
+  const pOrPstar = res.P_star!==null ? res.P_star : pi;
+  const pStarLabel = mode==='Buildup Test' ? 'P*' : 'Pi';
+
+  const html = `
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('COVER', dateStr)}
+        <div class="pr-headbar">
+          <div class="pr-h1">Well Test Analysis Engineering Suite</div>
+          <div class="pr-h2">${subtitle.toUpperCase()} · SEMILOG &amp; DIAGNOSTIC ANALYSIS</div>
+        </div>
+        <div class="pr-cover-title">
+          <h1>Well Test Analysis Report</h1>
+          <p>${subtitle} — Pressure Transient Interpretation</p>
+        </div>
+        <hr class="pr-rule">
+        <div class="pr-infolist">
+          <div><span>Test Type</span><b>${mode}</b></div>
+          <div><span>Points Used in Regression</span><b>${res.n_pts}</b></div>
+          <div><span>Regression R²</span><b>${fmt(r2,4)}</b></div>
+          <div><span>Report Generated</span><b>${dateStr}</b></div>
+        </div>
+        <div class="pr-kpi-row">
+          <div class="pr-kpi"><div class="pr-kpi-label">Permeability k</div><div class="pr-kpi-value">${fmt(k,1)}</div></div>
+          <div class="pr-kpi ${S<3?'good':'bad'}"><div class="pr-kpi-label">Skin Factor S</div><div class="pr-kpi-value">${fmt(S,2)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">${pStarLabel} (psia)</div><div class="pr-kpi-value">${fmt(pOrPstar,0)}</div></div>
+          <div class="pr-kpi ${res.FE>=0.7?'good':'bad'}"><div class="pr-kpi-label">Flow Efficiency</div><div class="pr-kpi-value">${fmt(res.FE,2)}</div></div>
+        </div>
+        <div class="pr-check ${engineeringOk?'ok':'bad'}">${engineeringOk? '✔ ENGINEERING CHECK: Regression fit is strong (R² ≥ 0.95) and k is physical.' : '⚠ ENGINEERING ALERT: Weak regression fit or non-physical k — review region selection.'}</div>
+      </div>
+      ${prFooter(1, TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('PARAMETERS & SUMMARY', dateStr)}
+        <div class="pr-section-title">1. Reservoir, Fluid &amp; Well Parameters</div>
+        <table class="pr-table">${paramTableHtml}</table>
+        <div class="pr-section-title">2. Executive Summary</div>
+        <p class="pr-summary">${summaryText}</p>
+      </div>
+      ${prFooter(2, TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('EQUATIONS USED', dateStr)}
+        <div class="pr-section-title">3. Equations Used</div>
+        ${buildEquationsHTML(mode)}
+      </div>
+      ${prFooter(3, TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('DIAGNOSTIC PLOT', dateStr)}
+        <div class="pr-section-title">4. Log-Log Diagnostic Plot &amp; Flow Regimes</div>
+        <div class="pr-plots"><div class="pr-plot-box" style="height:150mm;">${diagImg?`<img src="${diagImg}">`:'<p>Chart unavailable</p>'}</div></div>
+        <div class="pr-regime-row">${regimeHtml}</div>
+      </div>
+      ${prFooter(4, TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('SEMILOG ANALYSIS', dateStr)}
+        <div class="pr-section-title">5. Semilog Analysis</div>
+        <div class="pr-plots"><div class="pr-plot-box">${semiImg?`<img src="${semiImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      ${prFooter(5, TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('DATA TABLE', dateStr)}
+        <div class="pr-section-title">6. Test Data Table</div>
+        <table class="pr-table"><thead>${dtHead}</thead><tbody>${dtBody}</tbody></table>
+      </div>
+      ${prFooter(6, TOTAL_PAGES)}
+    </div>
+  `;
+
+  const container = document.getElementById('printReport');
+  container.innerHTML = html;
+  renderKatexIn(container);
+
+  if(btn){ btn.disabled=false; btn.textContent='📕 تحميل تقرير PDF'; }
+  setTimeout(()=>{ window.print(); }, 250);
+}
+</script>
+</body>
+</html>

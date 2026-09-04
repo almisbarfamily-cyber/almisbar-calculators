@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drilling Hydraulics Simulator | محاكي هيدروليكيات الحفر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --navy-950:#0e1d1f; --navy-900:#183033; --navy-850:#1d3b3f; --navy-800:#224347;
+  --navy-700:#2f5d63; --navy-600:#3d7a81;
+  --gold:#f8de7e; --gold-light:#fcf1ca; --gold-dim:rgba(248,222,126,0.35);
+  --paper:#f4f2ec; --paper-line:rgba(10,30,51,0.055);
+  --ink:#13202b; --muted:#5c6b78; --muted-2:#8493a0;
+  --danger:#b5432d; --good:#2e7d53;
+  --card:#ffffff; --card-border:#e4e1d6;
+  --shadow:0 10px 30px -12px rgba(10,30,51,0.18);
+  --plot-blue:#0072BD; --plot-red:#D9534F; --plot-orange:#F0AD4E; --plot-gray:#E1E8ED;
+}
+*{box-sizing:border-box; margin:0; padding:0; font-variant-numeric:lining-nums; }
+img, svg, video, canvas{max-width:100%; height:auto; display:block;}
+.plotwrap, .pr-plot-box, .plot-box{max-width:100%; overflow-x:auto;}
+
+html, body, input, button, select, textarea, .mono{ font-variant-numeric:lining-nums !important; }
+html{scroll-behavior:smooth; height:100%; overflow:hidden;}
+body{font-family:'Tajawal','Inter',sans-serif; background:var(--paper); color:var(--ink); height:100%; overflow:hidden; direction:rtl;}
+#appShell{display:flex; width:100%; height:100%;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Space Grotesk','Tajawal',sans-serif;}
+.grid-bg{background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px); background-size:28px 28px;}
+
+/* Sidebar */
+.sidebar{width:272px; flex-shrink:0; background:linear-gradient(180deg,var(--navy-950) 0%, var(--navy-900) 55%, var(--navy-850) 100%); color:#e8edf2; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; border-left:3px solid var(--gold);}
+.brand{padding:26px 22px 18px 22px; border-bottom:1px solid rgba(255,255,255,0.08);}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:6px;}
+.brand h1{font-size:19px; line-height:1.35; font-weight:700; color:#fff;}
+.brand .sub{margin-top:8px; font-size:12px; color:#9db0c2; line-height:1.6;}
+.brand .chip{display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--navy-950); background:var(--gold-light); padding:3px 9px; border-radius:20px; font-weight:600;}
+nav{padding:14px 12px; flex:1;}
+.nav-group-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:#6d84a0; text-transform:uppercase; padding:14px 12px 6px 12px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; color:#c4d1de; font-size:13.5px; font-weight:500; border-right:3px solid transparent; transition:all .15s ease; margin-bottom:2px;}
+.nav-item .ic{width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.nav-item.active{background:rgba(201,162,39,0.14); color:#fff; border-right-color:var(--gold);}
+.nav-item.active .ic svg{stroke:var(--gold-light);}
+.sidebar-footer{padding:16px 22px 20px 22px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; color:#7488a0; line-height:1.7;}
+
+.side-controls{padding:14px 22px; border-top:1px solid rgba(255,255,255,0.08);}
+.side-controls .sclabel{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); letter-spacing:1px; margin-bottom:6px; text-transform:uppercase;}
+.side-controls select, .side-controls input{
+  width:100%; padding:8px 10px; border-radius:7px; border:1px solid rgba(255,255,255,0.14);
+  background:rgba(255,255,255,0.06); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+  margin-bottom:12px; direction:ltr;
+}
+.side-controls select option{color:#000;}
+
+/* Main */
+.main{flex:1; min-width:0; height:100vh; overflow-y:auto;}
+.topbar{position:sticky; top:0; z-index:20; background:rgba(244,242,236,0.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--card-border); padding:16px 34px; display:flex; align-items:center; justify-content:space-between;}
+.topbar .crumb{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:.5px;}
+.topbar .ttl{font-size:20px; font-weight:700; margin-top:2px;}
+.topbar .eqtag{font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--navy-900); color:var(--gold-light); padding:6px 12px; border-radius:6px;}
+.content{padding:30px 34px 80px 34px; max-width:1300px;}
+.section{display:none; animation:fade .25s ease;}
+.section.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; box-shadow:var(--shadow); padding:24px 26px; margin-bottom:22px;}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid var(--navy-900); flex-wrap:wrap; gap:10px;}
+.card-head h2{font-size:16.5px; font-weight:700; color:var(--navy-900);}
+.card-head .eq{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:6px;}
+.card-sub{font-size:12.5px; color:var(--muted); margin-bottom:16px; line-height:1.8;}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+.grid5{display:grid; grid-template-columns:repeat(5,1fr); gap:14px;}
+.grid6{display:grid; grid-template-columns:repeat(6,1fr); gap:12px;}
+@media(max-width:900px){.grid2,.grid3,.grid4,.grid5,.grid6{grid-template-columns:1fr 1fr;}}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; color:var(--navy-800); margin-bottom:6px;}
+.field .unit{color:var(--muted-2); font-weight:400; font-size:11px;}
+.field input, .field select{width:100%; padding:10px 12px; border:1.5px solid #d8d4c6; border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; background:#fcfbf8; color:var(--ink); transition:border .15s; direction:ltr; text-align:left;}
+.field input:focus, .field select:focus{outline:none; border-color:var(--navy-700); background:#fff;}
+
+.btn{display:inline-flex; align-items:center; gap:8px; background:var(--navy-900); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .15s;}
+.btn:hover{background:var(--navy-700);}
+.btn.gold{background:var(--gold); color:var(--navy-950);}
+.btn.gold:hover{background:var(--gold-light);}
+.btn.ghost{background:#fff; color:var(--navy-900); border:1.5px solid var(--card-border);}
+.btn.ghost:hover{border-color:var(--navy-700);}
+.btn.sm{padding:7px 14px; font-size:12px;}
+.btn:disabled{opacity:.5; cursor:not-allowed;}
+.btn.block{width:100%; justify-content:center;}
+
+.result-panel{margin-top:18px; padding:20px; background:var(--navy-900); border-radius:12px; display:none; position:relative; overflow:hidden;}
+.result-panel::before{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size:18px 18px;}
+.result-panel.show{display:block;}
+.result-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; position:relative;}
+.rstat{padding:12px 14px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.08);}
+.rstat .rlabel{font-size:10.5px; color:#9db0c2; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; font-family:'IBM Plex Mono',monospace;}
+.rstat .rval{font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; color:#fff;}
+.rstat .rval.gold{color:var(--gold-light);}
+.rstat .runit{font-size:11px; color:#8fa1b4; margin-right:4px;}
+.rstat.highlight{background:rgba(201,162,39,0.16); border-color:var(--gold-dim);}
+
+.badge{display:inline-block; padding:5px 14px; border-radius:20px; font-size:12px; font-weight:700; font-family:'IBM Plex Mono',monospace;}
+.badge.ok{background:rgba(46,125,83,0.14); color:var(--good); border:1px solid rgba(46,125,83,.3);}
+.badge.warn{background:rgba(181,67,45,0.14); color:var(--danger); border:1px solid rgba(181,67,45,.3);}
+.badge.laminar{background:rgba(46,125,83,0.14); color:var(--good);}
+.badge.turbulent{background:rgba(181,67,45,0.14); color:var(--danger);}
+
+.hero{background:linear-gradient(135deg, var(--navy-950), var(--navy-800)); border-radius:18px; padding:38px 36px; color:#fff; position:relative; overflow:hidden; margin-bottom:26px;}
+.hero::after{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size:26px 26px;}
+.hero-inner{position:relative; z-index:2; display:flex; gap:30px; align-items:center;}
+.hero-text{flex:1.3;}
+.hero-text .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold-light); letter-spacing:2px; margin-bottom:12px;}
+.hero-text h1{font-size:29px; line-height:1.35; margin-bottom:14px;}
+.hero-text p{font-size:13.5px; color:#b9c8d6; line-height:1.9; max-width:580px;}
+@media(max-width:900px){.hero-inner{flex-direction:column;}}
+
+.mod-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:6px;}
+.mod-card{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:18px; cursor:pointer; transition:all .18s; box-shadow:var(--shadow);}
+.mod-card:hover{transform:translateY(-3px); border-color:var(--gold);}
+.mod-card .num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-size:11px; font-weight:700;}
+.mod-card h3{font-size:15px; margin:8px 0 6px 0; color:var(--navy-900);}
+.mod-card p{font-size:11.5px; color:var(--muted); line-height:1.7;}
+
+table.datatable{width:100%; border-collapse:collapse; font-size:12.5px;}
+table.datatable th{background:var(--navy-900); color:#fff; padding:9px 8px; text-align:center; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:11px;}
+table.datatable td{padding:4px; text-align:center; border-bottom:1px solid var(--paper-line);}
+table.datatable td input{width:100%; border:none; background:transparent; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:6px 4px; direction:ltr;}
+table.datatable td input:focus{outline:2px solid var(--gold-dim); border-radius:4px; background:#fffdf5;}
+table.datatable tr:nth-child(even){background:#faf9f5;}
+table.datatable td.rowdel{cursor:pointer; color:var(--danger); font-weight:700;}
+
+.plotwrap{background:#fff; border:1px solid var(--card-border); border-radius:12px; padding:6px; min-height:420px;}
+
+.formula-panel{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 18px; margin-bottom:16px;}
+.formula-panel .fp-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;}
+.formula-panel .fp-eq{margin:8px 0; direction:ltr; text-align:left; overflow-x:auto;}
+
+.export-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+.divider-label{display:flex; align-items:center; gap:12px; margin:22px 0 14px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:1.5px;}
+.divider-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
+/* ============================================================
+   LEARN SECTION
+   ============================================================ */
+.learn-intro{font-size:14px; line-height:2.1; color:#2a3742; max-width:820px;}
+.learn-intro b{color:var(--navy-900);}
+.diagram-card{padding:10px 10px 22px;}
+.diagram-wrap{width:100%; overflow-x:auto; text-align:center; background:linear-gradient(180deg,#eaf2fb 0%,#f4f2ec 30%); border-radius:12px; padding:10px;}
+.diagram-wrap svg{max-width:100%; height:auto;}
+.hl-target{transition:filter .2s ease;}
+.hl-target.active{filter:drop-shadow(0 0 7px #f8de7e);}
+.legend-mini{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-top:16px;}
+.legend-mini .lg-item{display:flex; gap:10px; align-items:flex-start; padding:10px 12px; background:#fbfaf6; border:1px solid var(--card-border); border-radius:9px; font-size:12px; color:var(--muted); line-height:1.7;}
+.legend-mini .lg-dot{flex-shrink:0; width:12px; height:12px; border-radius:3px; margin-top:3px;}
+.legend-mini b{color:var(--navy-900); display:block; font-size:12.5px; margin-bottom:2px;}
+
+.gloss-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px;}
+.gloss-card{background:#fff; border:1.5px solid var(--card-border); border-radius:11px; padding:14px 16px; cursor:pointer; transition:all .15s;}
+.gloss-card:hover{border-color:var(--gold);}
+.gloss-card.open{border-color:var(--navy-800); box-shadow:0 4px 14px rgba(10,30,51,.1);}
+.gloss-card .gc-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.gloss-card .gc-term{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--navy-900); font-size:13.5px;}
+.gloss-card .gc-ar{font-size:12px; color:var(--muted); margin-top:2px;}
+.gloss-card .gc-chev{font-size:12px; color:var(--gold); transition:transform .2s;}
+.gloss-card.open .gc-chev{transform:rotate(90deg);}
+.gloss-card .gc-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.gloss-card.open .gc-body{max-height:320px; margin-top:10px;}
+.gloss-card .gc-body p{font-size:12px; color:#3c4854; line-height:1.85;}
+.gloss-card .gc-body .gc-analogy{margin-top:8px; padding:8px 10px; background:#fbf9f3; border-right:3px solid var(--gold); border-radius:6px; font-size:11.5px; color:var(--muted);}
+
+.why-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;}
+.why-card{background:#fff; border:1.5px solid var(--card-border); border-radius:12px; padding:16px 18px;}
+.why-card .wc-icon{font-size:22px; margin-bottom:8px;}
+.why-card h4{font-size:13.5px; color:var(--navy-900); margin-bottom:6px;}
+.why-card p{font-size:12px; color:var(--muted); line-height:1.8;}
+
+/* Article-specific additions */
+.article-body{font-size:14px; line-height:2.15; color:#2a3742;}
+.article-body p{margin-bottom:14px;}
+.article-body b{color:var(--navy-900);}
+.eq-block{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:14px 18px; margin:14px 0;}
+.eq-block .eqx{direction:ltr; text-align:left; overflow-x:auto; margin:6px 0;}
+.eq-tag{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px; margin-bottom:8px; letter-spacing:.3px;}
+.eq-tag.applied{background:rgba(46,125,83,.12); color:var(--good); border:1px solid rgba(46,125,83,.3);}
+.eq-tag.proposed{background:rgba(181,67,45,.1); color:var(--danger); border:1px solid rgba(181,67,45,.3);}
+.eq-note{font-size:11.5px; color:var(--muted-2); margin-top:6px;}
+.compare-table{width:100%; border-collapse:collapse; font-size:12px; margin-top:10px;}
+.compare-table th{background:var(--navy-900); color:#fff; padding:8px 6px; font-size:11px; text-align:center;}
+.compare-table td{padding:8px 6px; text-align:center; border-bottom:1px solid var(--card-border);}
+.compare-table tr:nth-child(even){background:#faf9f5;}
+.station-flow{display:flex; flex-direction:column; gap:0; margin:16px 0;}
+.station-step{display:flex; gap:14px; align-items:flex-start; position:relative; padding-bottom:22px;}
+.station-step::before{content:""; position:absolute; right:17px; top:34px; bottom:0; width:2px; background:var(--card-border);}
+.station-step:last-child::before{display:none;}
+.station-num{flex-shrink:0; width:36px; height:36px; border-radius:50%; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:14px; z-index:1;}
+.station-step .st-body{flex:1; padding-top:4px;}
+.station-step h4{font-size:13.5px; color:var(--navy-900); margin-bottom:5px;}
+.waterfall{display:flex; align-items:flex-end; gap:6px; height:180px; margin:18px 0 8px; padding:0 4px;}
+.wf-bar{flex:1; border-radius:6px 6px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:6px; color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; transition:opacity .2s;}
+.wf-bar:hover{opacity:.85;}
+.wf-labels{display:flex; gap:6px; padding:0 4px;}
+.wf-labels span{flex:1; text-align:center; font-size:10.5px; color:var(--muted); font-weight:600;}
+.why-card.danger{border-color:rgba(181,67,45,.35); background:#fdf6f5;}
+.why-card.good{border-color:rgba(46,125,83,.3); background:#f6fbf7;}
+
+/* ============================================================
+   PRINT REPORT
+   ============================================================ */
+#printReport{display:none;}
+@page{ size:A4; margin:14mm 13mm; }
+@media print{
+  html, body{background:#fff !important; height:auto !important; overflow:visible !important;}
+  #appShell{display:none !important;}
+  #printReport{display:block !important;}
+}
+#printReport{
+  font-family:'Inter','Tajawal',sans-serif; color:#13202b; direction:ltr; text-align:left;
+  width:100%; background:#fff;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact;
+}
+#printReport .pr-page{ page-break-after:always; min-height:263mm; display:flex; flex-direction:column; position:relative; }
+#printReport .pr-body{ flex:1 0 auto; position:relative; z-index:1; }
+#printReport .pr-footer{ position:relative; z-index:1; }
+#printReport .pr-page:last-child{ page-break-after:auto; }
+#printReport .pr-page-header{ display:flex; align-items:center; justify-content:space-between; padding-bottom:9px; margin-bottom:16px; border-bottom:2.5px solid var(--gold); }
+#printReport .pr-page-header .pr-brand{display:flex; align-items:center; gap:10px;}
+#printReport .pr-page-header .pr-mark{ width:26px; height:26px; border-radius:7px; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; flex-shrink:0; }
+#printReport .pr-page-header .pr-brand-text .pr-t1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--navy-900);}
+#printReport .pr-page-header .pr-brand-text .pr-t2{font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--muted); letter-spacing:.5px;}
+#printReport .pr-page-header .pr-section-name{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:20px; font-weight:700;}
+#printReport .pr-headbar{ background:linear-gradient(135deg,var(--navy-950),var(--navy-800)); color:#fff; padding:22px 26px; border-radius:12px; margin-bottom:6px; position:relative; overflow:hidden; }
+#printReport .pr-headbar::after{content:""; position:absolute; top:-30px; right:-30px; width:110px; height:110px; border-radius:50%; background:rgba(201,162,39,0.14);}
+#printReport .pr-headbar .pr-h1{font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; position:relative;}
+#printReport .pr-headbar .pr-h2{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); margin-top:5px; letter-spacing:1px; position:relative;}
+#printReport .pr-cover-title{text-align:center; margin:24px 0 4px 0;}
+#printReport .pr-cover-title h1{font-family:'Space Grotesk',sans-serif; font-size:25px; color:var(--navy-900);}
+#printReport .pr-cover-title p{font-size:12px; color:var(--muted); margin-top:6px;}
+#printReport .pr-rule{height:2px; background:var(--gold); width:110px; margin:16px auto; border:none;}
+#printReport .pr-infolist{width:72%; margin:16px auto; font-size:11.5px;}
+#printReport .pr-infolist div{display:flex; justify-content:space-between; padding:6px 2px; border-bottom:1px dotted #ddd;}
+#printReport .pr-infolist b{color:var(--navy-900);}
+#printReport .pr-kpi-row{display:flex; gap:10px; justify-content:center; margin:22px 0; flex-wrap:wrap;}
+#printReport .pr-kpi{ border:1.5px solid var(--navy-800); border-top:3px solid var(--navy-800); border-radius:8px; padding:11px 16px; min-width:105px; text-align:center; background:#eef3f8; }
+#printReport .pr-kpi.bad{ border-color:var(--danger); border-top-color:var(--danger); background:#fceceb; }
+#printReport .pr-kpi .pr-kpi-label{font-size:8.5px; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-kpi .pr-kpi-value{font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:700; color:var(--navy-900); margin-top:5px;}
+#printReport .pr-check{ text-align:center; margin:16px auto 6px auto; padding:11px; border-radius:8px; font-weight:700; font-size:12px; max-width:82%; border:1.5px solid; }
+#printReport .pr-check.ok{color:var(--good); border-color:var(--good); background:#eaf6ef;}
+#printReport .pr-check.bad{color:var(--danger); border-color:var(--danger); background:#fceceb;}
+#printReport .pr-footer{ margin-top:auto; padding-top:9px; border-top:1px solid #e4e1d6; display:flex; align-items:center; justify-content:space-between; font-size:9px; color:var(--muted-2); }
+#printReport .pr-footer .pr-foot-brand{font-weight:700; color:var(--navy-700);}
+#printReport .pr-footer a{color:var(--navy-700); font-weight:700; text-decoration:none;}
+#printReport .pr-footer .pr-pageno{font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-section-title{ background:#eef3f8; color:var(--navy-900); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13.5px; padding:9px 12px; border-radius:6px; border-right:4px solid var(--gold); margin:18px 0 12px 0; }
+#printReport table.pr-table{width:100%; border-collapse:collapse; font-size:9.5px;}
+#printReport table.pr-table th{background:var(--navy-900); color:#fff; padding:5px 4px; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:8.5px;}
+#printReport table.pr-table td{padding:4px; text-align:center; border:1px solid #e7e4d8; font-family:'IBM Plex Mono',monospace;}
+#printReport table.pr-table tr:nth-child(even){background:#f8f7f2;}
+#printReport table.pr-table thead{display:table-header-group;}
+#printReport table.pr-table tr{page-break-inside:avoid;}
+#printReport .pr-summary{font-size:11.5px; line-height:1.9; text-align:justify; color:#2a3742;}
+#printReport .pr-plots{display:flex; flex-direction:column; gap:12px; margin-top:10px;}
+#printReport .pr-plot-box{ border:1px solid #e4e1d6; border-radius:8px; padding:6px; height:112mm; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(10,30,51,0.06); }
+#printReport .pr-plot-box img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;}
+#printReport .pr-eq-box{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:8px; padding:12px 16px; margin-bottom:12px;}
+#printReport .pr-eq-box .pr-eq-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:10px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;}
+#printReport .pr-eq-row{display:flex; align-items:center; gap:10px; margin:8px 0; min-width:0;}
+.pr-table-wrap{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.katex-eq{max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; display:inline-block;}
+#printReport .pr-eq-num{ flex-shrink:0; width:24px; height:24px; border-radius:6px; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; }
+
+/* ============================================================
+   MOBILE: hamburger toggle + off-canvas sidebar + responsive tune-up
+   ============================================================ */
+.hamburger-btn{display:none; background:var(--navy-900); border:none; color:#fff; width:38px; height:38px; border-radius:8px; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;}
+.sidebar-overlay{display:none; position:fixed; inset:0; background:rgba(5,15,26,0.55); z-index:40; opacity:0; transition:opacity .25s;}
+.sidebar-overlay.show{display:block; opacity:1;}
+
+@media (max-width:900px){
+  #appShell{display:block;}
+  .sidebar{
+    position:fixed; top:0; right:0; height:100vh; width:82%; max-width:320px;
+    transform:translateX(100%); transition:transform .28s ease; z-index:50;
+    box-shadow:-10px 0 30px rgba(0,0,0,0.35);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .main{width:100%;}
+  .hamburger-btn{display:flex;}
+  .topbar{padding:14px 16px; gap:10px;}
+  .ttl{font-size:15.5px;}
+  .crumb{font-size:9px;}
+  .eqtag{display:none;}
+  .content{padding:16px 14px 60px 14px;}
+  .hero-inner{flex-direction:column; padding:26px 22px; text-align:center; gap:16px;}
+  .hero-text h1{font-size:21px;}
+  .hero-text p{font-size:13px;}
+  #heroSvgWrap svg{width:170px; height:170px;}
+  .mod-grid{grid-template-columns:1fr;}
+  .mod-card{grid-column:auto !important;}
+  .grid2, .grid3, .grid4, .grid5, .grid6, .template-grid{grid-template-columns:1fr !important;}
+  .card{padding:18px 16px;}
+  .card-head{flex-direction:column; align-items:flex-start; gap:4px;}
+  .field input, .field select{font-size:16px;} /* prevents iOS auto-zoom on focus */
+  .formula-box, .formula-panel, .eq-box, .pr-eq-box{padding:12px 14px;}
+  .katex-eq .katex{font-size:0.88em;}
+  .eqx, .fp-eq{-webkit-overflow-scrolling:touch;}
+  table{font-size:11px;}
+  .datatable, .data-table, .vartable, .eqref{font-size:11px;}
+  .tabbar{overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;}
+  .diagram-wrap svg, .method-card svg{max-width:100% !important;}
+  .plotwrap{min-height:320px;}
+  .method-card{flex-direction:column;}
+  .method-card .mc-diagram{width:100%;}
+}
+@media (max-width:420px){
+  .hero-text h1{font-size:18px;}
+  .brand h1{font-size:16px;}
+}
+@media(max-width:900px){ table:not(.pr-table){display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;} }
+.katex-eq::-webkit-scrollbar, .pr-table-wrap::-webkit-scrollbar{ display:none; height:0; }
+.katex-eq, .pr-table-wrap{ scrollbar-width:none; -ms-overflow-style:none; }
+@media print{ .katex-eq, .pr-table-wrap{ overflow:visible !important; } }
+</style>
+</head>
+<body>
+<div id="appShell">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow">Drilling Hydraulics · System Pressure Analysis</div>
+    <h1>Drilling Hydraulics<br>Simulator</h1>
+    <div class="sub">محاكي هيدروليكيات الحفر — احسب فقدان الضغط في كامل دورة سائل الحفر باستخدام نموذج Bingham Plastic، وحسّن أداء فوهات المثقاب.</div>
+    <span class="chip">Al-Misbar Engineering Solutions</span>
+  </div>
+  <nav>
+    <div class="nav-group-label">General</div>
+    <div class="nav-item active" data-target="home">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      الرئيسية
+    </div>
+    <div class="nav-item" data-target="learn">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M7 10.5V16c0 1.5 2 3 5 3s5-1.5 5-3v-5.5"/></svg></span>
+      كيف تعمل دورة سائل الحفر؟
+    </div>
+    <div class="nav-group-label">Calculator</div>
+    <div class="nav-item" data-target="sim">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 2v6M12 16v6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M16 12h6M4.9 19.1l4.2-4.2M14.9 9.1l4.2-4.2"/></svg></span>
+      محاكاة الهيدروليكيات
+    </div>
+  </nav>
+  <div class="side-controls">
+    <div class="sclabel">نظام الوحدات</div>
+    <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:7px; padding:9px 12px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:#fff;">Field Units (API)</div>
+    <div class="sclabel">النموذج الريولوجي</div>
+    <select id="g_model"><option value="bingham">Bingham Plastic</option><option value="powerlaw">Power Law</option><option value="hb">Herschel-Bulkley</option></select>
+    <div style="font-size:10.5px; color:#9db0c2; line-height:1.6; margin-top:-6px; margin-bottom:2px;">القيم مشتقة من PV/YP (وθ100/θ3 إن أُدخلت). الجريان المضطرب: Bingham دقيق بالكامل، Power Law وHB يستخدمان تقريبًا معلَّمًا حاليًا.</div>
+  </div>
+  <div class="sidebar-footer">
+    مبني على نفس المعادلات ومنطق الرسوم البيانية للنسخة الأصلية (Streamlit/Plotly)، مع واجهة معاد تصميمها ودليل تعليمي كامل.
+  </div>
+</aside>
+
+<main class="main grid-bg">
+  <div class="topbar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="فتح القائمة">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <div>
+      <div class="crumb" id="crumb">GENERAL / OVERVIEW</div>
+      <div class="ttl" id="pageTitle">محاكي هيدروليكيات الحفر</div>
+    </div>
+    <div class="eqtag" id="eqTag">Hydraulics Calc</div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  <div class="content">
+
+    <!-- ============ HOME ============ -->
+    <section class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="eyebrow">DRILLING HYDRAULICS · CIRCULATING SYSTEM</div>
+            <h1>محاكي هيدروليكيات الحفر التفاعلي</h1>
+            <p>احسب فقدان الضغط الهيدروليكي عبر كامل دورة سائل الحفر — من المضخات، مرورًا بأنبوب الحفر، وصولًا إلى فوهات المثقاب، ثم عودةً عبر الحلقة (Annulus) — باستخدام نموذج Bingham Plastic. يشمل الموقع ضغط النظام الكلي، الكثافة المكافئة أثناء الدوران (ECD)، وتحسين هيدروليكيات المثقاب، مع رسوم بيانية تفاعلية وتقرير هندسي جاهز للطباعة.</p>
+          </div>
+          <div id="heroSvgWrap"></div>
+        </div>
+      </div>
+
+      <div class="divider-label">وحدات الموقع</div>
+      <div class="mod-grid">
+        <div class="mod-card" data-target="learn" style="border-color:var(--gold);"><div class="num">00 / START HERE</div><h3>🎓 كيف تعمل دورة سائل الحفر؟</h3><p>لا تعرف شيئًا عن هيدروليكيات الحفر؟ ابدأ من هنا — رسم كامل لدورة السائل مع شرح مبسّط لكل مصطلح ولماذا يهم.</p></div>
+        <div class="mod-card" data-target="sim"><div class="num">01 / SIMULATOR</div><h3>محاكاة الهيدروليكيات الكاملة</h3><p>أدخل خصائص السائل، هندسة أنبوب الحفر والحلقة، وفوهات المثقاب، واحصل على تحليل ضغط كامل مع رسوم بيانية وتقرير قابل للتصدير.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LEARN ============ -->
+    <section class="section" id="sec-learn">
+
+      <div class="card">
+        <div class="card-head"><h2>🎓 رحلة سائل الحفر — الدليل الهندسي الكامل</h2></div>
+        <div class="article-body">
+          <p>سائل الحفر يبدأ رحلته من أحواض سطحية (Mud Pits)، يُضخ تحت ضغط مرتفع عبر أنبوب القائم (Standpipe)، ينحدر داخل أنبوب الحفر إلى قاع البئر، يندفع بسرعة عالية عبر فوهات المثقاب لتفتيت الصخر وتنظيف القاع، ثم يصعد عبر الفراغ الحلقي (Annulus) حاملًا فتات الصخر، ليمر أخيرًا عبر غرابيل اهتزازية تفصل الفتات قبل عودته للأحواض — دورة مغلقة مستمرة طوال ساعات الحفر. خلال هذه الرحلة يقوم السائل بأربع وظائف حاسمة في آنٍ واحد:</p>
+          <div class="why-grid" style="margin:14px 0;">
+            <div class="why-card"><div class="wc-icon">🧹</div><h4>تنظيف قاع البئر</h4><p>رفع فتات الصخر المقطوع من القاع إلى السطح عبر الحلقة، ومنع تراكمها حول المثقاب وأدوات الحفر.</p></div>
+            <div class="why-card"><div class="wc-icon">❄️</div><h4>التبريد والتزييت</h4><p>تبريد رأس الحفر المحتك بالصخر بسرعة عالية، وتقليل احتكاك أنبوب الحفر بجدار البئر.</p></div>
+            <div class="why-card"><div class="wc-icon">⚖️</div><h4>موازنة ضغط الطبقات</h4><p>عمود هيدروستاتيكي يوازن ضغط سوائل التكوين ويمنع اندفاعها المفاجئ للبئر (Kick).</p></div>
+            <div class="why-card"><div class="wc-icon">🧱</div><h4>تدعيم جدار البئر</h4><p>طبقة ترشيح رقيقة (Filter Cake) تتكوّن على الجدار وتقلل تسرب السائل داخل الطبقات النفاذة.</p></div>
+          </div>
+          <p>ولأن كل جزء من هذه الرحلة يُفقد فيه جزء من ضغط السائل بسبب الاحتكاك (أو يُستهلك عمدًا كما سنرى في الفوهات)، فإن حساب هذا الفقدان بدقة يحدد أمرين حاسمين: الضغط الذي يجب أن توفره المضخات فعليًا ليكتمل الدوران، والكثافة المكافئة أثناء الدوران (ECD) التي تحدد إن كان الضغط الفعلي على جدار البئر أثناء الضخ آمنًا. لفهم كيف يُحسب هذا الفقدان، يجب أولًا فهم كيف يتصرف السائل نفسه تحت الحركة — وهذا ما يقودنا للسؤال الأول.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>سلوك السائل تحت الحركة: الجهد القاصّ ومعدل القص</h2></div>
+        <div class="article-body">
+          <p>تخيّل كتابًا موضوعًا على طاولة تدفعه من الأعلى بينما قاعه شبه ثابت بالاحتكاك — القوة التي تبذلها لتحريك الطبقة العلوية بالنسبة للسفلية تُسمى <b>الجهد القاصّ (Shear Stress − τ)</b>، وتُقاس بوحدة lb/100ft². داخل أنبوب يجري فيه سائل، الطبقة الملاصقة للجدار شبه ثابتة بالاحتكاك، بينما طبقة المنتصف تتحرك بأسرع سرعة، وهذا الانزلاق بين الطبقات يولّد الجهد القاصّ فعليًا. أما <b>معدل القص (Shear Rate − γ)</b> فهو ببساطة مدى سرعة هذا الانزلاق بين الطبقات، ويُقاس بوحدة ثانية عكسية (s⁻¹) — كلما تحرك السائل بسرعة أكبر داخل أنبوب أضيق، ارتفع معدل القص.</p>
+          <p>في الماء العادي، العلاقة بين τ وγ خطية بسيطة تبدأ من الصفر تمامًا: جهد أكبر يعني انزلاقًا أكبر بنسبة ثابتة، ومهما كان الجهد ضئيلاً سيتحرك الماء ولو ببطء شديد. هذا السلوك يُسمى <b>نيوتونيًا (Newtonian)</b> نسبة لإسحاق نيوتن. لكن سائل الحفر معلّق كثيف من جزيئات الطين (البنتونايت غالبًا) تتشابك مع بعضها في حالة السكون مكوّنة بنية هلامية ضعيفة، فيحتاج تحريكه من الصفر جهدًا أدنى معينًا لكسر هذه البنية أولًا قبل أن يبدأ بالجريان أصلاً — وهذا يجعله <b>غير نيوتوني (Non-Newtonian)</b>. وبما أن هذا الاختلاف الجوهري هو أساس كل ما سيلي، فإن الخطوة التالية هي قياسه فعليًا على السائل الحقيقي.</p>
+
+          <div class="grid2" style="align-items:center; margin-top:6px;">
+            <div>
+              <p>يُقاس هذا السلوك مخبريًا عبر <b>مقياس اللزوجة الدوّار (Fann Viscometer)</b>: أسطوانتان متحدتا المركز، السائل بينهما، تدور الأسطوانة الخارجية بسرعات قياسية محددة (RPM) بينما تقيس الأسطوانة الداخلية — عبر زنبرك معايَر — مقاومة السائل لهذا الدوران، فتُعطي قراءة رقمية (θ) عند كل سرعة. هذه القراءات الست فقط هي المصدر المشترك الذي تُشتق منه معاملات كل نموذج ريولوجي في الفقرة التالية:</p>
+            </div>
+            <div style="text-align:center;">
+              <svg viewBox="0 0 300 300" style="max-width:280px;">
+                <defs>
+                  <radialGradient id="rotorGrad" cx="35%" cy="30%" r="75%">
+                    <stop offset="0%" stop-color="#eef3f8"/>
+                    <stop offset="75%" stop-color="#c9d6e2"/>
+                    <stop offset="100%" stop-color="#a9bbcb"/>
+                  </radialGradient>
+                  <radialGradient id="bobGrad" cx="35%" cy="30%" r="75%">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="100%" stop-color="#e9edf1"/>
+                  </radialGradient>
+                  <pattern id="fluidDots" patternUnits="userSpaceOnUse" width="9" height="9">
+                    <rect width="9" height="9" fill="none"/><circle cx="2" cy="2" r="1" fill="#0072BD" opacity=".35"/><circle cx="6.5" cy="6.5" r="1" fill="#0072BD" opacity=".3"/>
+                  </pattern>
+                </defs>
+
+                <!-- outer rotor cylinder -->
+                <circle cx="150" cy="145" r="92" fill="url(#rotorGrad)" stroke="#224347" stroke-width="3"/>
+                <!-- dial tick marks around rotor rim -->
+                <g stroke="#5c6b78" stroke-width="1.4">
+                  <line x1="150" y1="57" x2="150" y2="67"/><line x1="150" y1="223" x2="150" y2="233"/>
+                  <line x1="62" y1="145" x2="72" y2="145"/><line x1="228" y1="145" x2="238" y2="145"/>
+                  <line x1="85.9" y1="80.9" x2="93" y2="88"/><line x1="207" y1="202" x2="214.1" y2="209.1"/>
+                  <line x1="207" y1="88" x2="214.1" y2="80.9"/><line x1="85.9" y1="209.1" x2="93" y2="202"/>
+                </g>
+                <!-- rotation motion arrows -->
+                <path d="M150,57 A88,88 0 0 1 234,133" fill="none" stroke="#0072BD" stroke-width="3" stroke-linecap="round" marker-end="url(#tArrow)"/>
+                <path d="M150,233 A88,88 0 0 1 66,157" fill="none" stroke="#0072BD" stroke-width="3" stroke-linecap="round" marker-end="url(#tArrow)" opacity=".55"/>
+
+                <!-- fluid gap between rotor and bob -->
+                <circle cx="150" cy="145" r="92" fill="none"/>
+                <circle cx="150" cy="145" r="66" fill="url(#fluidDots)"/>
+
+                <!-- inner bob cylinder (fixed) -->
+                <circle cx="150" cy="145" r="52" fill="url(#bobGrad)" stroke="#5c6b78" stroke-width="2.4"/>
+
+                <!-- torsion spring + dial indicator at center -->
+                <path d="M150,145 m-16,0 a16,16 0 1,1 32,0 a16,16 0 1,1 -32,0" fill="none" stroke="#f8de7e" stroke-width="1.6" stroke-dasharray="3 3"/>
+                <line x1="150" y1="145" x2="163" y2="132" stroke="#b5432d" stroke-width="2.6" stroke-linecap="round"/>
+                <circle cx="150" cy="145" r="5" fill="#f8de7e" stroke="#224347" stroke-width="1"/>
+                <text x="150" y="172" text-anchor="middle" font-size="12" fill="#8a6d1a" font-family="IBM Plex Mono" font-weight="700">θ</text>
+
+                <!-- callout labels with leader lines -->
+                <line x1="219" y1="83" x2="255" y2="60" stroke="#8a8672" stroke-width="1"/>
+                <rect x="255" y="46" width="140" height="34" rx="4" fill="#ffffff" fill-opacity="0.96" stroke="#d8d4c6"/>
+                <text x="325" y="60" text-anchor="middle" font-size="10" fill="#224347" font-family="Tajawal" font-weight="700">Rotor — الأسطوانة</text>
+                <text x="325" y="74" text-anchor="middle" font-size="9" fill="#224347" font-family="Tajawal" font-weight="700">الخارجية (دوّارة، RPM)</text>
+
+                <line x1="176" y1="120" x2="255" y2="120" stroke="#8a8672" stroke-width="1"/>
+                <rect x="255" y="106" width="140" height="30" rx="4" fill="#ffffff" fill-opacity="0.96" stroke="#d8d4c6"/>
+                <text x="325" y="125" text-anchor="middle" font-size="9.5" fill="#5c6b78" font-family="Tajawal" font-weight="700">Bob — الأسطوانة الداخلية (ثابتة)</text>
+
+                <line x1="192" y1="164" x2="255" y2="180" stroke="#8a8672" stroke-width="1"/>
+                <rect x="255" y="166" width="140" height="30" rx="4" fill="#ffffff" fill-opacity="0.96" stroke="#d8d4c6"/>
+                <text x="325" y="185" text-anchor="middle" font-size="9.5" fill="#0058a0" font-family="Tajawal" font-weight="700">عيّنة سائل الحفر</text>
+
+                <line x1="163" y1="132" x2="255" y2="240" stroke="#8a8672" stroke-width="1"/>
+                <rect x="255" y="226" width="140" height="30" rx="4" fill="#ffffff" fill-opacity="0.96" stroke="#d8d4c6"/>
+                <text x="325" y="245" text-anchor="middle" font-size="9.5" fill="#8a6d1a" font-family="Tajawal" font-weight="700">زنبرك معايَر — قراءة θ</text>
+              </svg>
+            </div>
+          </div>
+
+          <table class="compare-table">
+            <thead><tr><th>السرعة (RPM)</th><th>الرمز</th><th>الاستخدام الأساسي</th></tr></thead>
+            <tbody>
+              <tr><td>600</td><td>θ₆₀₀</td><td>حساب PV (مع θ300)</td></tr>
+              <tr><td>300</td><td>θ₃₀₀</td><td>حساب PV وYP، والنقطة المرجعية لـ Power Law</td></tr>
+              <tr><td>200 / 100</td><td>θ₂₀₀ / θ₁₀₀</td><td>تقييم انحناء المنحنى عند القص المتوسط، ومعاملات الحلقة</td></tr>
+              <tr><td>6 / 3</td><td>θ₆ / θ₃</td><td>تقدير جهد الخضوع عند القص شبه المنعدم (Herschel-Bulkley)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>النماذج الريولوجية الأربعة — من الأبسط إلى الأدق</h2></div>
+        <div class="article-body">
+          <p>أبسط نموذج ممكن هو <b>النيوتوني</b>، وفيه العلاقة بين الجهد ومعدل القص خطية بسيطة:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="%5Ctau%20%3D%20%5Cmu%20%5Ccdot%20%5Cdot%7B%5Cgamma%7D"></span></div>
+            <p>هنا τ هو الجهد القاصّ الناتج، γ̇ معدل القص المطبَّق، وμ اللزوجة الديناميكية — رقم ثابت واحد فقط يصف السائل بالكامل. الخط يمر من نقطة الأصل (0,0) تمامًا: أي جهد مهما كان ضئيلاً يُحرّك السائل ولو ببطء. يصلح للماء والزيوت الخفيفة، لكنه لا يصلح لسائل الحفر لأنه يتجاهل وجود عتبة جهد دنيا حقيقية يجب كسرها قبل أن يتحرك السائل أصلاً — وهذا بالضبط ما يقودنا للنموذج التالي.</p>
+          </div>
+
+          <div class="eq-block">
+            <p><b>Bingham Plastic</b> يضيف تحسينًا جوهريًا واحدًا: خط مستقيم أيضًا، لكنه لا يبدأ من الصفر:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="%5Ctau%20%3D%20YP%20%2B%20PV%20%5Ccdot%20%5Cdot%7B%5Cgamma%7D"></span></div>
+            <p>الخط يتقاطع مع محور الجهد عند قيمة موجبة تُسمى <b>نقطة الخضوع (Yield Point − YP)</b>، وهي الحد الأدنى من الجهد اللازم لكسر بنية السائل الداخلية المتشابكة قبل أن يتحرك إطلاقًا — بدونها، γ̇ يبقى صفرًا مهما كان τ صغيرًا. بعد تجاوز هذه العتبة، يتحرك السائل بمقاومة إضافية ثابتة لكل وحدة سرعة قص تُسمى <b>اللزوجة اللدنة (Plastic Viscosity − PV)</b> — وهي "ميل" الخط بعد نقطة البداية. يُشتق المعاملان مباشرة من قراءتين فقط من جهاز Fann (θ600 عند 600 دورة/دقيقة، θ300 عند 300 دورة/دقيقة):</p>
+            <div class="eqx"><span class="katex-eq" data-tex="PV%20%3D%20%5Ctheta_%7B600%7D%20-%20%5Ctheta_%7B300%7D%20%5C%20%5C%20%5BcP%5D%2C%20%5Cquad%20YP%20%3D%20%5Ctheta_%7B300%7D%20-%20PV%20%5C%20%5C%20%5Blb%2F100ft%5E2%5D"></span></div>
+            <p><b>مثال رقمي:</b> إذا كانت θ600 = 43 وθ300 = 25، فإن PV = 43−25 = 18 cP، وYP = 25−18 = 7 lb/100ft². أي أن السائل يحتاج جهدًا لا يقل عن 7 وحدات لبدء الحركة، ثم كل زيادة في معدل القص تضيف 18 وحدة جهد لكل وحدة سرعة إضافية.</p>
+            <p class="eq-note">بساطته وسرعته جعلته المعيار الصناعي التقليدي، لكنه يميل للمبالغة في تقدير الجهد عند معدلات القص المنخفضة جدًا (كما في الحلقة الواسعة أو عند التوقف) — وهنا يصبح التمثيل الأسّي في النموذج التالي أدق.</p>
+          </div>
+
+          <div class="eq-block">
+            <p><b>Power Law</b> يستبدل الخط المستقيم بمنحنى أسّي يمر من نقطة الأصل تمامًا (كالنيوتوني)، لكن بقوة أسّية n تجعله ينحني:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="%5Ctau%20%3D%20K%20%5Ccdot%20%5Cdot%7B%5Cgamma%7D%5E%7Bn%7D"></span></div>
+            <p><b>n (دليل سلوك الجريان − Flow Behavior Index)</b> رقم بلا وحدة، عادة بين 0 و1 لمعظم سوائل الحفر — تُسمى عندها "شبه-لدنة" (Pseudoplastic): كلما زاد معدل القص، انخفضت لزوجتها الظاهرية (المنحنى يتسطّح تدريجيًا)، وهو سلوك مرغوب هندسيًا: سميك عند التوقف لتعليق الفتات، لكنه يترقق أثناء الضخ السريع لتقليل فقدان الضغط. <b>K (معامل التماسك − Consistency Index)</b> رقم يعكس "سماكة" السائل العامة عند معدل قص مرجعي (γ̇=1 s⁻¹). يُشتقان من نفس قراءتي Fann:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="n%20%3D%203.32%20%5Clog_%7B10%7D%5Cleft%28%5Cfrac%7B%5Ctheta_%7B600%7D%7D%7B%5Ctheta_%7B300%7D%7D%5Cright%29%2C%20%5Cquad%20K%20%3D%20%5Cfrac%7B1.066%5C%2C%5Ctheta_%7B300%7D%7D%7B511%5E%7B%5C%2Cn%7D%7D"></span></div>
+            <p><b>مثال رقمي (نفس القراءتين):</b> n = 3.32 × log₁₀(43/25) = 3.32×0.235 ≈ 0.78، وK = 1.066×25/511^0.78 ≈ 0.31. الرقمان 511 و1.066 ثوابت تحويل وحدات فقط: 511 هو معدل القص المكافئ (s⁻¹) عند سرعة 300 دورة/دقيقة على هندسة جهاز Fann القياسية، و1.066 يحوّل قراءة المؤشر إلى وحدة الجهد الميدانية القياسية.</p>
+            <p class="eq-note">أدق من Bingham عند معدلات القص العالية (داخل الأنبوب)، لكنه يفترض كالنيوتوني أن السائل يتحرك عند أي جهد مهما صغر. الجريان الصفائحي لهذا النموذج مُتحقق منه رقميًا في الموقع (راجع الفقرة التالية)؛ أما الجريان المضطرب فلم يُتحقق منه بثقة كافية بعد، فيُقدَّر مؤقتًا بمعادلة Bingham المضطربة كتقريب معلَّم بعلامة (*) في جدول النتائج.</p>
+          </div>
+
+          <div class="eq-block">
+            <p><b>Herschel-Bulkley (Yield Power Law)</b> يجمع ميزتي النموذجين السابقين معًا في معادلة واحدة بثلاثة معاملات:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="%5Ctau%20%3D%20%5Ctau_0%20%2B%20K%20%5Ccdot%20%5Cdot%7B%5Cgamma%7D%5E%7Bn%7D"></span></div>
+            <p><b>τ₀ (جهد الخضوع − Yield Stress)</b> عتبة جهد دنيا حقيقية كما في Bingham، لكنها تُشتق من قراءة عند سرعة منخفضة جدًا (θ3 عند 3 دورات/دقيقة فقط) بدل الاستنتاج من θ600/θ300 — فتُمثّل سلوك السائل قرب السكون بدقة أعلى. بعد هذه العتبة، يتبع السائل سلوكًا أسّيًا كما في Power Law (n وK)، لكن مُعاد ضبطهما حول τ₀ الجديدة بدل الصفر. بثلاثة معاملات بدل معاملين، يستطيع هذا النموذج "مطابقة" منحنى القياس الفعلي بدقة أكبر عبر كامل مدى معدلات القص — من السكون التام وحتى أقصى سرعة داخل الأنبوب.</p>
+            <p><b>لا توجد صيغة جبرية مباشرة لحساب فقدان الضغط لهذا النموذج</b> — بخلاف Bingham وPower Law. الموقع يحلّها عدديًا بدل معادلة جاهزة: يبني علاقة تكامل بين معدل التدفق Q والجهد على جدار الأنبوب τw (علاقة Rabinowitsch-Mooney)، ثم يبحث عن قيمة τw التي تُعطي بالضبط معدل التدفق المطلوب عبر تجربة قيم متكررة ومقاربتها تدريجيًا (تنصيف الفترة)، وأخيرًا يحوّل τw الناتجة إلى فقدان ضغط. <b>تحققتُ من صحة هذه الطريقة رياضيًا بشكل حاسم</b> قبل استخدامها: عند τ₀=0 تُعطي نفس نتيجة معادلة Power Law المباشرة تمامًا، وعند n=1 تُعطي نفس نتيجة معادلة Buckingham-Reiner الدقيقة لـ Bingham تمامًا — وهما اختباران رياضيان مستقلان يؤكدان صحة الطريقة العددية.</p>
+          </div>
+
+          <table class="compare-table">
+            <thead><tr><th>النموذج</th><th>المعادلة</th><th>يبدأ من الصفر؟</th><th>طريقة الحساب في الموقع</th></tr></thead>
+            <tbody>
+              <tr><td>Newtonian</td><td>τ = μγ</td><td>نعم</td><td>مرجع مفاهيمي فقط</td></tr>
+              <tr><td>Bingham Plastic</td><td>τ = YP + PVγ</td><td>لا</td><td>معادلة مباشرة (صفائحي ومضطرب)</td></tr>
+              <tr><td>Power Law</td><td>τ = Kγⁿ</td><td>نعم</td><td>معادلة مباشرة (صفائحي)، تقريب (مضطرب)</td></tr>
+              <tr><td>Herschel-Bulkley</td><td>τ = τ₀ + Kγⁿ</td><td>لا</td><td>حل عددي (تكامل + تنصيف الفترة)</td></tr>
+            </tbody>
+          </table>
+
+          <p style="margin-top:14px;">الفرق بين المنحنيات الأربعة يتضح بصريًا أكثر من أي وصف نظري:</p>
+          <div class="diagram-wrap">
+            <svg viewBox="0 0 640 420" style="max-width:560px;">
+              <line x1="70" y1="350" x2="600" y2="350" stroke="#5c6b78" stroke-width="2" marker-end="url(#tArrow)"/>
+              <line x1="70" y1="350" x2="70" y2="30" stroke="#5c6b78" stroke-width="2" marker-end="url(#tArrow)"/>
+              <text x="590" y="368" text-anchor="end" font-size="11.5" fill="#5c6b78" font-family="Tajawal">معدل القص γ →</text>
+              <text x="55" y="35" text-anchor="end" font-size="11.5" fill="#5c6b78" font-family="Tajawal">↑ τ</text>
+
+              <path d="M70,350 L560,140" fill="none" stroke="#9aa7b3" stroke-width="2.5" stroke-dasharray="6 4"/>
+              <path d="M70,350 Q160,170 560,150" fill="none" stroke="#0072BD" stroke-width="2.8"/>
+              <path d="M70,300 L560,90" fill="none" stroke="#f8de7e" stroke-width="2.8"/>
+              <path d="M70,270 Q220,150 560,75" fill="none" stroke="#b5432d" stroke-width="2.8"/>
+
+              <circle cx="70" cy="300" r="4" fill="#f8de7e"/><text x="42" y="304" font-size="10.5" fill="#8a6d1a" font-family="IBM Plex Mono">YP</text>
+              <circle cx="70" cy="270" r="4" fill="#b5432d"/><text x="35" y="266" font-size="10.5" fill="#8a2f1e" font-family="IBM Plex Mono">τ₀</text>
+              <circle cx="70" cy="350" r="4" fill="#224347"/>
+            </svg>
+          </div>
+          <div class="legend-mini">
+            <div class="lg-item"><span class="lg-dot" style="background:#9aa7b3"></span><div><b>Newtonian</b>خط مستقيم من الصفر — مرجع مفاهيمي.</div></div>
+            <div class="lg-item"><span class="lg-dot" style="background:#0072BD"></span><div><b>Power Law</b>منحنى من الصفر يترقّق مع زيادة القص.</div></div>
+            <div class="lg-item"><span class="lg-dot" style="background:#f8de7e"></span><div><b>Bingham Plastic</b>خط مستقيم يبدأ من عتبة YP.</div></div>
+            <div class="lg-item"><span class="lg-dot" style="background:#b5432d"></span><div><b>Herschel-Bulkley</b>منحنى يبدأ من عتبة τ₀ الأعلى دقة.</div></div>
+          </div>
+          <p>وبما أن كل نموذج يصف "شكل" العلاقة بين الجهد ومعدل القص، فإن السؤال العملي التالي هو: عند أي سرعة يتحول جريان السائل من منتظم إلى فوضوي — ولماذا يهم ذلك لحساب فقدان الضغط تحديدًا؟</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>الجريان الصفائحي والمضطرب — ولماذا تتغيّر المعادلة كليًا عند العتبة</h2></div>
+        <div class="article-body">
+          <p>عند سرعة منخفضة نسبيًا، تتحرك طبقات السائل بخطوط متوازية منتظمة دون أن تختلط ببعضها — هذا هو <b>الجريان الصفائحي (Laminar)</b>. إذا تجاوزت السرعة حدًا معينًا، تتحول هذه الحركة فجأة إلى دوامات عشوائية فوضوية تختلط فيها الطبقات — <b>الجريان المضطرب (Turbulent)</b>. الفرق عمليًا هائل: الجريان المضطرب يُنتج احتكاكًا داخليًا أعلى بكثير عند نفس السرعة تقريبًا، ولهذا فإن <b>معادلة فقدان الضغط تتغيّر جذريًا</b> حسب أي نظام نحن فيه — ولا يمكن استخدام معادلة الجريان الصفائحي على جريان مضطرب أو العكس. تحديد هذه النقطة الفاصلة هو ما تحسبه الحاسبة أولاً عند كل مقطع، قبل أن تختار المعادلة الصحيحة.</p>
+
+          <div class="eq-block">
+            <p>السرعة الحرجة (Vc) لنموذج Bingham Plastic — إذا تجاوزت السرعة الفعلية V هذه القيمة، يتحول الجريان لمضطرب فورًا:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="V_c%20%3D%20%5Cfrac%7B1.08%5C%2CPV%20%2B%201.08%5Csqrt%7BPV%5E2%20%2B%209.26%5C%2Cd%5E2%5C%2CYP%20%5Ccdot%20MW%7D%7D%7BMW%20%5Ccdot%20d%7D"></span></div>
+            <p>PV وYP هما نفس معاملَي Bingham، d قطر الأنبوب (أو القطر المعادل للحلقة) بالبوصة، وMW وزن الطين بـ ppg. لاحظ أن PV وYP يظهران معًا داخل الجذر لأن كلاهما يسهم في "تماسك" السائل الذي يقاوم تكوّن الدوامات؛ كلما زادا، ارتفعت Vc — أي يحتاج السائل سرعة أعلى ليصبح مضطربًا. القسمة على MW·d في النهاية تعكس أن الأنابيب الأوسع والسوائل الأثقل تسمح بجريان أسرع قبل الاضطراب.</p>
+          </div>
+          <div class="eq-block">
+            <p>لنموذج Power Law، لا توجد صيغة مباشرة لـ Vc — بل تُستخرج من شرط أن يبلغ "رقم رينولدز المعمم" (Generalized Reynolds Number، صيغة Metzner-Reed المعدَّلة لسوائل غير نيوتونية) القيمة الحرجة التقليدية 2100:</p>
+            <div class="eqx"><span class="katex-eq" data-tex="Re%20%3D%20%5Cfrac%7B89100%20%5Ccdot%20MW%20%5Ccdot%20V%5E%7B2-n%7D%7D%7BK%7D%5Cleft%28%5Cfrac%7B4n%7D%7B3n%2B1%7D%5Cright%29%5E%7Bn%7D%5Cleft%28%5Cfrac%7Bd%7D%7B12%7D%5Cright%29%5E%7Bn%7D%20%3D%202100"></span></div>
+            <p>هنا n وK معاملا Power Law، وd/12 تحويل القطر من بوصة إلى قدم. بما أن V يظهر بأس (2−n) وليس أسًا بسيطًا، لا يمكن عزله جبريًا بخطوة واحدة — الموقع يحلّها بإعادة ترتيب المعادلة لحساب V مباشرة من بقية الحدود. النتيجة نفسها تُستخدم أيضًا كتقدير للسرعة الحرجة لنموذج Herschel-Bulkley (باستخدام n وK الخاصين بمكوّن Power Law فيه بدل نHb/kHb المتأثرين بـ τ₀، حفاظًا على اتساق الصيغة مع اشتقاقها الأصلي).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>🔄 رحلة فقدان الضغط الكاملة عبر النظام</h2><span class="eq">اضغط على أي مصطلح بالأسفل ليتوهج جزؤه في الرسم</span></div>
+        <div class="article-body" style="margin-bottom:8px;">
+          <p>بعد اختيار النموذج الريولوجي وتحديد نظام الجريان، يمكن الآن تتبع السائل محطة بمحطة، وحساب كم يفقد من ضغطه في كل واحدة.</p>
+        </div>
+        <div class="diagram-wrap">
+          <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" style="min-width:900px;">
+            <defs>
+              <pattern id="earthHatch2" patternUnits="userSpaceOnUse" width="14" height="14" patternTransform="rotate(35)">
+                <rect width="14" height="14" fill="#eef0e8"/><line x1="0" y1="0" x2="0" y2="14" stroke="#dcded2" stroke-width="4"/>
+              </pattern>
+              <pattern id="shakerHatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(0)">
+                <rect width="8" height="8" fill="#dfe6ee"/>
+                <line x1="0" y1="0" x2="8" y2="0" stroke="#8fa1b4" stroke-width="1"/>
+                <line x1="0" y1="0" x2="0" y2="8" stroke="#8fa1b4" stroke-width="1"/>
+              </pattern>
+              <pattern id="rockHatch" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(20)">
+                <rect width="10" height="10" fill="#e3dcc8"/><circle cx="3" cy="3" r="1.2" fill="#b9ab7c"/><circle cx="7" cy="7" r="1.2" fill="#b9ab7c"/>
+              </pattern>
+              <marker id="dArrow2" markerWidth="8" markerHeight="8" refX="4" refY="7" orient="auto"><path d="M0,0 L8,0 L4,8 z" fill="#0072BD"/></marker>
+              <marker id="gArrow2" markerWidth="8" markerHeight="8" refX="4" refY="0" orient="auto"><path d="M0,8 L8,8 L4,0 z" fill="#f8de7e"/></marker>
+              <marker id="tArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#2f5d63"/></marker>
+            </defs>
+
+            <rect x="0" y="0" width="1200" height="250" fill="#eaf2fb"/>
+            <rect x="0" y="250" width="1200" height="550" fill="url(#earthHatch2)"/>
+            <line x1="0" y1="250" x2="1200" y2="250" stroke="#8fa1b4" stroke-width="2"/>
+            <text x="12" y="242" font-size="11" fill="#5c6b78" font-family="IBM Plex Mono">السطح · SURFACE</text>
+
+            <!-- ============ STRUCTURAL ELEMENTS ============ -->
+            <g class="hl-target" id="p-pits">
+              <rect x="20" y="40" width="130" height="55" rx="4" fill="#d7e6f2" stroke="#224347" stroke-width="2"/>
+              <path d="M30,52 q7,-6 14,0 q7,6 14,0 q7,-6 14,0 q7,6 14,0 q7,-6 14,0 q7,6 14,0" stroke="#0072BD" stroke-width="1.6" fill="none"/>
+            </g>
+
+            <g class="hl-target" id="p-pump">
+              <circle cx="230" cy="67" r="18" fill="#224347" stroke="#183033" stroke-width="1.5"/>
+              <path d="M230,67 L230,53 M230,67 L241,73 M230,67 L219,73" stroke="#fcf1ca" stroke-width="2.2"/>
+              <circle cx="230" cy="67" r="4" fill="#fcf1ca"/>
+            </g>
+            <path d="M152,67 L210,67" stroke="#0072BD" stroke-width="2.2" marker-end="url(#tArrow)"/>
+
+            <g class="hl-target" id="p-standpipe">
+              <path d="M248,67 L280,67 L280,26 L345,26 L345,90" stroke="#2f5d63" stroke-width="4" fill="none" marker-end="url(#tArrow)"/>
+            </g>
+
+            <g class="hl-target" id="p-rig">
+              <path d="M362,35 L398,35 L415,225 L345,225 Z" fill="none" stroke="#224347" stroke-width="2.6"/>
+              <line x1="355" y1="150" x2="405" y2="150" stroke="#224347" stroke-width="1.6"/>
+              <line x1="350" y1="185" x2="410" y2="185" stroke="#224347" stroke-width="1.6"/>
+            </g>
+            <rect x="363" y="213" width="34" height="20" fill="#b5432d"/>
+
+            <g class="hl-target" id="p-annulus">
+              <rect x="335" y="250" width="90" height="410" fill="#dfe6ee" stroke="#8fa1b4" stroke-width="1.5"/>
+            </g>
+            <g class="hl-target" id="p-drillstring">
+              <rect x="368" y="250" width="24" height="395" fill="#9aa7b3" stroke="#5c6b78" stroke-width="1.5"/>
+            </g>
+
+            <g class="hl-target" id="p-flow-down">
+              <path d="M380,290 L380,315" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+              <path d="M380,350 L380,375" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+              <path d="M380,410 L380,435" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+              <path d="M380,470 L380,495" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+              <path d="M380,530 L380,555" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+              <path d="M380,590 L380,615" stroke="#0072BD" stroke-width="2.6" marker-end="url(#dArrow2)"/>
+            </g>
+
+            <g class="hl-target" id="p-flow-up">
+              <path d="M351,615 L351,590" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <path d="M351,555 L351,530" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <path d="M351,495 L351,470" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <path d="M351,435 L351,410" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <path d="M351,375 L351,350" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <path d="M351,315 L351,290" stroke="#f8de7e" stroke-width="2.6" marker-end="url(#gArrow2)"/>
+              <circle cx="342" cy="570" r="2.6" fill="#7a5f16"/><circle cx="359" cy="510" r="2.4" fill="#7a5f16"/>
+              <circle cx="343" cy="450" r="2.6" fill="#7a5f16"/><circle cx="358" cy="390" r="2.4" fill="#7a5f16"/>
+              <circle cx="344" cy="330" r="2.6" fill="#7a5f16"/>
+            </g>
+
+            <g class="hl-target" id="p-nozzles">
+              <path d="M365,645 L395,645 L385,671 L375,671 Z" fill="#224347"/>
+              <path d="M372,671 L355,691 M380,671 L380,694 M388,671 L405,691" stroke="#0072BD" stroke-width="2" marker-end="url(#dArrow2)"/>
+            </g>
+
+            <rect x="260" y="712" width="240" height="58" fill="url(#rockHatch)" stroke="#a89a6a" stroke-width="1"/>
+
+            <g class="hl-target" id="p-return-line">
+              <path d="M335,270 Q 480,150 638,80" stroke="#f8de7e" stroke-width="2.6" fill="none" stroke-dasharray="2 5" marker-end="url(#tArrow)"/>
+            </g>
+
+            <g class="hl-target" id="p-shakers">
+              <rect x="640" y="50" width="120" height="52" rx="4" fill="url(#shakerHatch)" stroke="#224347" stroke-width="1.6"/>
+              <circle cx="670" cy="112" r="3" fill="#7a6d4a"/><circle cx="690" cy="117" r="3.4" fill="#7a6d4a"/><circle cx="710" cy="113" r="3" fill="#7a6d4a"/>
+              <path d="M670,104 L690,117 L710,105" stroke="#7a6d4a" stroke-width="1" fill="none"/>
+            </g>
+
+            <path d="M640,95 Q 400,205 150,60" stroke="#2f5d63" stroke-width="2.2" fill="none" stroke-dasharray="5 5" marker-end="url(#tArrow)"/>
+
+            <!-- ============ CALLOUT LABELS (leader line + background card) ============ -->
+            <g font-family="Tajawal">
+              <!-- 1. Pits -->
+              <line x1="85" y1="95" x2="85" y2="108" stroke="#8a8672" stroke-width="1"/>
+              <rect x="10" y="108" width="150" height="24" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="85" y="124" text-anchor="middle" font-size="10.5" fill="#224347" font-weight="700">أحواض الطين (Mud Pits)</text>
+
+              <!-- 2. Pump -->
+              <line x1="230" y1="85" x2="230" y2="108" stroke="#8a8672" stroke-width="1"/>
+              <rect x="172" y="108" width="116" height="24" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="230" y="124" text-anchor="middle" font-size="10.5" fill="#224347" font-weight="700">المضخة (Mud Pump)</text>
+
+              <!-- 3. Standpipe -->
+              <line x1="312" y1="26" x2="312" y2="8" stroke="#8a8672" stroke-width="1"/>
+              <rect x="237" y="2" width="150" height="22" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="312" y="17" text-anchor="middle" font-size="9.5" fill="#2f5d63" font-weight="700">أنبوب الوقوف (Standpipe)</text>
+
+              <!-- 4. Derrick -->
+              <line x1="415" y1="130" x2="470" y2="130" stroke="#8a8672" stroke-width="1"/>
+              <rect x="470" y="118" width="112" height="24" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="526" y="134" text-anchor="middle" font-size="10.5" fill="#224347" font-weight="700">برج الحفر (Derrick)</text>
+
+              <!-- 5. Down-flow -->
+              <line x1="392" y1="410" x2="440" y2="410" stroke="#8a8672" stroke-width="1"/>
+              <rect x="440" y="388" width="215" height="40" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="547" y="404" text-anchor="middle" font-size="10.5" fill="#0058a0" font-weight="700">تدفق الطين نازلاً</text>
+              <text x="547" y="420" text-anchor="middle" font-size="9.5" fill="#0058a0">داخل أنبوب الحفر</text>
+
+              <!-- 6. Up-flow / Annulus -->
+              <line x1="335" y1="450" x2="318" y2="450" stroke="#8a8672" stroke-width="1"/>
+              <rect x="95" y="428" width="223" height="42" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="206" y="444" text-anchor="middle" font-size="10.5" fill="#8a6d1a" font-weight="700">الحلقة (Annulus)</text>
+              <text x="206" y="460" text-anchor="middle" font-size="9.5" fill="#8a6d1a">تدفق عائد يحمل الفتات للأعلى</text>
+
+              <!-- 7. Nozzles -->
+              <line x1="395" y1="665" x2="440" y2="665" stroke="#8a8672" stroke-width="1"/>
+              <rect x="440" y="650" width="255" height="40" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="567" y="666" text-anchor="middle" font-size="10.5" fill="#224347" font-weight="700">فوهات المثقاب (Bit Nozzles)</text>
+              <text x="567" y="682" text-anchor="middle" font-size="9.5" fill="#3c4854">تُسرّع السائل لتنظيف قاع البئر</text>
+
+              <!-- 8. Rock formation -->
+              <line x1="380" y1="770" x2="380" y2="778" stroke="#8a8672" stroke-width="1"/>
+              <rect x="270" y="778" width="220" height="20" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="380" y="792" text-anchor="middle" font-size="9.5" fill="#7a6d4a" font-weight="700">تكوين صخري قيد الحفر</text>
+
+              <!-- 9. Shakers -->
+              <line x1="700" y1="50" x2="700" y2="29" stroke="#8a8672" stroke-width="1"/>
+              <rect x="606" y="5" width="188" height="24" rx="4" fill="#ffffff" fill-opacity="0.95" stroke="#d8d4c6"/>
+              <text x="700" y="21" text-anchor="middle" font-size="10.5" fill="#224347" font-weight="700">الغرابيل الاهتزازية (Shakers)</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="article-body" style="margin-top:18px;">
+          <div class="station-flow">
+
+            <div class="station-step">
+              <div class="station-num">1</div>
+              <div class="st-body">
+                <h4>المعدات السطحية (Surface Equipment)</h4>
+                <p>قبل دخول أنبوب الحفر، يمر السائل عبر خراطيم وأنابيب المضخة الثابتة والوصلات المرنة. فقدان الضغط هنا لا يُشتق من معادلة رياضية، بل يُقدَّر عمليًا من جداول "طول مكافئ" معتمدة صناعيًا لكل تجهيزة قياسية (يُحوَّل شكل التجهيزة إلى طول أنبوب افتراضي يُعطي نفس مقدار الاحتكاك تقريبيًا)، ويُدخله المستخدم مباشرة في الحاسبة كرقم واحد يمثل هذه المرحلة.</p>
+              </div>
+            </div>
+
+            <div class="station-step">
+              <div class="station-num">2</div>
+              <div class="st-body">
+                <h4>داخل أنبوب الحفر — مقطعًا بمقطع</h4>
+                <p>لكل قسم (Drill Pipe، HWDP، Drill Collars…) نحسب السرعة V، نقارنها بـ Vc لتحديد النظام، ثم نطبّق معادلة فقدان الضغط المطابقة. نفس هذه الخطوات الأربع تتكرر تلقائيًا على كل مقطع إضافي تُدخله في الجدول، ثم تُجمع النتائج.</p>
+                <div class="eq-block" style="margin:10px 0;">
+                  <p><b>Bingham Plastic</b> — للجريان الصفائحي، حدّان منفصلان تمامًا: الأول (PV·L·V)/(1500d²) يمثل مقاومة اللزوجة الخالصة وتتناسب طرديًا مع السرعة V (كلما تحرك السائل أسرع، زاد احتكاكه الداخلي) وعكسيًا مع d² (أنبوب أضيق = احتكاك أكبر بالجدار)؛ والثاني (YP·L)/(225d) يمثل مقاومة كسر البنية الداخلية الثابتة — لا تعتمد على V إطلاقًا لأنها جهد يجب دفعه فقط لتحريك السائل من السكون. للجريان المضطرب، تختفي YP تمامًا من المعادلة لأن الدوامات العشوائية تسيطر على المقاومة، وتصبح "عتبة الخضوع" الساكنة بلا معنى فيزيائي أثناء الحركة العنيفة المستمرة:</p>
+                  <div class="eqx"><span class="katex-eq" data-tex="%5CDelta%20P_%7BLam%7D%20%3D%20%5Cfrac%7BPV%20%5Ccdot%20L%20%5Ccdot%20V%7D%7B1500%5C%2Cd%5E2%7D%20%2B%20%5Cfrac%7BYP%20%5Ccdot%20L%7D%7B225%5C%2Cd%7D%2C%20%5Cquad%20%5CDelta%20P_%7BTurb%7D%20%3D%20%5Cfrac%7B8.91%5Ctimes10%5E%7B-5%7DMW%5E%7B0.8%7DQ%5E%7B1.8%7DPV%5E%7B0.2%7DL%7D%7Bd%5E%7B4.8%7D%7D"></span></div>
+                  <p class="eq-note">L طول المقطع بالقدم، Q معدل التدفق بالجالون/دقيقة. حساسية d⁴·⁸ العالية جدًا في صيغة المضطرب تعني أن قطر الأنبوب هو العامل الأكثر تأثيرًا على فقدان الضغط بفارق كبير — تضييق الأنبوب قليلاً يرفع فقدان الضغط بشكل هائل.</p>
+                </div>
+                <div class="eq-block" style="margin:10px 0;">
+                  <p><b>Power Law</b> — للجريان الصفائحي فقط حاليًا. الحد بين القوسين المربعين هو "معدل القص الظاهري عند الجدار" مرفوعًا لأس n، مضروبًا في ثابت هندسي (3n+1)/(4n) يُصحّح شكل توزيع السرعة داخل الأنبوب الدائري لسائل غير خطي (بدل افتراض توزيع سرعة بارابولي بسيط كما في السوائل النيوتونية):</p>
+                  <div class="eqx"><span class="katex-eq" data-tex="%5CDelta%20P_%7BLam%7D%20%3D%20%5Cleft%5B%5Cfrac%7B1.6V%7D%7Bd%7D%5Ccdot%5Cfrac%7B3n%2B1%7D%7B4n%7D%5Cright%5D%5E%7Bn%7D%20%5Ctimes%20%5Cfrac%7BK%20L%7D%7B300d%7D"></span></div>
+                  <p class="eq-note">هذه الصيغة تحديدًا اختبرتُها رقميًا على مثال مرجعي معتمد (n=0.87، K=0.154، d=3.5 بوصة، V=250 قدم/دقيقة، L=10000 قدم) وأعطت 93.6 psi — مطابقة تمامًا للنتيجة المرجعية المنشورة.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="station-step">
+              <div class="station-num">3</div>
+              <div class="st-body">
+                <h4>فوهات المثقاب — حيث الفقدان "مقصود"</h4>
+                <p>هنا نُريد فقدان ضغط كبيرًا: فتحات ضيقة جدًا (بالأجزاء من 32 من البوصة) تُحوّل الضغط المتبقي لسرعة اندفاع هائلة تضرب قاع البئر بقوة ارتطام تُفتّت الصخر وتُنظّف القاع.</p>
+                <div class="eq-block" style="margin:10px 0;">
+                  <p>TFA (مساحة التدفق الكلية) مجموع مساحات دوائر الفوهات — كل فوهة قطرها Nᵢ/32 بوصة (لأن مقاسات الفوهات تُذكر تقليديًا بوحدة 1/32 من البوصة)، والجمع البسيط صحيح لأن كل فوهة تعمل بشكل مستقل ومتوازٍ مع البقية. معادلة الفوهات نفسها معادلة "تسارع" وليست "احتكاك" كسابقاتها: الضغط يتحول بالكامل إلى طاقة حركية عبر فتحة ضيقة (كضغط خرطوم حديقة يتحول لاندفاع قوي عند تضييق الفوهة)، ولهذا يظهر Q² (تربيع معدل التدفق) بدل الأس الكسري المعتاد في معادلات الاحتكاك — لأن الطاقة الحركية تتناسب مع مربع السرعة:</p>
+                  <div class="eqx"><span class="katex-eq" data-tex="TFA%3D%5Csum%5Cfrac%7B%5Cpi%7D%7B4%7D%5Cleft%28%5Cfrac%7BN_i%7D%7B32%7D%5Cright%29%5E2%2C%20%5Cquad%20%5CDelta%20P_%7BBit%7D%3D%5Cfrac%7BMW%5Ccdot%20Q%5E2%7D%7B10858%5Ccdot%20TFA%5E2%7D"></span></div>
+                  <p class="eq-note">الثابت 10858 صُحِّح بعد رصد خطأ في الثابت الأصلي المستخدم سابقًا أدى لنتائج غير واقعية (نحو 186 ألف psi بدل ~1100 psi الصحيحة على نفس المثال) — تحقق منه مصدران هندسيان مستقلان.</p>
+                </div>
+                <div class="eq-block" style="margin:10px 0;">
+                  <p>سرعة الاندفاع من الفوهات Vₙ هي نفس منطق معادلة السرعة الأولى (حجم÷مساحة)، بثابت وحدات مختلف لأن TFA هنا بوحدة بوصة² مباشرة. قوة الارتطام IF ترجمة مباشرة لقانون "القوة = معدل تغيّر كمية الحركة" (F=ṁv)، حيث ṁ (معدل التدفق الكتلي) يُشتق من MW·Q، مضروبًا بالسرعة Vₙ نفسها المحسوبة للتو — تراكب مباشر على المعادلة السابقة. معيارا التحسين الصناعيان: HHP (القدرة الحصانية المُستهلكة عند الفوهات) وHSI (كثافتها بالنسبة لمساحة وجه المثقاب):</p>
+                  <div class="eqx"><span class="katex-eq" data-tex="V_n%3D%5Cfrac%7B0.32086%5Ccdot%20Q%7D%7BTFA%7D%2C%20%5Cquad%20IF%3D%5Cfrac%7BMW%5Ccdot%20Q%5Ccdot%20V_n%7D%7B1930%7D"></span></div>
+                  <div class="eqx"><span class="katex-eq" data-tex="HHP_%7Bbit%7D%3D%5Cfrac%7B%5CDelta%20P_%7BBit%7D%5Ccdot%20Q%7D%7B1714%7D%2C%20%5Cquad%20HSI%3D%5Cfrac%7BHHP_%7Bbit%7D%7D%7B%5Cfrac%7B%5Cpi%7D%7B4%7DD_%7Bbit%7D%5E2%7D"></span></div>
+                  <p class="eq-note">يستهدف معيار "أقصى قدرة حصانية" توجيه نحو 65% من ضغط النظام للفوهات، بينما يستهدف معيار "أقصى قوة ارتطام" نحو 48% — الحاسبة تعرض النسبة الفعلية المُحققة في محاكاتك وتقارنها بهذا النطاق تلقائيًا.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="station-step">
+              <div class="station-num">4</div>
+              <div class="st-body">
+                <h4>الحلقة (Annulus) — نفس المنطق، بالاتجاه المعاكس</h4>
+                <p>بعد خروج السائل من الفوهات، يعود صاعدًا عبر الفراغ الحلقي بين أنبوب الحفر وجدار البئر. تُكرَّر بالضبط نفس الخطوات الأربع من المحطة الثانية (السرعة → السرعة الحرجة → تحديد النظام → معادلة فقدان الضغط)، لكن بهندسة مختلفة (قطر معادل deq = D−d بدل قطر أنبوب بسيط)، مقطعًا بمقطع أيضًا — نفس معادلات Bingham وPower Law أعلاه تنطبق هنا حرفيًا، فقط بمعاملات مختلفة قليلاً (1000 و200 بدل 1500 و225 في Bingham) تعكس اختلاف الهندسة الحلقية عن الأنبوب البسيط في الاشتقاق التجريبي الأصلي.</p>
+                <p>وبما أن الوظيفة الأساسية لهذه المحطة هي رفع فتات الصخر، تُضاف هنا خطوة تحقق إضافية: <b>سرعة الانزلاق (Vs)</b> هي السرعة التي تهبط بها حبيبة صخرية داخل السائل الساكن بفعل الجاذبية وحدها (وفق ارتباط Chien) — كلما انخفضت Vs، كان السائل أفضل في "حمل" الفتات فعليًا لأنها تهبط أبطأ نسبةً لصعود السائل حولها:</p>
+                <div class="eq-block" style="margin:10px 0;">
+                  <div class="eqx"><span class="katex-eq" data-tex="V_s%20%3D%20%5Cfrac%7B0.45%5C%2CPV%7D%7BMW%20%5Ccdot%20d_p%7D%5Cleft%5B%5Csqrt%7B1%2B3.6%5Ctimes10%5E%7B6%7D%5Cfrac%7Bd_p%5E3%5C%2CMW%28%5Crho_s-MW%29%7D%7BPV%5E2%7D%7D-1%5Cright%5D"></span></div>
+                  <p class="eq-note">dp قطر حبيبة الفتات المفترض (0.25 بوصة افتراضيًا)، ρs الكثافة النوعية للصخر. نسبة النقل Rt = 1 − (Vs/Va) — حيث Va سرعة صعود السائل الفعلية في الحلقة: كلما اقتربت Rt من 100%، كانت الحلقة أفضل في رفع الفتات فعليًا وليس فقط نظريًا.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p>بجمع كل هذه المحطات معًا نحصل على الضغط الذي يجب أن توفره المضخات فعليًا — ويمكن تصور هذا "التناقص التدريجي" للضغط المتاح عبر رحلة السائل بصريًا:</p>
+          <div class="waterfall">
+            <div class="wf-bar" style="height:100%; background:#224347;">P المضخة</div>
+            <div class="wf-bar" style="height:88%; background:#0072BD;">−Surface</div>
+            <div class="wf-bar" style="height:55%; background:#0072BD;">−Drill String</div>
+            <div class="wf-bar" style="height:30%; background:#D9534F;">−Bit</div>
+            <div class="wf-bar" style="height:6%; background:#F0AD4E;">−Annulus</div>
+          </div>
+          <div class="wf-labels"><span>ضغط المضخة</span><span>المعدات السطحية</span><span>أنبوب الحفر</span><span>الفوهات</span><span>عودة سطحية ≈ 0</span></div>
+        </div>
+
+        <div class="legend-mini">
+          <div class="lg-item"><span class="lg-dot" style="background:#0072BD"></span><div><b>السهم الأزرق</b>مسار سائل الحفر النازل داخل أنبوب الحفر من المضخة حتى المثقاب.</div></div>
+          <div class="lg-item"><span class="lg-dot" style="background:#f8de7e"></span><div><b>السهم الذهبي</b>مسار السائل العائد للأعلى عبر الحلقة (Annulus)، محمّلاً بفتات الصخر.</div></div>
+          <div class="lg-item"><span class="lg-dot" style="background:#224347"></span><div><b>فوهات المثقاب</b>حيث يتسارع السائل بشدة لحظة خروجه، لتفتيت الصخر وتنظيف قاع البئر.</div></div>
+          <div class="lg-item"><span class="lg-dot" style="background:#7a6d4a"></span><div><b>الغرابيل الاهتزازية</b>تفصل فتات الصخر عن السائل قبل إعادته إلى الأحواض لإكمال الدورة.</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>الضغط الكلي والكثافة المكافئة أثناء الدوران (ECD)</h2></div>
+        <div class="article-body">
+          <p>جمع فقدان الضغط عبر المحطات الأربع خطي بسيط، لأن كل جزء مستقل فيزيائيًا عن الآخر — لا يوجد تفاعل بين فقدان الضغط في الأنبوب وفقدان الضغط في الحلقة، فيصح جمعهم كأربع "فواتير" منفصلة لنفس الرحلة:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="P_%7Btotal%7D%20%3D%20P_%7Bsurface%7D%20%2B%20%5Csum%20%5CDelta%20P_%7Bstring%7D%20%2B%20%5CDelta%20P_%7Bbit%7D%20%2B%20%5Csum%20%5CDelta%20P_%7Bannulus%7D"></span></div>
+            <p class="eq-note">هذا الرقم هو ما تراقبه الحاسبة كـ"Pump Pressure" — الضغط الفعلي الذي يجب أن توفره المضخات على السطح ليكتمل دوران السائل عبر النظام بأكمله.</p>
+          </div>
+          <p>أثناء توقف الضخ، يمارس عمود السائل الساكن ضغطًا هيدروستاتيكيًا بسيطًا يعتمد فقط على وزنه، بلا أي احتكاك:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="HP%20%3D%200.052%20%5Ccdot%20MW%20%5Ccdot%20TVD"></span></div>
+            <p class="eq-note">الثابت 0.052 تحويل وحدات مباشر (رطل/جالون → رطل/بوصة² لكل قدم عمق)؛ TVD العمق الرأسي الحقيقي بالقدم (هنا: مجموع أطوال أقسام أنبوب الحفر). مثال: MW=12 ppg، TVD=11850 قدم → HP = 0.052×12×11850 ≈ 7394 psi.</p>
+          </div>
+          <p>لكن بمجرد بدء الضخ، يُضاف فقدان الضغط في الحلقة تحديدًا (الجزء الملامس فعليًا لجدار البئر المكشوف — وليس فقدان الأنبوب أو الفوهات، لأنهما لا يؤثران على الضغط الخارجي على الجدار) إلى هذا الضغط الساكن، فيرتفع الضغط الفعلي الظاهري على الجدار. نُعبّر عن هذا الضغط الإضافي كـ"كثافة مكافئة" بدل "ضغط" مباشرة، لتسهيل مقارنتها الفورية بكثافة الطين الساكن نفسها:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="ECD%20%3D%20MW%20%2B%20%5Cfrac%7B%5Csum%20%5CDelta%20P_%7Bannulus%7D%7D%7B0.052%20%5Ccdot%20TVD%7D"></span></div>
+            <p class="eq-note">نأخذ فقدان الضغط التراكمي في الحلقة، ونُحوّله من "وحدة ضغط" إلى "وحدة كثافة مكافئة" بقسمته على نفس ثابت 0.052×TVD أعلاه، ثم نضيفه لكثافة السائل الساكن MW. مثال: إذا كان مجموع فقدان الحلقة 580 psi عند TVD=11850 قدم وMW=12 ppg، فإن ECD = 12 + 580/(0.052×11850) = 12 + 0.94 ≈ 12.94 ppg — أي أن جدار البئر "يشعر" بضغط يعادل طينًا وزنه 12.94 ppg أثناء الضخ، رغم أن الطين الفعلي 12 ppg فقط.</p>
+          </div>
+          <p>ولأن فقدان الضغط في الحلقة يتراكم مع العمق (كل قسم إضافي من الحلقة يُضيف فقدانه الخاص)، فإن ECD ليست ثابتة بل تزداد تدريجيًا كلما اتجهنا نحو قاع البئر — وهذا بالضبط ما يُظهره مخطط ECD مقابل العمق في صفحة المحاكاة. لكن كل هذه الحسابات تبقى غير مكتملة دون التحقق من أنها تقع ضمن حدود آمنة — وهذا ما تتناوله الفقرة الأخيرة.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>ما تبقّى — حسابات تُطبَّق على النظام ككل</h2></div>
+        <div class="article-body">
+          <p>بعض الحسابات لا تنتمي لمحطة واحدة محددة في الرحلة، بل تُقارن نتيجة الرحلة كاملة بحدود خارجية عنها، ولذلك بقيت للنهاية:</p>
+          <div class="eq-block">
+            <p><b>ضغط السحب والدفع (Swab/Surge Pressure):</b> تذبذب إضافي في ضغط القاع ناتج عن الحركة العمودية لأنابيب الحفر نفسها أثناء التنزيل أو السحب (Tripping) — سحب سريع جدًا قد يُسبب ضغطًا سالبًا كافيًا لاندفاع سوائل التكوين حتى لو كان ECD الأساسي (أثناء الدوران فقط) آمنًا تمامًا. هذا الحساب غير مطبَّق في الموقع حاليًا.</p>
+          </div>
+          <div class="eq-block">
+            <p><b>نافذة الأمان التشغيلية:</b> مقارنة مباشرة بين ECD المحسوبة وحدّي ضغط المسام (Pore Pressure) وضغط التكسير (Fracture Pressure) لكل عمق، لتنبيه المهندس فور اقتراب أي نقطة من هذين الحدين. هذا الحساب أيضًا غير مطبَّق في الموقع حاليًا.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📖 قاموس المصطلحات التفاعلي</h2><span class="eq">اضغط لعرض الشرح</span></div>
+        <div class="gloss-grid" id="glossaryGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📚 المصادر المعتمدة</h2></div>
+        <div class="article-body" style="font-size:12.5px;">
+          <p>API RP 13D — <i>Recommended Practice on the Rheology and Hydraulics of Oil-Well Drilling Fluids</i>, American Petroleum Institute · Bourgoyne, A.T. et al. — <i>Applied Drilling Engineering</i>, SPE Textbook Series Vol. 2 · Rabia, H. — <i>Well Engineering &amp; Construction</i> · Lapeyrouse, N.J. — <i>Formulas and Calculations for Drilling, Production and Workover</i>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SIMULATOR ============ -->
+    <section class="section" id="sec-sim">
+
+      <div class="card">
+        <div class="card-head"><h2>🎛️ أدوات التحكم بالبيانات</h2></div>
+        <div class="grid2">
+          <button class="btn ghost block" onclick="loadStandardWell()">📚 إضافة بيانات تجريبية (كاملة)</button>
+          <button class="btn ghost block" onclick="clearGeometry()">🗑️ حذف جميع البيانات (تنظيف)</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>1. FLUID &amp; CIRCULATION PARAMETERS</h2></div>
+        <div style="font-size:11.5px; color:var(--muted-2); margin-bottom:10px;">لا تعرف معنى MW أو PV أو YP؟ <a href="javascript:void(0)" onclick="goTo('learn')" style="color:var(--navy-700); font-weight:700;">شاهد الشرح المصوَّر هنا ↗</a></div>
+        <div class="grid5">
+          <div class="field"><label>Mud Weight <span class="unit">ppg</span></label><input type="text" id="input_mw"></div>
+          <div class="field"><label>Plastic Viscosity <span class="unit">cP</span></label><input type="text" id="input_pv"></div>
+          <div class="field"><label>Yield Point <span class="unit">lbf/100ft²</span></label><input type="text" id="input_yp"></div>
+          <div class="field"><label>Flow Rate <span class="unit">GPM</span></label><input type="text" id="input_q"></div>
+          <div class="field"><label>Surface Loss <span class="unit">psi</span></label><input type="text" id="input_surf"></div>
+        </div>
+        <div class="eq-toggle-fann" onclick="const b=document.getElementById('fannBox'); const open=b.style.maxHeight && b.style.maxHeight!=='0px'; b.style.maxHeight= open ? '0px':'160px'; this.querySelector('span').style.transform= open? 'rotate(0deg)':'rotate(90deg)';" style="cursor:pointer; font-size:12px; color:var(--navy-700); font-weight:700; margin-top:4px; display:flex; align-items:center; gap:6px;">
+          <span style="transition:transform .2s;">▸</span> قراءات جهاز Fann الفعلية (اختياري — يرفع دقة Power Law وHerschel-Bulkley ويجعلها مستقلة فعليًا عن PV/YP)
+        </div>
+        <div id="fannBox" class="grid4" style="max-height:0; overflow:hidden; transition:max-height .25s ease;">
+          <div class="field"><label>θ100 <span class="unit">(اختياري)</span></label><input type="text" id="input_t100" placeholder="سيُقدَّر تلقائيًا"></div>
+          <div class="field"><label>θ3 <span class="unit">(اختياري)</span></label><input type="text" id="input_t3" placeholder="سيُقدَّر تلقائيًا"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🔀 وضع المقارنة بين النماذج</h2></div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">فعّل هذا الوضع لتشغيل أكثر من نموذج ريولوجي معًا على نفس البيانات ومقارنة النتائج جنبًا إلى جنب.</p>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--navy-900); cursor:pointer;">
+          <input type="checkbox" id="compareMode" onchange="toggleCompareMode()" style="width:16px; height:16px;"> تفعيل وضع المقارنة
+        </label>
+        <div id="compareModelPicker" style="display:none; margin-top:12px; gap:16px;" class="grid3">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px;"><input type="checkbox" class="cmpModel" value="bingham" checked> Bingham Plastic</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px;"><input type="checkbox" class="cmpModel" value="powerlaw" checked> Power Law</label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px;"><input type="checkbox" class="cmpModel" value="hb" checked> Herschel-Bulkley</label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>2. WELLBORE GEOMETRY &amp; TUBULARS</h2></div>
+        <div class="grid2">
+          <div>
+            <div style="font-weight:700; font-size:12.5px; color:var(--navy-900); margin-bottom:8px;">Drill String (Top to Bottom)</div>
+            <div style="overflow-x:auto;">
+              <table class="datatable" id="stringTable">
+                <thead><tr><th>#</th><th>Component</th><th>OD (in)</th><th>ID (in)</th><th>Length (ft)</th><th></th></tr></thead>
+                <tbody id="stringBody"></tbody>
+              </table>
+            </div>
+            <button class="btn ghost sm" style="margin-top:10px;" onclick="addStringRow()">+ إضافة صف</button>
+          </div>
+          <div>
+            <div style="font-weight:700; font-size:12.5px; color:var(--navy-900); margin-bottom:8px;">Annulus / Open Hole (Top to Bottom)</div>
+            <div style="overflow-x:auto;">
+              <table class="datatable" id="annulusTable">
+                <thead><tr><th>#</th><th>Section</th><th>ID (in)</th><th>Length (ft)</th><th></th></tr></thead>
+                <tbody id="annulusBody"></tbody>
+              </table>
+            </div>
+            <button class="btn ghost sm" style="margin-top:10px;" onclick="addAnnulusRow()">+ إضافة صف</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>3. BIT HYDRAULICS (NOZZLES IN 32nds)</h2></div>
+        <div class="grid6">
+          <div class="field"><label>Nozzle 1</label><input type="text" id="input_n1"></div>
+          <div class="field"><label>Nozzle 2</label><input type="text" id="input_n2"></div>
+          <div class="field"><label>Nozzle 3</label><input type="text" id="input_n3"></div>
+          <div class="field"><label>Nozzle 4</label><input type="text" id="input_n4"></div>
+          <div class="field"><label>Nozzle 5</label><input type="text" id="input_n5"></div>
+          <div class="field"><label>Nozzle 6</label><input type="text" id="input_n6"></div>
+        </div>
+        <button class="btn gold block" onclick="runSimulation()">⚡ EXECUTE HYDRAULICS SIMULATION</button>
+      </div>
+
+      <div id="simResultsWrap" style="display:none;">
+        <div class="card">
+          <div class="card-head"><h2>📊 4. EXECUTIVE SUMMARY &amp; KPIs</h2></div>
+          <div class="result-panel show" style="margin-top:0">
+            <div class="result-grid">
+              <div class="rstat highlight"><div class="rlabel">Pump Pressure</div><div class="rval gold" id="o_pump">—</div></div>
+              <div class="rstat"><div class="rlabel">Bit Pressure Drop</div><div class="rval" id="o_pb">—</div></div>
+              <div class="rstat"><div class="rlabel">Annular Loss</div><div class="rval" id="o_ann">—</div></div>
+              <div class="rstat"><div class="rlabel">Bottom Hole ECD</div><div class="rval" id="o_ecd">—</div></div>
+              <div class="rstat"><div class="rlabel">Bit Impact Force</div><div class="rval" id="o_if">—</div></div>
+              <div class="rstat"><div class="rlabel">Hydraulic HP (Bit)</div><div class="rval" id="o_bhhp">—</div></div>
+              <div class="rstat"><div class="rlabel">HSI</div><div class="rval" id="o_hsi">—</div></div>
+              <div class="rstat"><div class="rlabel">Slip Velocity</div><div class="rval" id="o_vs">—</div></div>
+              <div class="rstat"><div class="rlabel">Transport Ratio</div><div class="rval" id="o_rt">—</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card no-print">
+          <div class="card-head"><h2>🎯 معايير تحسين الفوهات (Nozzle Optimization)</h2></div>
+          <div class="grid2">
+            <div class="field"><label>قطر المثقاب <span class="unit">in</span></label><input type="text" id="input_bitdia" value="8.5" onchange="if(simResults) runSimulation()"></div>
+          </div>
+          <div class="why-grid">
+            <div class="why-card"><h4>Max Hydraulic Horsepower</h4><p id="hhpNote">يستهدف توجيه نحو 65% من ضغط النظام للفوهات لتعظيم القدرة الحصانية عند المثقاب.</p></div>
+            <div class="why-card"><h4>Max Jet Impact Force</h4><p id="jifNote">يستهدف توجيه نحو 48% من ضغط النظام للفوهات لتعظيم قوة الارتطام وتنظيف القاع.</p></div>
+            <div class="why-card" id="pctCard"><h4>النسبة الحالية في محاكاتك</h4><p id="pctNote">—</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>تفاصيل هبوط الضغط — Drill String</h2></div>
+          <div style="overflow-x:auto;">
+            <table class="datatable" id="stringResultsTable">
+              <thead><tr><th>Component</th><th>Length (ft)</th><th>Velocity (ft/s)</th><th>Regime</th><th>dP (psi)</th></tr></thead>
+              <tbody id="stringResultsBody"></tbody>
+            </table>
+          </div>
+          <div class="card-head" style="margin-top:22px;"><h2>تفاصيل هبوط الضغط — Annulus</h2></div>
+          <div style="overflow-x:auto;">
+            <table class="datatable" id="annResultsTable">
+              <thead><tr><th>Section</th><th>Length (ft)</th><th>Velocity (ft/s)</th><th>Regime</th><th>dP (psi)</th></tr></thead>
+              <tbody id="annResultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-head"><h2>🍩 System Pressure Breakdown</h2></div>
+            <div class="plotwrap" id="piePlot"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>📈 Annular Pressure Profile (ECD vs Depth)</h2></div>
+            <div class="plotwrap" id="ecdPlot"></div>
+            <div class="eq-toggle-fann" onclick="const b=document.getElementById('ecdPointsBox'); const open=b.style.maxHeight && b.style.maxHeight!=='0px'; b.style.maxHeight= open?'0px':'340px'; this.querySelector('span').style.transform= open?'rotate(0deg)':'rotate(90deg)';" style="cursor:pointer; font-size:12px; color:var(--navy-700); font-weight:700; margin-top:10px; display:flex; align-items:center; gap:6px;">
+              <span style="transition:transform .2s;">▸</span> عرض جدول القيم عند كل نقطة عمق محسوبة
+            </div>
+            <div id="ecdPointsBox" style="max-height:0; overflow:hidden; transition:max-height .25s ease;">
+              <div class="table-wrap" style="max-height:320px; overflow-y:auto; margin-top:8px;">
+                <table class="datatable"><thead><tr><th>TVD (ft)</th><th>ECD (ppg)</th></tr></thead><tbody id="ecdPointsBody"></tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>المعادلات المستخدمة</h2><span class="eq">Live Reference</span></div>
+          <div id="hydFormula"></div>
+        </div>
+
+        <div class="card no-print">
+          <div class="card-head"><h2>📥 تصدير النتائج والتقارير</h2></div>
+          <div class="export-row">
+            <button class="btn ghost" onclick="exportCSV()">📄 تحميل CSV</button>
+            <button class="btn ghost" onclick="exportExcel()">📊 تحميل Excel</button>
+            <button class="btn gold" onclick="printReport(event)">📕 تحميل التقرير الهندسي الشامل (PDF)</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="compareResultsWrap" style="display:none;">
+        <div class="card">
+          <div class="card-head"><h2>🔀 مقارنة النماذج الريولوجية</h2></div>
+          <div class="result-panel show" style="margin-top:0">
+            <div class="result-grid" id="compareKpis"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>تفصيل فقدان الضغط حسب المرحلة والنموذج</h2></div>
+          <div style="overflow-x:auto;">
+            <table class="datatable" id="compareTable"></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>📊 مقارنة ضغط النظام الكلي</h2></div>
+          <div class="plotwrap" id="comparePlot"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>📊 مقارنة الكثافة المكافئة (ECD) حسب العمق</h2></div>
+          <div class="plotwrap" id="compareEcdPlot"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>🔎 التفصيل الكامل لكل نموذج على حدة</h2><span class="eq">Drill String &amp; Annulus, مقطعًا بمقطع</span></div>
+          <div id="compareDetailWrap"></div>
+        </div>
+        <div class="card no-print">
+          <div class="card-head"><h2>📥 تصدير المقارنة</h2></div>
+          <div class="export-row">
+            <button class="btn ghost" onclick="exportCompareCSV()">📄 تحميل CSV</button>
+            <button class="btn ghost" onclick="exportCompareExcel()">📊 تحميل Excel</button>
+            <button class="btn gold" onclick="printCompareReport(event)">📕 تحميل تقرير مقارنة (PDF)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div><!-- /appShell -->
+
+<div id="printReport"></div>
+
+<script>
+/* ============================================================
+   GLOBAL STATE & HELPERS
+   ============================================================ */
+let simResults = null;
+let compareResults = null;
+let stringRows = [];
+let annulusRows = [];
+
+function parseFloatSafe(v, def=0.0){
+  if(v===null || v===undefined) return def;
+  const s = String(v).trim();
+  if(s==='') return def;
+  const arabicDigits='٠١٢٣٤٥٦٧٨٩'; let clean=s;
+  for(let i=0;i<10;i++) clean = clean.split(arabicDigits[i]).join(String(i));
+  clean = clean.replace(',', '.');
+  const f = parseFloat(clean);
+  return isNaN(f) ? def : f;
+}
+function fmt(n,d=2){ if(!isFinite(n)) return "—"; return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const titles = {
+  home:["GENERAL / OVERVIEW","محاكي هيدروليكيات الحفر","Hydraulics Calc"],
+  learn:["GENERAL / HOW IT WORKS","كيف تعمل دورة سائل الحفر؟","Learn"],
+  sim:["CALCULATOR / SIMULATOR","محاكاة الهيدروليكيات الكاملة","System Pressure"],
+};
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+function goTo(target){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+target).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  const t = titles[target];
+  document.getElementById('crumb').textContent=t[0];
+  document.getElementById('pageTitle').textContent=t[1];
+  document.getElementById('eqTag').textContent=t[2];
+  closeSidebar();
+  document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+  if(target==='sim' && simResults){ setTimeout(()=>{ renderPie(); renderEcd(); },50); }
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+document.querySelectorAll('.mod-card').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+
+/* ============================================================
+   CORE MATH — ported 1:1 from Python
+   ============================================================ */
+function bpDeltaP(q, dOuter, dInner, length, mw, pv, yp, isAnnulus){
+  if(length<=0 || q<=0) return {dp:0, v:0, regime:'N/A'};
+  let dp, v, regime;
+  if(isAnnulus){
+    const dEq = dOuter - dInner;
+    if(dEq<=0) return {dp:0, v:0, regime:'N/A'};
+    v = (0.408*q)/(dOuter*dOuter - dInner*dInner);
+    const vCrit = (1.08*pv + 1.08*Math.sqrt(pv*pv + 9.26*dEq*dEq*yp*mw))/(mw*dEq);
+    if(v<vCrit){
+      dp = ((pv*length*v)/(1000*dEq*dEq)) + ((yp*length)/(200*dEq));
+      regime='Laminar';
+    } else {
+      dp = (8.91e-5 * Math.pow(mw,0.8) * Math.pow(q,1.8) * Math.pow(pv,0.2) * length) / (Math.pow(dEq,3) * Math.pow(dOuter+dInner,1.8));
+      regime='Turbulent';
+    }
+  } else {
+    const d = dInner;
+    if(d<=0) return {dp:0, v:0, regime:'N/A'};
+    v = (0.408*q)/(d*d);
+    const vCrit = (1.08*pv + 1.08*Math.sqrt(pv*pv + 9.26*d*d*yp*mw))/(mw*d);
+    if(v<vCrit){
+      dp = ((pv*length*v)/(1500*d*d)) + ((yp*length)/(225*d));
+      regime='Laminar';
+    } else {
+      dp = (8.91e-5 * Math.pow(mw,0.8) * Math.pow(q,1.8) * Math.pow(pv,0.2) * length) / Math.pow(d,4.8);
+      regime='Turbulent';
+    }
+  }
+  return {dp, v, regime};
+}
+
+/* ------------------------------------------------------------
+   POWER LAW MODEL — n & K derived from PV/YP (via reconstructed
+   theta600/theta300), laminar formula numerically verified
+   against a published reference example (n=0.87, K=0.154,
+   d=3.5in, V=250 ft/min, L=10000ft -> ~93-95 psi, matched).
+   Turbulent regime for Power Law is NOT independently verified
+   yet, so it falls back to the Bingham turbulent correlation as
+   a labeled approximation rather than an unverified formula.
+   ------------------------------------------------------------ */
+function powerLawParams(pv, yp){
+  const theta300 = yp + pv;
+  const theta600 = 2*pv + yp;
+  if(theta300<=0 || theta600<=0 || theta600<=theta300) return {n:1, k:0};
+  const n = 3.32 * Math.log10(theta600/theta300);
+  const k = (1.066 * theta300) / Math.pow(511, n);
+  return {n, k, theta300, theta600};
+}
+function plCriticalVelocity(n, k, d, mw){
+  // Generalized Reynolds number (Metzner-Reed form) solved for V at Re=2100
+  // Re = 89100 * mw * V^(2-n) / K * (4n/(3n+1))^n * (d/12)^n = 2100
+  const shapeFactor = Math.pow(4*n/(3*n+1), n) * Math.pow(d/12, n);
+  const base = (2100*k) / (89100*mw*shapeFactor);
+  return Math.pow(base, 1/(2-n)); // ft/s
+}
+function powerLawDeltaP(q, dOuter, dInner, length, mw, n, k, pv, yp, isAnnulus){
+  if(length<=0 || q<=0) return {dp:0, v:0, regime:'N/A', approx:false};
+  if(!n || !k) return {dp:0, v:0, regime:'N/A', approx:false};
+  let v, d, vCrit;
+  if(isAnnulus){
+    d = dOuter - dInner;
+    if(d<=0) return {dp:0, v:0, regime:'N/A', approx:false};
+    v = (0.408*q)/(dOuter*dOuter - dInner*dInner); // ft/s
+  } else {
+    d = dInner;
+    if(d<=0) return {dp:0, v:0, regime:'N/A', approx:false};
+    v = (0.408*q)/(d*d); // ft/s
+  }
+  vCrit = plCriticalVelocity(n, k, d, mw);
+  const vFtMin = v*60;
+  if(v < vCrit){
+    let dp;
+    if(isAnnulus){
+      dp = Math.pow((2.4*vFtMin/d)*((2*n+1)/(3*n)), n) * (k*length)/(300*d);
+    } else {
+      dp = Math.pow((1.6*vFtMin/d)*((3*n+1)/(4*n)), n) * (k*length)/(300*d);
+    }
+    return {dp, v, regime:'Laminar', approx:false};
+  } else {
+    // Turbulent Power Law: not yet independently verified -> approximate
+    // via the Bingham turbulent correlation using PV/YP as stand-ins.
+    const bing = bpDeltaP(q, dOuter, dInner, length, mw, pv, yp, isAnnulus);
+    return {dp:bing.dp, v, regime:'Turbulent*', approx:true};
+  }
+}
+
+/* ------------------------------------------------------------
+   BIT HYDRAULICS — BUG FIX: the original bit pressure-drop
+   constant (156 / (TFA*100)^2) produced physically impossible
+   results (~186,000 psi on the reference dataset). Verified
+   against two independent sources (US patent 9,631,457 and
+   Calculator Academy's bit pressure loss reference) that the
+   correct field-units constant is 10858. Jet velocity and
+   impact force formulas were already correct and unaffected.
+   ------------------------------------------------------------ */
+function bitHydraulics(q, mw, nozzles, bitDiaIn){
+  const tfa = nozzles.filter(n=>n>0).reduce((s,n)=> s + (Math.PI/4)*Math.pow(n/32,2), 0);
+  if(tfa===0) return {tfa:0,pb:0,vn:0,bhhp:0,impactForce:0,hsi:0};
+  const vn = (0.32086*q)/tfa;
+  const pb = (mw*Math.pow(q,2))/(10858*Math.pow(tfa,2));
+  const bhhp = (pb*q)/1714;
+  const impactForce = (mw*q*vn)/1930;
+  const bitArea = bitDiaIn>0 ? (Math.PI/4)*Math.pow(bitDiaIn,2) : 0;
+  const hsi = bitArea>0 ? bhhp/bitArea : 0;
+  return {tfa,pb,vn,bhhp,impactForce,hsi};
+}
+
+/* ------------------------------------------------------------
+   SLIP VELOCITY & CUTTINGS TRANSPORT — Chien (1994) correlation,
+   commonly cited alongside API RP 13D hole-cleaning guidance.
+   ------------------------------------------------------------ */
+function slipVelocity(pv, mw, cuttingDia_in=0.25, cuttingSG=2.6){
+  const rhoS = cuttingSG*8.345; // ppg
+  const dp = cuttingDia_in;
+  const term = Math.sqrt(1 + 3.6e6*Math.pow(dp,3)*mw*(rhoS-mw)/(pv*pv)) - 1;
+  const vs = (0.45*pv/(mw*dp)) * term; // ft/min
+  return vs;
+}
+
+/* ============================================================
+   FANN READING DERIVATION — independent rheological parameters
+   for all three models. If theta100/theta3 are supplied, they
+   are used directly (accurate); otherwise they are estimated
+   from the pipe-derived Power Law curve as a labeled fallback.
+   ============================================================ */
+function deriveRheology(pv, yp, theta100In, theta3In){
+  const theta300 = yp + pv;
+  const theta600 = 2*pv + yp;
+  const out = {theta300, theta600, pv, yp};
+  if(theta300<=0 || theta600<=theta300){ out.n=1; out.k=0; return out; }
+
+  // Pipe Power Law params (from theta600/theta300)
+  out.n = 3.32*Math.log10(theta600/theta300);
+  out.k = (1.066*theta300)/Math.pow(511, out.n);
+
+  // theta100 / theta3 : use supplied values if present, else estimate
+  // from the pipe power-law curve (gamma_100=170.3, gamma_3=5.1 s^-1)
+  const est100 = out.k*Math.pow(170.3, out.n);
+  const est3   = out.k*Math.pow(5.1, out.n);
+  const theta100 = theta100In>0 ? theta100In : est100;
+  const theta3   = theta3In>0 ? theta3In : est3;
+  out.theta100 = theta100; out.theta3 = theta3;
+  out.theta100Estimated = !(theta100In>0);
+  out.theta3Estimated = !(theta3In>0);
+
+  // Annular Power Law params (low shear-rate accurate form per API RP 13D)
+  if(theta100>0 && theta3>0 && theta100>theta3){
+    out.nAnn = 2.09*Math.log10(theta100/theta3);
+    out.kAnn = (1.066*theta100)/Math.pow(170.2, out.nAnn);
+  } else { out.nAnn = out.n; out.kAnn = out.k; }
+
+  // Herschel-Bulkley params (tau0 from theta3, n/K refit through theta600/theta300)
+  out.tau0 = Math.max(0, 2*theta3 - (theta100>0 ? (theta3+ (theta100-theta3)*3/97) : theta3*0.3)); // simple low-shear intercept estimate
+  // Refit n,K around tau0 using theta600/theta300 (Herschel-Bulkley form)
+  const num = theta600 - out.tau0, den = theta300 - out.tau0;
+  if(num>0 && den>0 && num!==den){
+    out.nHb = 3.32*Math.log10(num/den);
+    out.kHb = den/Math.pow(511, out.nHb);
+  } else { out.nHb = out.n; out.kHb = out.k; out.tau0 = 0; }
+
+  return out;
+}
+
+/* ============================================================
+   HERSCHEL-BULKLEY — numerical solution (Rabinowitsch-Mooney
+   integral + Simpson's rule + bisection). VERIFIED against two
+   independent closed-form solutions:
+     - tau0=0 reduces exactly to the Power Law laminar formula
+     - n=1 reduces exactly to the Buckingham-Reiner Bingham
+       Plastic equation
+   Field-unit inputs are converted to SI, solved, then the
+   result is converted back to psi.
+   ------------------------------------------------------------ */
+const PA_PER_LB100FT2 = 0.478803;   // 1 lbf/100ft^2 -> Pa
+const M3S_PER_GPM = 6.30902e-5;     // 1 gpm -> m^3/s
+const M_PER_IN = 0.0254;
+const M_PER_FT = 0.3048;
+const PSI_PER_PA = 1/6894.757;
+
+function hbPipeQFromTauw(tauw, tau0, K, n, R, num=300){
+  if(tauw<=tau0) return 0;
+  const a=tau0, b=tauw, h=(b-a)/num;
+  const f=(t)=>{ const base=(t-a)/K; return t*t*Math.pow(Math.max(base,0), 1/n); };
+  let s=f(a)+f(b);
+  for(let i=1;i<num;i++){ s += (i%2===1?4:2)*f(a+i*h); }
+  const integral = s*h/3;
+  return (Math.PI*Math.pow(R,3)/Math.pow(tauw,3)) * integral;
+}
+function hbSlotQFromTauw(tauw, tau0, K, n, halfGap, width, num=300){
+  if(tauw<=tau0) return 0;
+  const a=tau0, b=tauw, h=(b-a)/num;
+  const f=(t)=>{ const base=(t-a)/K; return t*Math.pow(Math.max(base,0), 1/n); };
+  let s=f(a)+f(b);
+  for(let i=1;i<num;i++){ s += (i%2===1?4:2)*f(a+i*h); }
+  const integral = s*h/3;
+  return width * (Math.pow(halfGap,2)/Math.pow(tauw,2)) * integral;
+}
+function hbDeltaP(q, dOuter, dInner, length, tau0_field, k_field, n, isAnnulus){
+  if(length<=0 || q<=0 || n<=0) return {dp:0, v:0, regime:'N/A'};
+  const Q_si = q*M3S_PER_GPM;
+  const L_si = length*M_PER_FT;
+  const tau0_si = tau0_field*PA_PER_LB100FT2;
+  const K_si = k_field*PA_PER_LB100FT2; // K has stress units at gamma=1 s^-1, consistent
+
+  let dp_pa, v;
+  if(isAnnulus){
+    const gap = dOuter - dInner;
+    if(gap<=0) return {dp:0, v:0, regime:'N/A'};
+    v = (0.408*q)/(dOuter*dOuter - dInner*dInner); // ft/s (for display/consistency)
+    const halfGap = (gap*M_PER_IN)/2;
+    const width = Math.PI*((dOuter+dInner)/2)*M_PER_IN; // mean circumference
+    // bisection on tauw
+    let lo=tau0_si*1.0000001, hi=tau0_si+5e7;
+    for(let i=0;i<80;i++){
+      const mid=(lo+hi)/2;
+      const Qm = hbSlotQFromTauw(mid, tau0_si, K_si, n, halfGap, width);
+      if(Qm<Q_si) lo=mid; else hi=mid;
+    }
+    const tauw=(lo+hi)/2;
+    dp_pa = 2*tauw*L_si/(gap*M_PER_IN);
+  } else {
+    const d = dInner;
+    if(d<=0) return {dp:0, v:0, regime:'N/A'};
+    v = (0.408*q)/(d*d);
+    const R = (d*M_PER_IN)/2;
+    let lo=tau0_si*1.0000001, hi=tau0_si+5e7;
+    for(let i=0;i<80;i++){
+      const mid=(lo+hi)/2;
+      const Qm = hbPipeQFromTauw(mid, tau0_si, K_si, n, R);
+      if(Qm<Q_si) lo=mid; else hi=mid;
+    }
+    const tauw=(lo+hi)/2;
+    dp_pa = 2*tauw*L_si/R;
+  }
+  const dp_psi = dp_pa*PSI_PER_PA;
+  return {dp:dp_psi, v, regime:'Laminar (numeric)'};
+}
+
+/* ============================================================
+   TABLE EDITORS
+   ============================================================ */
+function renderStringTable(){
+  const tbody=document.getElementById('stringBody');
+  tbody.innerHTML = stringRows.map((r,i)=>`
+    <tr>
+      <td class="mono">${i+1}</td>
+      <td><input type="text" value="${r.component??''}" onchange="stringRows[${i}].component=this.value"></td>
+      <td><input type="text" value="${r.od??''}" onchange="stringRows[${i}].od=this.value"></td>
+      <td><input type="text" value="${r.id??''}" onchange="stringRows[${i}].id=this.value"></td>
+      <td><input type="text" value="${r.length??''}" onchange="stringRows[${i}].length=this.value"></td>
+      <td class="rowdel" onclick="delStringRow(${i})">✕</td>
+    </tr>`).join('');
+}
+function renderAnnulusTable(){
+  const tbody=document.getElementById('annulusBody');
+  tbody.innerHTML = annulusRows.map((r,i)=>`
+    <tr>
+      <td class="mono">${i+1}</td>
+      <td><input type="text" value="${r.section??''}" onchange="annulusRows[${i}].section=this.value"></td>
+      <td><input type="text" value="${r.id??''}" onchange="annulusRows[${i}].id=this.value"></td>
+      <td><input type="text" value="${r.length??''}" onchange="annulusRows[${i}].length=this.value"></td>
+      <td class="rowdel" onclick="delAnnulusRow(${i})">✕</td>
+    </tr>`).join('');
+}
+function addStringRow(){ stringRows.push({component:'',od:'',id:'',length:''}); renderStringTable(); }
+function delStringRow(i){ stringRows.splice(i,1); renderStringTable(); }
+function addAnnulusRow(){ annulusRows.push({section:'',id:'',length:''}); renderAnnulusTable(); }
+function delAnnulusRow(i){ annulusRows.splice(i,1); renderAnnulusTable(); }
+
+function loadStandardWell(){
+  stringRows = [
+    {component:'DP 5-in', od:'5.0', id:'4.276', length:'9000.0'},
+    {component:'HWDP 5-in', od:'5.0', id:'3.0', length:'1500.0'},
+    {component:'DC 6.75-in', od:'6.75', id:'2.812', length:'1200.0'},
+    {component:'MWD/LWD 6.75-in', od:'6.75', id:'2.25', length:'150.0'},
+  ];
+  annulusRows = [
+    {section:'Casing 9-5/8', id:'8.681', length:'8000.0'},
+    {section:'Open Hole 8.5', id:'8.5', length:'3850.0'},
+  ];
+  renderStringTable(); renderAnnulusTable();
+  document.getElementById('input_mw').value='12.0';
+  document.getElementById('input_pv').value='25.0';
+  document.getElementById('input_yp').value='18.0';
+  document.getElementById('input_q').value='600.0';
+  document.getElementById('input_surf').value='150.0';
+  document.getElementById('input_n1').value='14';
+  document.getElementById('input_n2').value='14';
+  document.getElementById('input_n3').value='14';
+  document.getElementById('input_n4').value='14';
+  document.getElementById('input_n5').value='0';
+  document.getElementById('input_n6').value='0';
+  if(document.getElementById('input_bitdia')) document.getElementById('input_bitdia').value='8.5';
+  if(document.getElementById('input_t100')) document.getElementById('input_t100').value='29';
+  if(document.getElementById('input_t3')) document.getElementById('input_t3').value='9';
+  simResults=null;
+  document.getElementById('simResultsWrap').style.display='none';
+}
+function clearGeometry(){
+  stringRows=[{component:'',od:'',id:'',length:''}];
+  annulusRows=[{section:'',id:'',length:''}];
+  renderStringTable(); renderAnnulusTable();
+  ['input_mw','input_pv','input_yp','input_q','input_surf','input_n1','input_n2','input_n3','input_n4','input_n5','input_n6'].forEach(k=>document.getElementById(k).value='');
+  if(document.getElementById('input_t100')) document.getElementById('input_t100').value='';
+  if(document.getElementById('input_t3')) document.getElementById('input_t3').value='';
+  simResults=null; compareResults=null;
+  document.getElementById('simResultsWrap').style.display='none';
+  const cw=document.getElementById('compareResultsWrap'); if(cw) cw.style.display='none';
+}
+clearGeometry();
+
+/* ============================================================
+   SIMULATION
+   ============================================================ */
+/* ============================================================
+   MODEL ROUTER — single source of truth used by both the
+   single-model run and the multi-model comparison mode.
+   ============================================================ */
+function deltaPForModel(modelKey, rheo, q, dOuter, dInner, length, mw, isAnnulus){
+  if(modelKey==='powerlaw'){
+    const n = isAnnulus ? rheo.nAnn : rheo.n, k = isAnnulus ? rheo.kAnn : rheo.k;
+    return powerLawDeltaP(q, dOuter, dInner, length, mw, n, k, rheo.pv, rheo.yp, isAnnulus);
+  }
+  if(modelKey==='hb'){
+    const d = isAnnulus ? (dOuter-dInner) : dInner;
+    if(d<=0) return {dp:0, v:0, regime:'N/A'};
+    const v = isAnnulus ? (0.408*q)/(dOuter*dOuter-dInner*dInner) : (0.408*q)/(d*d);
+    // Critical velocity approximated via the tau0-free Power Law fit (n,k), since
+    // the Metzner-Reed critical-Reynolds formula assumes tau0=0 by derivation —
+    // plugging in the HB-refit n/K (which has tau0 baked in) would be inconsistent.
+    const nRef = isAnnulus ? rheo.nAnn : rheo.n, kRef = isAnnulus ? rheo.kAnn : rheo.k;
+    const vCrit = plCriticalVelocity(nRef||1, kRef||0.001, d, mw);
+    if(v < vCrit){
+      const r = hbDeltaP(q, dOuter, dInner, length, rheo.tau0, rheo.kHb, rheo.nHb, isAnnulus);
+      return r;
+    } else {
+      const bing = bpDeltaP(q, dOuter, dInner, length, mw, rheo.pv, rheo.yp, isAnnulus);
+      return {dp:bing.dp, v, regime:'Turbulent*'};
+    }
+  }
+  // default: bingham
+  return bpDeltaP(q, dOuter, dInner, length, mw, rheo.pv, rheo.yp, isAnnulus);
+}
+
+function computeSystemForModel(modelKey, rheo, mw, q, surf, dsRows, anRows, nozzles, bitDia){
+  const totalTvd = dsRows.reduce((s,r)=>s+r.length,0);
+  const stringDetails=[]; let totalPipeDp=0;
+  dsRows.forEach(r=>{
+    const {dp,v,regime}=deltaPForModel(modelKey, rheo, q, r.od, r.id, r.length, mw, false);
+    totalPipeDp+=dp;
+    stringDetails.push({name:r.name, length:r.length, v, regime, dp});
+  });
+  const avgPipeOd = dsRows.length ? dsRows.reduce((s,r)=>s+r.od,0)/dsRows.length : 5.0;
+  const annulusDetails=[]; let totalAnnDp=0; let annVelocity=0;
+  anRows.forEach(r=>{
+    const {dp,v,regime}=deltaPForModel(modelKey, rheo, q, r.id, avgPipeOd, r.length, mw, true);
+    totalAnnDp+=dp; annVelocity=v;
+    annulusDetails.push({name:r.name, length:r.length, v, regime, dp});
+  });
+  const bit=bitHydraulics(q, mw, nozzles, bitDia);
+  const totalSysPressure = surf + totalPipeDp + totalAnnDp + bit.pb;
+  const ecdBottom = totalTvd>0 ? mw + (totalAnnDp/(0.052*totalTvd)) : mw;
+  const vs = rheo.pv>0 ? slipVelocity(rheo.pv, mw) : 0;
+  const annVelocityFtMin = annVelocity*60;
+  const rt = annVelocityFtMin>0 ? Math.max(0, 1-(vs/annVelocityFtMin)) : 0;
+  const bitPct = totalSysPressure>0 ? (bit.pb/totalSysPressure)*100 : 0;
+  return {model:modelKey, stringDetails, annulusDetails, totalPipeDp, totalAnnDp,
+    pb:bit.pb, tfa:bit.tfa, vn:bit.vn, bhhp:bit.bhhp, impactForce:bit.impactForce, hsi:bit.hsi,
+    totalSysPressure, ecdBottom, hpBottom:0.052*mw*totalTvd, tvd:totalTvd,
+    mw, pv:rheo.pv, yp:rheo.yp, q, surf, vs, rt, bitPct, bitDia};
+}
+
+const MODEL_LABELS = {bingham:'Bingham Plastic', powerlaw:'Power Law', hb:'Herschel-Bulkley'};
+function readCommonInputs(){
+  const mw=parseFloatSafe(document.getElementById('input_mw').value);
+  const pv=parseFloatSafe(document.getElementById('input_pv').value);
+  const yp=parseFloatSafe(document.getElementById('input_yp').value);
+  const q=parseFloatSafe(document.getElementById('input_q').value);
+  const surf=parseFloatSafe(document.getElementById('input_surf').value);
+  const bitDia=parseFloatSafe(document.getElementById('input_bitdia')?.value, 8.5);
+  const t100=parseFloatSafe(document.getElementById('input_t100')?.value, 0);
+  const t3=parseFloatSafe(document.getElementById('input_t3')?.value, 0);
+  const rheo = deriveRheology(pv, yp, t100, t3);
+  const dsRows = stringRows.map(r=>({name:r.component, od:parseFloatSafe(r.od), id:parseFloatSafe(r.id), length:parseFloatSafe(r.length)})).filter(r=> r.length>0 || r.od>0 || r.id>0 || (r.name && r.name.trim()!==''));
+  const anRows = annulusRows.map(r=>({name:r.section, id:parseFloatSafe(r.id), length:parseFloatSafe(r.length)})).filter(r=> r.length>0 || r.id>0 || (r.name && r.name.trim()!==''));
+  const nozzles=[1,2,3,4,5,6].map(i=>parseFloatSafe(document.getElementById('input_n'+i).value));
+  return {mw, rheo, q, surf, bitDia, dsRows, anRows, nozzles};
+}
+
+function toggleCompareMode(){
+  const on = document.getElementById('compareMode').checked;
+  document.getElementById('compareModelPicker').style.display = on ? 'grid' : 'none';
+}
+
+function runSimulation(){
+  const compareOn = document.getElementById('compareMode').checked;
+  const {mw, rheo, q, surf, bitDia, dsRows, anRows, nozzles} = readCommonInputs();
+  if(dsRows.length===0){ alert('الرجاء إدخال بيانات أنبوب الحفر أولاً (أو اضغط "إضافة بيانات تجريبية").'); return; }
+
+  if(compareOn){
+    const models = [...document.querySelectorAll('.cmpModel:checked')].map(el=>el.value);
+    if(models.length===0){ alert('اختر نموذجًا واحدًا على الأقل للمقارنة.'); return; }
+    const results = models.map(m=>computeSystemForModel(m, rheo, mw, q, surf, dsRows, anRows, nozzles, bitDia));
+    renderComparison(results, rheo);
+    document.getElementById('simResultsWrap').style.display='none';
+    document.getElementById('compareResultsWrap').style.display='block';
+    document.getElementById('compareResultsWrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+    simResults=null; compareResults=results;
+    return;
+  }
+
+  document.getElementById('compareResultsWrap').style.display='none';
+  const modelSel = document.getElementById('g_model').value;
+  const r = computeSystemForModel(modelSel, rheo, mw, q, surf, dsRows, anRows, nozzles, bitDia);
+  simResults = r; compareResults=null;
+
+  document.getElementById('o_pump').textContent = fmt(r.totalSysPressure,0)+' psi';
+  document.getElementById('o_pb').textContent = fmt(r.pb,0)+' psi';
+  document.getElementById('o_ann').textContent = fmt(r.totalAnnDp,0)+' psi';
+  document.getElementById('o_ecd').textContent = r.ecdBottom.toFixed(3)+' ppg';
+  document.getElementById('o_if').textContent = fmt(r.impactForce,0)+' lbf';
+  document.getElementById('o_bhhp').textContent = fmt(r.bhhp,1)+' hp';
+  document.getElementById('o_hsi').textContent = fmt(r.hsi,2)+' hp/in²';
+  document.getElementById('o_vs').textContent = fmt(r.vs,1)+' ft/min';
+  document.getElementById('o_rt').textContent = (r.rt*100).toFixed(0)+'%';
+  const pctCard=document.getElementById('pctCard');
+  pctCard.className = 'why-card ' + (r.bitPct>=45 && r.bitPct<=70 ? 'good' : 'danger');
+  document.getElementById('pctNote').textContent = `فقدان الفوهات يشكّل حاليًا ${r.bitPct.toFixed(0)}% من ضغط النظام الكلي — ${r.bitPct>=45&&r.bitPct<=70 ? 'ضمن النطاق المعتاد بين معياري التحسين (48%–65%).' : 'خارج النطاق المعتاد؛ جرّب تعديل مقاس الفوهات.'}`;
+
+  document.getElementById('stringResultsBody').innerHTML = r.stringDetails.map(x=>`
+    <tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td>
+    <td><span class="badge ${x.regime.startsWith('Turbulent')?'turbulent':'laminar'}">${x.regime}</span></td><td>${fmt(x.dp,1)}</td></tr>`).join('');
+  document.getElementById('annResultsBody').innerHTML = r.annulusDetails.map(x=>`
+    <tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td>
+    <td><span class="badge ${x.regime.startsWith('Turbulent')?'turbulent':'laminar'}">${x.regime}</span></td><td>${fmt(x.dp,1)}</td></tr>`).join('');
+
+  document.getElementById('simResultsWrap').style.display='block';
+  renderPie(); renderEcd(); renderHydFormula();
+  document.getElementById('simResultsWrap').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function renderComparison(results, rheo){
+  const wrap=document.getElementById('compareResultsWrap');
+  const kpiHtml = results.map(r=>`
+    <div class="rstat highlight">
+      <div class="rlabel">${MODEL_LABELS[r.model]}</div>
+      <div class="rval gold">${fmt(r.totalSysPressure,0)}<span class="runit">psi</span></div>
+      <div style="font-size:11px; color:#9db0c2; margin-top:6px; font-family:'IBM Plex Mono',monospace;">
+        Bit: ${fmt(r.pb,0)} · Ann: ${fmt(r.totalAnnDp,0)} · ECD: ${r.ecdBottom.toFixed(3)} · IF: ${fmt(r.impactForce,0)} lbf
+      </div>
+    </div>`).join('');
+  document.getElementById('compareKpis').innerHTML = kpiHtml;
+
+  const cols=['المرحلة', ...results.map(r=>MODEL_LABELS[r.model])];
+  const rows = ['Surface','Drill String','Bit Nozzles','Annulus','Total System','ECD (ppg)','Impact Force (lbf)','HHP (hp)','Slip Velocity (ft/min)','Transport Ratio (%)'];
+  const tableRows = rows.map(stage=>{
+    const vals = results.map(r=>{
+      if(stage==='Surface') return r.surf;
+      if(stage==='Drill String') return r.totalPipeDp;
+      if(stage==='Bit Nozzles') return r.pb;
+      if(stage==='Annulus') return r.totalAnnDp;
+      if(stage==='Total System') return r.totalSysPressure;
+      if(stage==='ECD (ppg)') return r.ecdBottom;
+      if(stage==='Impact Force (lbf)') return r.impactForce;
+      if(stage==='HHP (hp)') return r.bhhp;
+      if(stage==='Slip Velocity (ft/min)') return r.vs;
+      if(stage==='Transport Ratio (%)') return r.rt*100;
+    });
+    const dec = (stage==='ECD (ppg)') ? 3 : 1;
+    return `<tr><td style="text-align:right; font-weight:600;">${stage}</td>${vals.map(v=>`<td>${fmt(v,dec)}</td>`).join('')}</tr>`;
+  }).join('');
+  document.getElementById('compareTable').innerHTML = `
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${tableRows}</tbody>`;
+
+  const palette=['#0072BD','#D9534F','#F0AD4E'];
+  const barData = results.map(r=>({model:MODEL_LABELS[r.model], value:r.totalSysPressure}));
+  Plotly.newPlot('comparePlot', [{
+    type:'bar', x:barData.map(b=>b.model), y:barData.map(b=>b.value),
+    marker:{color:palette.slice(0,results.length)}, text:barData.map(b=>fmt(b.value,0)), textposition:'outside'
+  }], {yaxis:{title:'Total System Pressure (psi)'}, margin:{t:20,b:40,l:60,r:20}, height:360}, {responsive:true, displaylogo:false});
+
+  const ecdTraces = results.map((r,i)=>{
+    const {depths, ecds} = computeEcdProfile(r.annulusDetails, r.mw, 100);
+    return {x:ecds, y:depths, mode:'lines', name:MODEL_LABELS[r.model], line:{color:palette[i], width:3}};
+  });
+  Plotly.newPlot('compareEcdPlot', ecdTraces, {
+    xaxis:{title:'Equivalent Density (ppg)', side:'top'}, yaxis:{title:'True Vertical Depth (ft)', autorange:'reversed'},
+    margin:{t:40,b:20,l:20,r:20}, height:400, showlegend:true
+  }, {responsive:true, displaylogo:false});
+
+  const detailHtml = results.map((r,i)=>`
+    <div style="margin-bottom:22px;">
+      <div style="font-weight:700; color:${palette[i]}; font-size:13px; margin-bottom:8px; padding-bottom:6px; border-bottom:2px solid ${palette[i]};">${MODEL_LABELS[r.model]}</div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:700;">Drill String</div>
+      <div style="overflow-x:auto; margin-bottom:12px;"><table class="datatable">
+        <thead><tr><th>Component</th><th>Length (ft)</th><th>Velocity (ft/s)</th><th>Regime</th><th>dP (psi)</th></tr></thead>
+        <tbody>${r.stringDetails.map(x=>`<tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td><td><span class="badge ${x.regime.startsWith('Turbulent')?'turbulent':'laminar'}">${x.regime}</span></td><td>${fmt(x.dp,1)}</td></tr>`).join('')}</tbody>
+      </table></div>
+      <div style="font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:700;">Annulus</div>
+      <div style="overflow-x:auto;"><table class="datatable">
+        <thead><tr><th>Section</th><th>Length (ft)</th><th>Velocity (ft/s)</th><th>Regime</th><th>dP (psi)</th></tr></thead>
+        <tbody>${r.annulusDetails.map(x=>`<tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td><td><span class="badge ${x.regime.startsWith('Turbulent')?'turbulent':'laminar'}">${x.regime}</span></td><td>${fmt(x.dp,1)}</td></tr>`).join('')}</tbody>
+      </table></div>
+    </div>`).join('');
+  document.getElementById('compareDetailWrap').innerHTML = detailHtml;
+}
+
+/* ============================================================
+   COMPARISON MODE — CSV / Excel / PDF exports
+   ============================================================ */
+function exportCompareCSV(){
+  if(!compareResults){ alert('لا توجد نتائج مقارنة حاليًا.'); return; }
+  let csv = 'Model,Section,Type,Length (ft),Velocity (ft/s),Regime,dP (psi)\n';
+  compareResults.forEach(r=>{
+    r.stringDetails.forEach(x=>{ csv += `${MODEL_LABELS[r.model]},${x.name||''},Drill String,${x.length},${x.v.toFixed(2)},${x.regime},${x.dp.toFixed(2)}\n`; });
+    r.annulusDetails.forEach(x=>{ csv += `${MODEL_LABELS[r.model]},${x.name||''},Annulus,${x.length},${x.v.toFixed(2)},${x.regime},${x.dp.toFixed(2)}\n`; });
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob); link.download='Model_Comparison.csv'; link.target='_blank'; link.click();
+}
+
+function exportCompareExcel(){
+  if(!compareResults){ alert('لا توجد نتائج مقارنة حاليًا.'); return; }
+  const wb = XLSX.utils.book_new();
+  const summary = [['Metric', ...compareResults.map(r=>MODEL_LABELS[r.model])]];
+  const metrics = [
+    ['Surface (psi)', r=>r.surf], ['Drill String (psi)', r=>r.totalPipeDp], ['Bit Nozzles (psi)', r=>r.pb],
+    ['Annulus (psi)', r=>r.totalAnnDp], ['Total System (psi)', r=>r.totalSysPressure], ['ECD (ppg)', r=>r.ecdBottom],
+    ['Impact Force (lbf)', r=>r.impactForce], ['HHP (hp)', r=>r.bhhp], ['Slip Velocity (ft/min)', r=>r.vs], ['Transport Ratio (%)', r=>r.rt*100]
+  ];
+  metrics.forEach(([label,fn])=> summary.push([label, ...compareResults.map(r=>Number(fn(r).toFixed(3)))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'Comparison Summary');
+
+  compareResults.forEach(r=>{
+    const dsData=[['Component','Length (ft)','Velocity (ft/s)','Regime','dP (psi)']];
+    r.stringDetails.forEach(x=>dsData.push([x.name||'', x.length, Number(x.v.toFixed(2)), x.regime, Number(x.dp.toFixed(2))]));
+    const anData=[['Section','Length (ft)','Velocity (ft/s)','Regime','dP (psi)']];
+    r.annulusDetails.forEach(x=>anData.push([x.name||'', x.length, Number(x.v.toFixed(2)), x.regime, Number(x.dp.toFixed(2))]));
+    const sheetName = (MODEL_LABELS[r.model]||r.model).slice(0,28);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['DRILL STRING'],...dsData,[],['ANNULUS'],...anData]), sheetName);
+  });
+  XLSX.writeFile(wb, 'Model_Comparison.xlsx');
+}
+
+/* ============================================================
+   PLOTS — configs kept identical to the original Streamlit app
+   ============================================================ */
+function renderPie(){
+  if(!simResults) return;
+  const labels=['Surface Eq','Drill String','Bit Nozzles','Annulus'];
+  const values=[simResults.surf, simResults.totalPipeDp, simResults.pb, simResults.totalAnnDp];
+  const data=[{type:'pie', labels, values, hole:.4, marker:{colors:['#E1E8ED','#0072BD','#D9534F','#F0AD4E']}}];
+  const layout={margin:{t:20,b:20,l:20,r:20}, height:400};
+  Plotly.newPlot('piePlot', data, layout, {responsive:true, displaylogo:false});
+}
+function computeEcdProfile(annulusDetails, mw, stepFt=100){
+  // True point-by-point profile: since dP is linear along a uniform-property
+  // segment (same physical assumption the pressure-loss model already makes),
+  // intermediate points are computed via exact linear interpolation of the
+  // segment's own start/end cumulative values — not just plotted at row
+  // boundaries. Segments are subdivided roughly every `stepFt` feet.
+  const depths=[0], ecds=[mw];
+  let cumDepth=0, cumDpStart=0;
+  annulusDetails.forEach(sec=>{
+    const segStartDepth = cumDepth, segStartDp = cumDpStart;
+    const nSteps = Math.max(1, Math.min(50, Math.ceil(sec.length/stepFt)));
+    for(let i=1;i<=nSteps;i++){
+      const frac = i/nSteps;
+      const depth = segStartDepth + sec.length*frac;
+      const dpAtPoint = segStartDp + sec.dp*frac;
+      depths.push(depth);
+      ecds.push(depth>0 ? mw + dpAtPoint/(0.052*depth) : mw);
+    }
+    cumDepth = segStartDepth + sec.length;
+    cumDpStart = segStartDp + sec.dp;
+  });
+  return {depths, ecds};
+}
+function renderEcd(){
+  if(!simResults) return;
+  const {depths, ecds} = computeEcdProfile(simResults.annulusDetails, simResults.mw, 100);
+  const data=[{x:ecds, y:depths, mode:'lines', line:{color:'#D9534F', width:3, shape:'linear'}, name:'Dynamic ECD'}];
+  const layout={
+    xaxis:{title:'<b>Equivalent Density (ppg)</b>', side:'top'},
+    yaxis:{title:'<b>True Vertical Depth (ft)</b>', autorange:'reversed'},
+    margin:{t:40,b:20,l:20,r:20}, height:400,
+    shapes:[{type:'line', x0:simResults.mw, x1:simResults.mw, y0:0, y1:1, yref:'paper', line:{color:'gray', dash:'dash'}}],
+    annotations:[{x:simResults.mw, y:1, yref:'paper', yshift:12, text:'Static MW', showarrow:false, font:{size:10,color:'gray'}}]
+  };
+  Plotly.newPlot('ecdPlot', data, layout, {responsive:true, displaylogo:false});
+  const tbody=document.getElementById('ecdPointsBody');
+  if(tbody){
+    tbody.innerHTML = depths.map((d,i)=>`<tr><td>${fmt(d,1)}</td><td>${ecds[i].toFixed(4)}</td></tr>`).join('');
+  }
+}
+
+/* ============================================================
+   EQUATIONS (KaTeX)
+   ============================================================ */
+const HYD_TEX = [
+  ["Bingham Plastic Model Equations (Field Units):", true],
+  ["Velocity_{Pipe} = \\dfrac{0.408 \\times Q}{d^2}", false],
+  ["Velocity_{Annulus} = \\dfrac{0.408 \\times Q}{D_2^2 - D_1^2}", false],
+  ["Velocity_{Critical} = \\dfrac{1.08\\,PV + 1.08\\sqrt{PV^2 + 9.26\\,d_{eq}^2\\,YP \\cdot MW}}{MW \\cdot d_{eq}}", false],
+  ["\\Delta P_{Lam,\\ Pipe} = \\dfrac{PV \\cdot L \\cdot V}{1500\\,d^2} + \\dfrac{YP \\cdot L}{225\\,d}", false],
+  ["\\Delta P_{Turb,\\ Pipe} = \\dfrac{8.91\\times10^{-5}\\,MW^{0.8}\\,Q^{1.8}\\,PV^{0.2}\\,L}{d^{4.8}}", false],
+  ["\\Delta P_{Lam,\\ Ann} = \\dfrac{PV \\cdot L \\cdot V}{1000\\,(D_2-D_1)^2} + \\dfrac{YP \\cdot L}{200\\,(D_2-D_1)}", false],
+  ["\\Delta P_{Turb,\\ Ann} = \\dfrac{8.91\\times10^{-5}\\,MW^{0.8}\\,Q^{1.8}\\,PV^{0.2}\\,L}{(D_2-D_1)^3\\,(D_2+D_1)^{1.8}}", false],
+  ["Power Law Model (n, K derived from PV/YP) — Laminar Only, Verified:", true],
+  ["n = 3.32 \\cdot \\log_{10}\\!\\left(\\dfrac{\\theta_{600}}{\\theta_{300}}\\right), \\quad K = \\dfrac{1.066\\,\\theta_{300}}{511^{\\,n}}", false],
+  ["\\Delta P_{Lam,\\ Pipe} = \\left[\\dfrac{1.6\\,V}{d}\\cdot\\dfrac{3n+1}{4n}\\right]^{n} \\times \\dfrac{K \\cdot L}{300\\,d}", false],
+  ["\\Delta P_{Lam,\\ Ann} = \\left[\\dfrac{2.4\\,V}{D_2-D_1}\\cdot\\dfrac{2n+1}{3n}\\right]^{n} \\times \\dfrac{K \\cdot L}{300\\,(D_2-D_1)}", false],
+  ["Bit\\ Hydraulics\\ \\&\\ Optimization:", true],
+  ["TFA = \\sum \\dfrac{\\pi}{4}\\left(\\dfrac{N_i}{32}\\right)^2", false],
+  ["\\Delta P_{Bit} = \\dfrac{MW \\cdot Q^2}{10858 \\cdot TFA^2}", false],
+  ["Jet\\ Velocity = \\dfrac{0.32086 \\cdot Q}{TFA}", false],
+  ["Impact\\ Force = \\dfrac{MW \\cdot Q \\cdot V_n}{1930}", false],
+  ["HHP_{bit} = \\dfrac{\\Delta P_{Bit} \\cdot Q}{1714}, \\quad HSI = \\dfrac{HHP_{bit}}{\\frac{\\pi}{4} D_{bit}^2}", false],
+  ["Hole\\ Cleaning\\ (Chien\\ Slip\\ Velocity):", true],
+  ["V_s = \\dfrac{0.45\\,PV}{MW \\cdot d_p}\\left[\\sqrt{1+3.6\\times10^{6}\\dfrac{d_p^3\\,MW(\\rho_s-MW)}{PV^2}}-1\\right]", false],
+  ["Herschel-Bulkley (\\tau=\\tau_0+K\\dot{\\gamma}^n) — Numerical Solution:", true],
+  ["\\tau_0 = 2\\theta_3-\\theta_6\\ (est.),\\quad n,K\\ \\text{refit through}\\ \\theta_{600},\\theta_{300}\\ \\text{around}\\ \\tau_0", false],
+  ["Q(\\tau_w) = \\dfrac{\\pi R^3}{\\tau_w^3}\\int_{\\tau_0}^{\\tau_w}\\!\\tau^2\\left(\\dfrac{\\tau-\\tau_0}{K}\\right)^{1/n}\\!d\\tau \\ \\Rightarrow\\ \\text{solve}\\ \\tau_w\\ \\text{s.t.}\\ Q(\\tau_w)=Q_{target}", false],
+  ["\\Delta P = \\dfrac{2\\,\\tau_w\\,L}{R}\\quad\\text{(solved by bisection + Simpson's rule; verified against Power Law and Bingham as limiting cases)}", false]
+];
+function buildHydEqHTML(){
+  let n=1;
+  let html = `<div class="formula-panel"><div class="fp-title">Bingham Plastic — Governing Equations</div>`;
+  HYD_TEX.forEach(([tex,isTitle])=>{
+    if(isTitle){ html += `</div><div class="formula-panel"><div class="fp-title">${tex.replace(/\\&/g,'&')}</div>`; }
+    else{ html += `<div class="fp-eq"><span class="katex-eq" data-tex="${encodeURIComponent(tex)}"></span></div>`; }
+  });
+  html += `</div>`;
+  return html;
+}
+function renderHydFormula(){
+  const container=document.getElementById('hydFormula');
+  container.innerHTML = buildHydEqHTML();
+  renderKatexIn(container);
+}
+function renderKatexIn(container){
+  if(typeof katex === 'undefined'){ setTimeout(()=>renderKatexIn(container), 150); return; }
+  container.querySelectorAll('.katex-eq').forEach(el=>{
+    const tex = decodeURIComponent(el.dataset.tex);
+    try{ katex.render(tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent = tex; }
+  });
+}
+
+/* ============================================================
+   EXPORT — CSV
+   ============================================================ */
+function exportCSV(){
+  if(!simResults) return;
+  const cols=['name','length','v','regime','dp'];
+  let csv = 'Component,Length (ft),Velocity (ft/s),Regime,dP (psi)\n';
+  [...simResults.stringDetails, ...simResults.annulusDetails].forEach(r=>{
+    csv += cols.map(c=> c==='name' ? (r[c]||'') : r[c]).join(',')+'\n';
+  });
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='Pressure_Losses.csv';
+  link.target='_blank'; link.click();
+}
+
+function exportExcel(){
+  if(!simResults){ alert('الرجاء تشغيل المحاكاة أولاً.'); return; }
+  const {depths, ecds} = computeEcdProfile(simResults.annulusDetails, simResults.mw, 100);
+  const wb = XLSX.utils.book_new();
+
+  const summaryData = [
+    ['Parameter','Value','Unit'],
+    ['Rheology Model', MODEL_LABELS[simResults.model]||simResults.model, ''],
+    ['Mud Weight', simResults.mw, 'ppg'],
+    ['Plastic Viscosity', simResults.pv, 'cP'],
+    ['Yield Point', simResults.yp, 'lb/100ft²'],
+    ['Flow Rate', simResults.q, 'GPM'],
+    ['Surface Loss', simResults.surf, 'psi'],
+    ['Total System Pressure', Number(simResults.totalSysPressure.toFixed(1)), 'psi'],
+    ['Bit Pressure Drop', Number(simResults.pb.toFixed(1)), 'psi'],
+    ['Total Annular Loss', Number(simResults.totalAnnDp.toFixed(1)), 'psi'],
+    ['Bottom Hole ECD', Number(simResults.ecdBottom.toFixed(3)), 'ppg'],
+    ['Bit Impact Force', Number(simResults.impactForce.toFixed(1)), 'lbf'],
+    ['Hydraulic Horsepower (Bit)', Number(simResults.bhhp.toFixed(1)), 'hp'],
+    ['HSI', Number(simResults.hsi.toFixed(3)), 'hp/in²'],
+    ['Slip Velocity', Number(simResults.vs.toFixed(1)), 'ft/min'],
+    ['Cuttings Transport Ratio', Number((simResults.rt*100).toFixed(1)), '%'],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summaryData), 'Summary');
+
+  const dsData = [['Component','Length (ft)','Velocity (ft/s)','Regime','dP (psi)']];
+  simResults.stringDetails.forEach(r=>dsData.push([r.name||'', r.length, Number(r.v.toFixed(2)), r.regime, Number(r.dp.toFixed(2))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dsData), 'Drill String');
+
+  const anData = [['Section','Length (ft)','Velocity (ft/s)','Regime','dP (psi)']];
+  simResults.annulusDetails.forEach(r=>anData.push([r.name||'', r.length, Number(r.v.toFixed(2)), r.regime, Number(r.dp.toFixed(2))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(anData), 'Annulus');
+
+  const ecdData = [['TVD (ft)','ECD (ppg)']];
+  depths.forEach((d,i)=>ecdData.push([Number(d.toFixed(1)), Number(ecds[i].toFixed(4))]));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ecdData), 'ECD Profile');
+
+  XLSX.writeFile(wb, 'Hydraulics_Report_'+(MODEL_LABELS[simResults.model]||'model').replace(/\s+/g,'_')+'.xlsx');
+}
+
+/* ============================================================
+   PRINT / PDF REPORT
+   ============================================================ */
+function prFooter(pageNo, totalPages){
+  return `<div class="pr-footer">
+    <div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div>
+    <div class="pr-pageno">Page ${pageNo} of ${totalPages}</div>
+  </div>`;
+}
+function prPageHeader(sectionName, dateStr){
+  return `<div class="pr-page-header">
+    <div class="pr-brand">
+      <div class="pr-mark">AM</div>
+      <div class="pr-brand-text"><div class="pr-t1">Drilling Hydraulics Simulator</div><div class="pr-t2">${dateStr}</div></div>
+    </div>
+    <div class="pr-section-name">${sectionName}</div>
+  </div>`;
+}
+function buildHydEqPrintHTML(){
+  let n=1;
+  let html = `<div class="pr-eq-box"><div class="pr-eq-title">Bingham Plastic — Governing Equations</div>`;
+  HYD_TEX.forEach(([tex,isTitle])=>{
+    if(isTitle){ html += `</div><div class="pr-eq-box"><div class="pr-eq-title">${tex.replace(/\\&/g,'&')}</div>`; }
+    else{ html += `<div class="pr-eq-row"><span class="pr-eq-num">E${n++}</span><span class="katex-eq" data-tex="${encodeURIComponent(tex)}"></span></div>`; }
+  });
+  html += `</div>`;
+  return html;
+}
+
+async function printReport(evt){
+  if(!simResults){ alert('الرجاء تشغيل المحاكاة أولاً قبل توليد التقرير.'); return; }
+  const btn = evt ? evt.target : null;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جارٍ تجهيز التقرير...'; }
+
+  let pieImg='', ecdImg='';
+  try{
+    const tmp1=document.createElement('div'); tmp1.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp1);
+    await Plotly.newPlot(tmp1, [{type:'pie', labels:['Surface Eq','Drill String','Bit Nozzles','Annulus'],
+      values:[simResults.surf, simResults.totalPipeDp, simResults.pb, simResults.totalAnnDp], hole:.4,
+      marker:{colors:['#E1E8ED','#0072BD','#D9534F','#F0AD4E']}}],
+      {margin:{t:30,b:30,l:30,r:30}, height:520, width:900, title:{text:'System Pressure Breakdown', font:{size:14}}}, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    pieImg = await Plotly.toImage(tmp1, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp1); tmp1.remove();
+
+    const {depths, ecds} = computeEcdProfile(simResults.annulusDetails, simResults.mw, 100);
+    const tmp2=document.createElement('div'); tmp2.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp2);
+    await Plotly.newPlot(tmp2, [{x:ecds, y:depths, mode:'lines', line:{color:'#D9534F', width:3}, name:'Dynamic ECD'}],
+      {xaxis:{title:'Equivalent Density (ppg)', side:'top'}, yaxis:{title:'True Vertical Depth (ft)', autorange:'reversed'},
+       margin:{t:50,b:30,l:50,r:20}, height:520, width:900, title:{text:'Annular Pressure Profile', font:{size:14}},
+       shapes:[{type:'line', x0:simResults.mw, x1:simResults.mw, y0:0, y1:1, yref:'paper', line:{color:'gray', dash:'dash'}}],
+       annotations:[{x:simResults.mw, y:1, yref:'paper', yshift:14, text:'Static MW', showarrow:false, font:{size:11,color:'gray'}}]
+      }, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    ecdImg = await Plotly.toImage(tmp2, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp2); tmp2.remove();
+  }catch(e){ console.warn('plot capture failed', e); }
+
+  if(btn){ btn.disabled=false; btn.textContent='📕 تحميل التقرير الهندسي الشامل (PDF)'; }
+
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5);
+  const summaryText = `The hydraulic simulation was conducted at a True Vertical Depth (TVD) of ${fmt(simResults.tvd,0)} ft with a mud weight of ${simResults.mw} ppg. The total system pressure loss is calculated at ${fmt(simResults.totalSysPressure,0)} psi. The Annular Pressure Loss accounts for ${fmt(simResults.totalAnnDp,0)} psi, resulting in a dynamic bottom hole ECD of ${simResults.ecdBottom.toFixed(3)} ppg. Bit hydraulics analysis indicates a Total Flow Area (TFA) of ${simResults.tfa.toFixed(3)} sq.in, generating a jet velocity of ${fmt(simResults.vn,1)} ft/sec and an impact force of ${fmt(simResults.impactForce,0)} lbf.`;
+
+  const stringRowsHtml = simResults.stringDetails.map(r=>`<tr><td>${r.name||'—'}</td><td>${fmt(r.length,0)}</td><td>${fmt(r.v,1)}</td><td>${r.regime}</td><td>${fmt(r.dp,1)}</td></tr>`).join('');
+  const annRowsHtml = simResults.annulusDetails.map(r=>`<tr><td>${r.name||'—'}</td><td>${fmt(r.length,0)}</td><td>${fmt(r.v,1)}</td><td>${r.regime}</td><td>${fmt(r.dp,1)}</td></tr>`).join('');
+  const cols=['Component','Length (ft)','Velocity (ft/s)','Regime','dP (psi)'];
+
+  const TOTAL_PAGES=5;
+  const html = `
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('COVER', dateStr)}
+        <div class="pr-headbar">
+          <div class="pr-h1">Drilling Hydraulics Simulator</div>
+          <div class="pr-h2">${(MODEL_LABELS[simResults.model]||'BINGHAM PLASTIC').toUpperCase()} MATH ENGINE · SYSTEM PRESSURE ANALYSIS</div>
+        </div>
+        <div class="pr-cover-title">
+          <h1>Comprehensive Hydraulics Report</h1>
+          <p>System Pressure Analysis &amp; Bit Optimization Summary</p>
+        </div>
+        <hr class="pr-rule">
+        <div class="pr-infolist">
+          <div><span>Rheology Model</span><b>${MODEL_LABELS[simResults.model]||'Bingham Plastic'}</b></div>
+          <div><span>Mud Weight</span><b>${simResults.mw} ppg</b></div>
+          <div><span>Plastic Viscosity / Yield Point</span><b>${simResults.pv} cP / ${simResults.yp} lb/100ft²</b></div>
+          <div><span>Flow Rate</span><b>${simResults.q} GPM</b></div>
+          <div><span>Total Vertical Depth (String)</span><b>${fmt(simResults.tvd,0)} ft</b></div>
+          <div><span>Bit Diameter</span><b>${simResults.bitDia} in</b></div>
+          <div><span>Report Generated</span><b>${dateStr}</b></div>
+        </div>
+        <div class="pr-kpi-row">
+          <div class="pr-kpi"><div class="pr-kpi-label">Pump Pressure</div><div class="pr-kpi-value">${fmt(simResults.totalSysPressure,0)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Bit dP</div><div class="pr-kpi-value">${fmt(simResults.pb,0)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Annular Loss</div><div class="pr-kpi-value">${fmt(simResults.totalAnnDp,0)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">ECD</div><div class="pr-kpi-value">${simResults.ecdBottom.toFixed(3)}</div></div>
+        </div>
+        <div class="pr-kpi-row">
+          <div class="pr-kpi"><div class="pr-kpi-label">Impact Force</div><div class="pr-kpi-value">${fmt(simResults.impactForce,0)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Hydraulic HP</div><div class="pr-kpi-value">${fmt(simResults.bhhp,1)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">HSI</div><div class="pr-kpi-value">${fmt(simResults.hsi,2)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Transport Ratio</div><div class="pr-kpi-value">${(simResults.rt*100).toFixed(0)}%</div></div>
+        </div>
+        <div class="pr-check ok">✔ Simulation completed successfully using the ${MODEL_LABELS[simResults.model]||'Bingham Plastic'} rheology model.</div>
+        <p class="pr-summary" style="margin-top:18px; text-align:center; color:#8a93a3; font-size:10.5px;">This report was generated by the Drilling Hydraulics Simulator (Al-Misbar Engineering Solutions), covering the full circulating system from surface equipment through the drill string, bit nozzles, and annulus, with pressure-loss equations verified against published reference examples.</p>
+      </div>
+      ${prFooter(1,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('EXECUTIVE SUMMARY', dateStr)}
+        <div class="pr-section-title">1. Executive Summary</div>
+        <p class="pr-summary">${summaryText}</p>
+        <div class="pr-section-title">2. Mathematical Model Used</div>
+        ${buildHydEqPrintHTML()}
+      </div>
+      ${prFooter(2,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('PRESSURE LOSS TABLES', dateStr)}
+        <div class="pr-section-title">3. Drill String Pressure Losses</div>
+        <table class="pr-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${stringRowsHtml}</tbody></table>
+        <div class="pr-section-title">4. Annulus Pressure Losses</div>
+        <table class="pr-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${annRowsHtml}</tbody></table>
+      </div>
+      ${prFooter(3,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('SYSTEM PRESSURE BREAKDOWN', dateStr)}
+        <div class="pr-section-title">5. System Pressure Breakdown</div>
+        <div class="pr-plots"><div class="pr-plot-box">${pieImg?`<img src="${pieImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      ${prFooter(4,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('ANNULAR PRESSURE PROFILE', dateStr)}
+        <div class="pr-section-title">6. Annular Pressure Profile (ECD vs Depth)</div>
+        <div class="pr-plots"><div class="pr-plot-box">${ecdImg?`<img src="${ecdImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      ${prFooter(5,TOTAL_PAGES)}
+    </div>
+  `;
+  document.getElementById('printReport').innerHTML = html;
+  renderKatexIn(document.getElementById('printReport'));
+  await new Promise(r=>setTimeout(r,300));
+  window.print();
+}
+
+/* ============================================================
+   COMPARISON MODE — PDF report (multi-model side-by-side)
+   ============================================================ */
+async function printCompareReport(evt){
+  if(!compareResults || compareResults.length===0){ alert('الرجاء تشغيل وضع المقارنة أولاً قبل توليد التقرير.'); return; }
+  const btn = evt ? evt.target : null;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جارٍ تجهيز التقرير...'; }
+
+  const palette=['#0072BD','#D9534F','#F0AD4E'];
+  let barImg='', ecdImg='';
+  try{
+    const tmp1=document.createElement('div'); tmp1.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp1);
+    await Plotly.newPlot(tmp1, [{
+      type:'bar', x:compareResults.map(r=>MODEL_LABELS[r.model]), y:compareResults.map(r=>r.totalSysPressure),
+      marker:{color:palette.slice(0,compareResults.length)}, text:compareResults.map(r=>fmt(r.totalSysPressure,0)), textposition:'outside'
+    }], {yaxis:{title:'Total System Pressure (psi)'}, margin:{t:30,b:50,l:60,r:20}, height:520, width:900, title:{text:'Total System Pressure by Model', font:{size:14}}}, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    barImg = await Plotly.toImage(tmp1, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp1); tmp1.remove();
+
+    const ecdTraces = compareResults.map((r,i)=>{
+      const {depths, ecds} = computeEcdProfile(r.annulusDetails, r.mw, 100);
+      return {x:ecds, y:depths, mode:'lines', name:MODEL_LABELS[r.model], line:{color:palette[i], width:3}};
+    });
+    const tmp2=document.createElement('div'); tmp2.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp2);
+    await Plotly.newPlot(tmp2, ecdTraces, {
+      xaxis:{title:'Equivalent Density (ppg)', side:'top'}, yaxis:{title:'True Vertical Depth (ft)', autorange:'reversed'},
+      margin:{t:50,b:30,l:50,r:20}, height:520, width:900, title:{text:'ECD Profile by Model', font:{size:14}}, showlegend:true
+    }, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    ecdImg = await Plotly.toImage(tmp2, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp2); tmp2.remove();
+  }catch(e){ console.warn('plot capture failed', e); }
+
+  if(btn){ btn.disabled=false; btn.textContent='📕 تحميل تقرير مقارنة (PDF)'; }
+
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5);
+  const modelNames = compareResults.map(r=>MODEL_LABELS[r.model]).join(' vs ');
+
+  const summaryCols = ['Metric', ...compareResults.map(r=>MODEL_LABELS[r.model])];
+  const summaryRows = [
+    ['Surface (psi)', r=>fmt(r.surf,1)], ['Drill String (psi)', r=>fmt(r.totalPipeDp,1)], ['Bit Nozzles (psi)', r=>fmt(r.pb,1)],
+    ['Annulus (psi)', r=>fmt(r.totalAnnDp,1)], ['Total System (psi)', r=>fmt(r.totalSysPressure,1)], ['ECD (ppg)', r=>r.ecdBottom.toFixed(3)],
+    ['Impact Force (lbf)', r=>fmt(r.impactForce,0)], ['HHP (hp)', r=>fmt(r.bhhp,1)], ['Transport Ratio (%)', r=>(r.rt*100).toFixed(0)]
+  ];
+  const summaryTableHtml = `<table class="pr-table"><thead><tr>${summaryCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${summaryRows.map(([label,fn])=>`<tr><td style="text-align:left;font-weight:600;">${label}</td>${compareResults.map(r=>`<td>${fn(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+
+  const detailPages = compareResults.map((r,i)=>{
+    const cols=['Component','Length (ft)','Velocity (ft/s)','Regime','dP (psi)'];
+    const dsHtml = r.stringDetails.map(x=>`<tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td><td>${x.regime}</td><td>${fmt(x.dp,1)}</td></tr>`).join('');
+    const anHtml = r.annulusDetails.map(x=>`<tr><td>${x.name||'—'}</td><td>${fmt(x.length,0)}</td><td>${fmt(x.v,1)}</td><td>${x.regime}</td><td>${fmt(x.dp,1)}</td></tr>`).join('');
+    return `
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('MODEL DETAIL — '+MODEL_LABELS[r.model].toUpperCase(), dateStr)}
+        <div class="pr-section-title" style="border-right-color:${palette[i]};">${MODEL_LABELS[r.model]} — Drill String Pressure Losses</div>
+        <table class="pr-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${dsHtml}</tbody></table>
+        <div class="pr-section-title" style="border-right-color:${palette[i]};">${MODEL_LABELS[r.model]} — Annulus Pressure Losses</div>
+        <table class="pr-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${anHtml}</tbody></table>
+      </div>
+      ${prFooter(4+i, 4+compareResults.length)}
+    </div>`;
+  }).join('');
+
+  const TOTAL_PAGES = 4 + compareResults.length;
+  const html = `
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('COVER', dateStr)}
+        <div class="pr-headbar">
+          <div class="pr-h1">Drilling Hydraulics Simulator</div>
+          <div class="pr-h2">MULTI-MODEL COMPARISON · ${modelNames.toUpperCase()}</div>
+        </div>
+        <div class="pr-cover-title">
+          <h1>Rheological Model Comparison Report</h1>
+          <p>${modelNames}</p>
+        </div>
+        <hr class="pr-rule">
+        <div class="pr-infolist">
+          <div><span>Models Compared</span><b>${modelNames}</b></div>
+          <div><span>Flow Rate</span><b>${compareResults[0].q} GPM</b></div>
+          <div><span>Mud Weight</span><b>${compareResults[0].mw} ppg</b></div>
+          <div><span>Report Generated</span><b>${dateStr}</b></div>
+        </div>
+        <div class="pr-kpi-row">
+          ${compareResults.map((r,i)=>`<div class="pr-kpi" style="border-color:${palette[i]}; border-top-color:${palette[i]};"><div class="pr-kpi-label">${MODEL_LABELS[r.model]}</div><div class="pr-kpi-value">${fmt(r.totalSysPressure,0)}</div></div>`).join('')}
+        </div>
+        <div class="pr-check ok">✔ Comparison completed successfully across ${compareResults.length} rheological models.</div>
+      </div>
+      ${prFooter(1,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('SUMMARY COMPARISON', dateStr)}
+        <div class="pr-section-title">1. Stage-by-Stage Pressure Comparison</div>
+        ${summaryTableHtml}
+      </div>
+      ${prFooter(2,TOTAL_PAGES)}
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('VISUAL COMPARISON', dateStr)}
+        <div class="pr-section-title">2. Total System Pressure by Model</div>
+        <div class="pr-plots"><div class="pr-plot-box">${barImg?`<img src="${barImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      ${prFooter(3,TOTAL_PAGES)}
+    </div>
+
+    ${detailPages}
+
+    <div class="pr-page">
+      <div class="pr-body">
+        ${prPageHeader('ECD COMPARISON', dateStr)}
+        <div class="pr-section-title">${3+compareResults.length}. Annular Pressure Profile (ECD vs Depth) — All Models</div>
+        <div class="pr-plots"><div class="pr-plot-box">${ecdImg?`<img src="${ecdImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      ${prFooter(TOTAL_PAGES,TOTAL_PAGES)}
+    </div>
+  `;
+  document.getElementById('printReport').innerHTML = html;
+  renderKatexIn(document.getElementById('printReport'));
+  await new Promise(r=>setTimeout(r,300));
+  window.print();
+}
+
+/* ============================================================
+   LEARN — interactive glossary
+   ============================================================ */
+const GLOSSARY = [
+  {term:'MW', ar:'وزن الطين (Mud Weight)', hl:'p-pits',
+   text:'كثافة سائل الحفر، تُقاس بالرطل لكل جالون (ppg). كلما زادت الكثافة، زاد الضغط الذي يمارسه عمود السائل على جدران البئر.',
+   analogy:'مثل اختيار سائل أثقل أو أخف لموازنة ضغط معين — كالفرق بين الماء والعسل في وزن العمود نفسه.'},
+  {term:'PV', ar:'اللزوجة اللدنة (Plastic Viscosity)', hl:'p-flow-down',
+   text:'مقاومة السائل للتدفق نتيجة الاحتكاك الداخلي بين جزيئاته أثناء الحركة، تُقاس بالسنتيبواز (cP).',
+   analogy:'الفرق بين سكب الماء وسكب الزيت — الزيت "أكثر لزوجة" فيتحرك ببطء أكبر عبر نفس الأنبوب.'},
+  {term:'YP', ar:'نقطة الخضوع (Yield Point)', hl:'p-flow-up',
+   text:'القوة الدنيا اللازمة لبدء تحريك السائل من حالة السكون؛ خاصية مهمة لقدرة السائل على حمل فتات الصخر للأعلى حتى عند تدفق بطيء.',
+   analogy:'مثل معجون كثيف يحتاج دفعة معينة ليبدأ بالتحرك، لكنه بعدها يحمل الأشياء العالقة به بسهولة.'},
+  {term:'Q', ar:'معدل التدفق (Flow Rate)', hl:'p-pump',
+   text:'كمية سائل الحفر التي تضخها المضخات في الدقيقة، تُقاس بالجالون في الدقيقة (GPM).',
+   analogy:'تمامًا مثل معدل تدفق الماء من صنبور — كلما فتحته أكثر، زادت الكمية المتدفقة في نفس الوقت.'},
+  {term:'Laminar/Turbulent', ar:'الجريان الصفائحي/المضطرب',
+   text:'عند سرعة منخفضة يتحرك السائل بطبقات منتظمة (Laminar). عند تجاوز "السرعة الحرجة" يصبح الجريان فوضويًا (Turbulent) وتزداد مقاومته للحركة بشكل حاد.',
+   analogy:'مثل الفرق بين نهر هادئ يتدفق بخطوط منتظمة، وشلال مضطرب مليء بالدوامات.'},
+  {term:'ΔP', ar:'فقدان الضغط (Pressure Drop)',
+   text:'مقدار الضغط الذي "يخسره" السائل بسبب الاحتكاك أثناء مروره عبر جزء معين من المسار (أنبوب أو حلقة)، يُقاس بالرطل لكل بوصة مربعة (psi).',
+   analogy:'مثل ضغط الماء الذي ينخفض تدريجيًا كلما مرّ عبر خرطوم طويل وضيق.'},
+  {term:'ECD', ar:'الكثافة المكافئة أثناء الدوران', hl:'p-annulus',
+   text:'الضغط الفعلي الذي يشعر به جدار البئر أثناء الضخ، معبَّرًا عنه ككثافة مكافئة — يشمل وزن الطين الساكن بالإضافة إلى فقدان الضغط الإضافي في الحلقة بسبب الحركة.',
+   analogy:'مثل الفرق بين وزنك وأنت واقف بهدوء ووزنك الظاهر وأنت تقفز — الحركة تُضيف "ضغطًا" إضافيًا ظاهريًا.'},
+  {term:'TFA', ar:'مساحة التدفق الكلية للفوهات', hl:'p-nozzles',
+   text:'مجموع مساحات فتحات فوهات المثقاب التي يمر السائل خلالها، تُقاس بالبوصة المربعة.',
+   analogy:'مثل مجموع أقطار فتحات رأس الدُش — كلما صغرت الفتحات، خرج الماء بسرعة أكبر لكن بضغط دفع أعلى.'},
+  {term:'Jet Velocity', ar:'سرعة الاندفاع من الفوهات', hl:'p-nozzles',
+   text:'السرعة التي يندفع بها سائل الحفر لحظة خروجه من فوهات المثقاب، وهي العامل الأهم في تنظيف قاع البئر وتفتيت الصخر.',
+   analogy:'مثل الفرق بين رشّ الماء من خرطوم مفتوح بالكامل وبين تضييق فوهته — نفس الكمية لكن سرعة أعلى بكثير.'},
+  {term:'Impact Force', ar:'قوة الارتطام',
+   text:'القوة الفعلية التي يضرب بها السائل المندفع قاع البئر، وتساهم بشكل مباشر في تنظيف الحفرة وزيادة معدل التقدم بالحفر.',
+   analogy:'مثل الفرق بين رذاذ خفيف على الأرض وضربة ماء قوية من خرطوم إطفاء — الثانية "تزيح" الأوساخ فعليًا.'},
+  {term:'Annulus', ar:'الحلقة', hl:'p-annulus',
+   text:'الفراغ الحلقي بين الجدار الخارجي لأنبوب الحفر وجدار البئر (أو غلاف التبطين)، وهو المسار الذي يعود عبره سائل الحفر للسطح حاملًا فتات الصخر.',
+   analogy:'مثل الفراغ بين أنبوب داخلي وأنبوب خارجي أكبر منه — المسافة بينهما هي "الحلقة".'},
+  {term:'Shale Shaker', ar:'الغرابيل الاهتزازية', hl:'p-shakers',
+   text:'شاشات معدنية مهتزة تفصل فتات الصخر المحمول عن سائل الحفر العائد، قبل إعادة السائل النظيف إلى أحواض الطين لإكمال الدورة.',
+   analogy:'تعمل تمامًا مثل مصفاة اهتزازية تفصل الحصى الكبير عن الرمل الناعم في موقع بناء.'},
+  {term:'Shear Stress τ', ar:'الجهد القاصّ',
+   text:'القوة المقاومة للجريان لكل وحدة مساحة، تنشأ من انزلاق طبقات السائل فوق بعضها أثناء الحركة.',
+   analogy:'مثل القوة التي تبذلها لتحريك صفحة كتاب علوية بالنسبة لصفحة سفلية شبه ثابتة بالاحتكاك.'},
+  {term:'Shear Rate γ', ar:'معدل القص',
+   text:'مدى سرعة انزلاق طبقات السائل المتجاورة عن بعضها؛ كلما ضاق الأنبوب عند نفس التدفق، ارتفع معدل القص.',
+   analogy:'الفرق بين تحريك يدك ببطء أو بسرعة فوق سطح لزج — نفس الحركة، لكن "معدل" الانزلاق مختلف.'},
+  {term:'Newtonian Fluid', ar:'السائل النيوتوني',
+   text:'سائل تكون فيه العلاقة بين الجهد ومعدل القص خطية تبدأ من الصفر تمامًا، كالماء والزيوت الخفيفة — لا عتبة دنيا لبدء حركته.',
+   analogy:'كالماء: أي جهد مهما كان ضئيلاً يُحرّكه ولو ببطء شديد.'},
+  {term:'n (Flow Behavior Index)', ar:'دليل سلوك الجريان',
+   text:'معامل في نموذج Power Law يصف مدى انحناء العلاقة بين الجهد ومعدل القص؛ أقل من 1 يعني سائلاً "يترقّق" كلما زاد القص.',
+   analogy:'كلما اقترب من الصفر، كان السائل أكثر "حساسية" لتغير سرعة الضخ.'},
+  {term:'K (Consistency Index)', ar:'معامل التماسك',
+   text:'معامل في نموذج Power Law يعكس "سماكة" السائل العامة عند معدل قص مرجعي واحد.',
+   analogy:'مثل مقياس عام لسماكة السائل، مكافئ للزوجة لكن لسائل غير خطي.'},
+  {term:'τ₀ (Yield Stress)', ar:'جهد الخضوع',
+   text:'العتبة الدنيا الحقيقية للجهد في نموذج Herschel-Bulkley، تُشتق من قراءة Fann عند سرعة منخفضة جدًا (θ3 أو θ6).',
+   analogy:'أدق من YP في Bingham لأنها تُقاس عند سرعة أقرب فعليًا لحالة السكون.'},
+  {term:'Reynolds Number', ar:'رقم رينولدز',
+   text:'رقم بلا وحدة يقارن قوى الحركة بقوى اللزوجة المقاومة لها؛ كلما ارتفع، اقترب الجريان من الاضطراب الفوضوي.',
+   analogy:'مؤشر "هل السائل ما زال منظمًا أم بدأ يتحول لفوضى" — أعلى من حد معين يعني اضطرابًا.'},
+  {term:'HHP / HSI', ar:'القدرة الحصانية الهيدروليكية',
+   text:'القدرة الفعلية المُستهلكة عند فوهات المثقاب (HHP)، وكثافتها بالنسبة لمساحة وجه المثقاب (HSI) — معياران لتحسين مقاس الفوهات.',
+   analogy:'مثل مقارنة "قوة" رشاش الماء بالنسبة لمساحة الأرض التي يغسلها.'},
+  {term:'Slip Velocity Vs', ar:'سرعة انزلاق الفتات',
+   text:'السرعة التي تهبط بها حبيبة صخرية داخل السائل الساكن بفعل الجاذبية وحدها؛ كلما انخفضت، كان السائل أفضل في رفع الفتات فعليًا.',
+   analogy:'كحجر يهبط أبطأ في العسل منه في الماء — السائل الأكثر تماسكًا "يُبطئ" هبوط الفتات فيسهل رفعها.'},
+];
+function renderGlossary(){
+  const grid=document.getElementById('glossaryGrid');
+  if(!grid) return;
+  grid.innerHTML = GLOSSARY.map((g,i)=>`
+    <div class="gloss-card" id="gc-${i}" onclick="toggleGloss(${i})">
+      <div class="gc-head">
+        <div><div class="gc-term">${g.term}</div><div class="gc-ar">${g.ar}</div></div>
+        <span class="gc-chev">▸</span>
+      </div>
+      <div class="gc-body"><p>${g.text}</p><div class="gc-analogy">💡 ${g.analogy}</div></div>
+    </div>`).join('');
+}
+function toggleGloss(i){
+  const card = document.getElementById('gc-'+i);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.gloss-card').forEach(c=>c.classList.remove('open'));
+  document.querySelectorAll('.hl-target').forEach(el=>el.classList.remove('active'));
+  if(!wasOpen){
+    card.classList.add('open');
+    const hl = GLOSSARY[i].hl;
+    if(hl){ hl.split(',').forEach(id=>{ const el=document.getElementById(id); if(el) el.classList.add('active'); }); }
+  }
+}
+renderGlossary();
+
+/* ============================================================
+   HERO DIAGRAM
+   ============================================================ */
+(function(){
+  const svg = `
+  <svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="hArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f8de7e"/></marker></defs>
+    <circle cx="60" cy="120" r="34" fill="none" stroke="#3d7a81" stroke-width="6"/>
+    <path d="M60,86 A34,34 0 0 1 94,120" fill="none" stroke="#fcf1ca" stroke-width="6" marker-end="url(#hArrow)"/>
+    <line x1="60" y1="60" x2="60" y2="180" stroke="#7fa0c4" stroke-width="2" stroke-dasharray="4 4"/>
+    <text x="60" y="122" text-anchor="middle" font-size="10" fill="#e8edf2" font-family="IBM Plex Mono">MUD</text>
+    <text x="60" y="134" text-anchor="middle" font-size="10" fill="#e8edf2" font-family="IBM Plex Mono">LOOP</text>
+    <text x="60" y="215" text-anchor="middle" font-size="9.5" fill="#9db0c2" font-family="IBM Plex Mono">CLOSED-LOOP CIRCULATION</text>
+  </svg>`;
+  document.getElementById("heroSvgWrap").innerHTML = svg;
+})();
+
+/* init */
+renderKatexIn(document.body);
+</script>
+</body>
+</html>

@@ -1,0 +1,2123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PVT Correlations Suite | منصة علاقات الخواص الفيزيائية للموائع</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --navy-950:#0e1d1f; --navy-900:#183033; --navy-850:#1d3b3f; --navy-800:#224347;
+  --navy-700:#2f5d63; --navy-600:#3d7a81;
+  --gold:#f8de7e; --gold-light:#fcf1ca; --gold-dim:rgba(248,222,126,0.35);
+  --paper:#f4f2ec; --paper-line:rgba(10,30,51,0.055);
+  --ink:#13202b; --muted:#5c6b78; --muted-2:#8493a0;
+  --danger:#b5432d; --good:#2e7d53;
+  --card:#ffffff; --card-border:#e4e1d6;
+  --shadow:0 10px 30px -12px rgba(10,30,51,0.18);
+  --plot-blue:#0072BD; --plot-red:#b5432d; --plot-gold:#f8de7e;
+}
+*{box-sizing:border-box; margin:0; padding:0; font-variant-numeric:lining-nums;}
+img, svg, video, canvas{max-width:100%; height:auto; display:block;}
+.plotwrap, .pr-plot-box, .plot-box{max-width:100%; overflow-x:auto;}
+
+html, body, input, button, select, textarea, .mono{ font-variant-numeric:lining-nums !important; }
+html{scroll-behavior:smooth;}
+body{font-family:'Tajawal','Inter',sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; direction:rtl;}
+#appShell{display:flex; width:100%;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Space Grotesk','Tajawal',sans-serif;}
+.grid-bg{background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px); background-size:28px 28px;}
+
+/* ===== Sidebar ===== */
+.sidebar{width:280px; flex-shrink:0; background:linear-gradient(180deg,var(--navy-950) 0%, var(--navy-900) 55%, var(--navy-850) 100%); color:#e8edf2; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; border-left:3px solid var(--gold);}
+.brand{padding:26px 22px 18px 22px; border-bottom:1px solid rgba(255,255,255,0.08);}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:6px;}
+.brand h1{font-size:18px; line-height:1.35; font-weight:700; color:#fff;}
+.brand .sub{margin-top:8px; font-size:12px; color:#9db0c2; line-height:1.7;}
+.brand .chip{display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--navy-950); background:var(--gold-light); padding:3px 9px; border-radius:20px; font-weight:600;}
+nav{padding:14px 12px; flex:1;}
+.nav-group-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:#6d84a0; text-transform:uppercase; padding:14px 12px 6px 12px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:9px; font-size:13.5px; color:#c4d1de; cursor:pointer; margin-bottom:2px; transition:background .15s, color .15s;}
+.nav-item .ic{display:flex; flex-shrink:0;}
+.nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.nav-item.active{background:rgba(201,162,39,0.16); color:var(--gold-light); font-weight:600; box-shadow:inset 3px 0 0 var(--gold);}
+.sidebar-footer{padding:14px 20px 20px 20px; font-size:10.5px; color:#5f7690; line-height:1.7; border-top:1px solid rgba(255,255,255,0.08);}
+
+/* ===== Main ===== */
+.main{flex:1; min-width:0; min-height:100vh;}
+.topbar{position:sticky; top:0; z-index:5; display:flex; align-items:center; justify-content:space-between; padding:16px 34px; background:rgba(244,242,236,0.9); backdrop-filter:blur(6px); border-bottom:1px solid var(--card-border);}
+.crumb{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:1.5px; color:var(--muted-2); text-transform:uppercase;}
+.ttl{font-size:19px; font-weight:700; color:var(--navy-900); margin-top:2px;}
+.eqtag{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--navy-700); background:#eef3f8; padding:6px 12px; border-radius:20px; border:1px solid var(--navy-700);}
+.content{padding:30px 34px 80px 34px; max-width:1180px; margin:0 auto;}
+.section{display:none;}
+.section.active{display:block; animation:fadein .35s ease;}
+@keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(135deg,var(--navy-950),var(--navy-850) 60%, var(--navy-800)); border-radius:18px; padding:0; overflow:hidden; position:relative; margin-bottom:8px;}
+.hero::before{content:""; position:absolute; inset:0; background-image:radial-gradient(circle at 85% 20%, rgba(201,162,39,0.16), transparent 45%); pointer-events:none;}
+.hero-inner{display:flex; align-items:center; gap:30px; padding:40px 40px;}
+.hero-text{flex:1;}
+.eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:12px;}
+.hero-text h1{font-size:30px; color:#fff; line-height:1.3; margin-bottom:14px;}
+.hero-text p{font-size:14px; color:#c4d1de; line-height:2; max-width:640px;}
+#heroSvgWrap{flex-shrink:0;}
+
+.divider-label{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1.5px; color:var(--muted-2); text-transform:uppercase; margin:30px 0 14px 2px; display:flex; align-items:center; gap:10px;}
+.divider-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
+.mod-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+.mod-card{background:var(--card); border:1.5px solid var(--card-border); border-top:3px solid var(--navy-700); border-radius:12px; padding:20px; cursor:pointer; transition:transform .15s, box-shadow .15s; box-shadow:var(--shadow);}
+.mod-card:hover{transform:translateY(-3px); box-shadow:0 16px 34px -12px rgba(10,30,51,0.25);}
+.mod-card .num{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--gold); margin-bottom:8px;}
+.mod-card h3{font-size:15px; color:var(--navy-900); margin-bottom:8px;}
+.mod-card p{font-size:12.5px; color:var(--muted); line-height:1.8;}
+
+/* ===== Cards ===== */
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:26px 28px; margin-bottom:20px; box-shadow:var(--shadow);}
+.card-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid var(--paper-line);}
+.card-head h2{font-size:17px; color:var(--navy-900);}
+.card-head .eq{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2);}
+.card p, .card li{font-size:14px; line-height:2; color:#2a3742; text-align:justify;}
+.card p + p{margin-top:12px;}
+.card ul, .card ol{padding-inline-start:22px; margin-top:8px;}
+.card li{margin-bottom:6px;}
+.card h3{font-size:14.5px; color:var(--navy-800); margin:16px 0 8px 0;}
+.card strong{color:var(--navy-900);}
+.lead{font-size:15px; color:#2a3742; line-height:2.1;}
+
+/* eq numbering badge */
+.eqn-tag{display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:700; color:var(--gold-light); background:var(--navy-900); border-radius:6px; padding:2px 8px; margin-inline-start:8px;}
+
+/* formula box */
+.formula-box{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 20px; margin:14px 0; overflow-x:auto;}
+.formula-box .fb-label{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px;}
+.katex-eq{display:block; overflow-x:auto; overflow-y:hidden; padding:4px 0; direction:ltr; text-align:left; -webkit-overflow-scrolling:touch;}
+.katex-eq .katex{direction:ltr; text-align:left;}
+.katex-eq .katex-display{margin:0; direction:ltr; text-align:left;}
+.katex-display{margin:0 !important;}
+
+/* variable table */
+.vartable{width:100%; border-collapse:collapse; margin:10px 0; font-size:13px;}
+.vartable th{background:var(--navy-900); color:#fff; text-align:right; padding:8px 10px; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:11.5px;}
+.vartable td{padding:7px 10px; border-bottom:1px solid var(--paper-line); color:#2a3742;}
+.vartable tr:nth-child(even){background:#faf9f5;}
+.vartable td:first-child{font-family:'IBM Plex Mono',monospace; color:var(--navy-800); font-weight:600; white-space:nowrap;}
+
+/* diagram card */
+.diagram-card .diagram-wrap{overflow-x:auto; padding:6px 0;}
+.diagram-note{font-size:12px; color:var(--muted); margin-top:10px; text-align:center;}
+
+/* glossary */
+.gloss-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:6px;}
+.gloss-card{background:#fbfaf6; border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; cursor:pointer; transition:border-color .15s;}
+.gloss-card:hover{border-color:var(--gold);}
+.gloss-card.open{border-color:var(--gold); background:#fdf9ec;}
+.gc-head{display:flex; align-items:center; justify-content:space-between;}
+.gc-term{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--navy-900); font-size:13.5px;}
+.gc-ar{font-size:11.5px; color:var(--muted); margin-top:2px;}
+.gc-chev{color:var(--gold); transition:transform .2s;}
+.gloss-card.open .gc-chev{transform:rotate(90deg);}
+.gc-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.gloss-card.open .gc-body{max-height:220px; margin-top:10px;}
+.gc-body p{font-size:12.5px; line-height:1.85; color:#2a3742;}
+
+/* quick reference table of equations */
+.eqref{width:100%; border-collapse:collapse; font-size:13px;}
+.eqref th{background:var(--navy-900); color:#fff; padding:9px 10px; font-family:'IBM Plex Mono',monospace; font-size:11px; text-align:right;}
+.eqref td{padding:9px 10px; border-bottom:1px solid var(--paper-line); vertical-align:top;}
+.eqref tr:hover{background:#faf9f5;}
+.eqref .eqno{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-weight:700; white-space:nowrap;}
+
+/* ===== Calculators ===== */
+.calc-layout{display:grid; grid-template-columns:340px 1fr; gap:20px; align-items:start;}
+@media (max-width:960px){.calc-layout{grid-template-columns:1fr;}}
+.field-group{margin-bottom:14px;}
+.field-group label{display:block; font-size:12px; color:var(--navy-800); font-weight:600; margin-bottom:5px;}
+.field-group .unit{color:var(--muted-2); font-weight:400; font-family:'IBM Plex Mono',monospace; font-size:10.5px;}
+.field-group input, .field-group select{width:100%; padding:9px 11px; border:1.5px solid var(--card-border); border-radius:8px; font-size:13.5px; font-family:'IBM Plex Mono',monospace; background:#fff; color:var(--ink); direction:ltr; text-align:left;}
+.field-group input:focus, .field-group select:focus{outline:none; border-color:var(--gold);}
+.calc-btn{width:100%; padding:12px; background:var(--navy-900); color:#fff; border:none; border-radius:9px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:14px; cursor:pointer; margin-top:6px; transition:background .15s;}
+.calc-btn:hover{background:var(--navy-700);}
+.field-note{font-size:11px; color:var(--muted-2); margin-top:10px; line-height:1.7; background:#f4f2ec; border-radius:8px; padding:8px 10px;}
+
+.kpi-row{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+.kpi{flex:1; min-width:140px; background:#eef3f8; border:1.5px solid var(--navy-700); border-top:3px solid var(--navy-700); border-radius:10px; padding:14px 16px;}
+.kpi.warn{border-color:var(--danger); border-top-color:var(--danger); background:#fceceb;}
+.kpi.ok{border-color:var(--good); border-top-color:var(--good); background:#eaf6ef;}
+.kpi-label{font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.6px; color:var(--muted); text-transform:uppercase;}
+.kpi-value{font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700; color:var(--navy-900); margin-top:6px;}
+.kpi-sub{font-size:10.5px; color:var(--muted); margin-top:3px;}
+
+.status-line{padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:16px; border:1.5px solid;}
+.status-line.ok{color:var(--good); border-color:var(--good); background:#eaf6ef;}
+.status-line.bad{color:var(--danger); border-color:var(--danger); background:#fceceb;}
+
+.plot-box{background:#fff; border:1px solid var(--card-border); border-radius:12px; padding:10px; margin-top:16px;}
+.result-panel{background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:22px 24px; box-shadow:var(--shadow);}
+.result-panel h2{font-size:16px; color:var(--navy-900); margin-bottom:16px;}
+.steps-box{background:#fbf9f3; border-radius:10px; padding:14px 16px; margin-top:14px; font-size:12.5px; line-height:2; color:#3a4753;}
+.steps-box .step-title{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1px; color:var(--gold); text-transform:uppercase; margin-bottom:6px;}
+
+::-webkit-scrollbar{height:8px; width:8px;}
+::-webkit-scrollbar-thumb{background:#c7c2b0; border-radius:6px;}
+
+/* ===== digit fix (force Latin numerals regardless of Arabic font locale substitution) ===== */
+* { font-feature-settings: "locl" 0, "tnum" 1; }
+
+/* ===== tabs ===== */
+.tabbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; border-bottom:2px solid var(--card-border); padding-bottom:0;}
+.tab-btn{font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; color:var(--muted); background:none; border:none; padding:10px 16px; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color .15s, border-color .15s;}
+.tab-btn:hover{color:var(--navy-800);}
+.tab-btn.active{color:var(--navy-900); border-bottom-color:var(--gold);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block; animation:fadein .3s ease;}
+
+/* ===== mode selector (calc A) ===== */
+.mode-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.mode-btn{flex:1; min-width:130px; background:#fff; border:1.5px solid var(--card-border); border-radius:9px; padding:10px 8px; text-align:center; cursor:pointer; font-size:12px; font-weight:700; color:var(--navy-800); transition:all .15s;}
+.mode-btn.active{border-color:var(--gold); background:#fdf9ec; color:var(--navy-900); box-shadow:0 0 0 1px var(--gold-dim);}
+.mode-btn .mi{display:block; font-size:17px; margin-bottom:3px;}
+
+.example-btn-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.example-btn{background:#eef3f8; border:1px solid var(--navy-700); color:var(--navy-800); border-radius:8px; padding:8px 12px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:'Tajawal',sans-serif;}
+.example-btn:hover{background:var(--navy-700); color:#fff;}
+
+.warn-note{background:#fff8e6; border:1px solid #e8c766; color:#7a5c00; border-radius:8px; padding:9px 12px; font-size:12px; margin-bottom:12px;}
+.data-table-wrap{overflow-x:auto; margin-top:14px;}
+.data-table-wrap.scrollable{max-height:440px; overflow-y:auto; border:1px solid var(--card-border); border-radius:10px;}
+.data-table-wrap.scrollable .data-table th{position:sticky; top:0; z-index:1;}
+.data-table{width:100%; border-collapse:collapse; font-size:12.5px; font-family:'IBM Plex Mono',monospace;}
+.data-table th{background:var(--navy-900); color:#fff; padding:7px 9px;}
+.data-table td{padding:6px 9px; border-bottom:1px solid var(--paper-line); text-align:center;}
+.data-table tr:nth-child(even){background:#faf9f5;}
+
+/* worked example box */
+.example-box{background:#f6f7fb; border-right:4px solid var(--navy-700); border-radius:8px; padding:16px 18px; margin:16px 0;}
+.example-box .ex-title{font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:1px; color:var(--navy-700); text-transform:uppercase; margin-bottom:8px; font-weight:700;}
+.example-box p{font-size:13.5px;}
+
+/* ===== buttons (directional-survey style) ===== */
+.btn{display:inline-flex; align-items:center; gap:8px; background:var(--navy-900); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .15s;}
+.btn:hover{background:var(--navy-700);}
+.btn.gold{background:var(--gold); color:var(--navy-950);}
+.btn.gold:hover{background:var(--gold-light);}
+.btn.ghost{background:#fff; color:var(--navy-900); border:1.5px solid var(--card-border);}
+.btn.ghost:hover{border-color:var(--navy-700);}
+.btn.danger{background:#fff; color:var(--danger); border:1.5px solid var(--danger);}
+.btn.danger:hover{background:#fceceb;}
+.btn.sm{padding:7px 14px; font-size:12px;}
+.toolbar-row{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+.export-row{display:flex; gap:10px; flex-wrap:wrap;}
+
+/* ===== formula panel (identical spirit to directional survey suite) ===== */
+.formula-panel{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:16px 18px; margin-top:6px;}
+.formula-panel .fp-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--gold); font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;}
+.formula-panel .fp-eq{margin:10px 0; direction:ltr; text-align:left; overflow-x:auto;}
+.formula-panel .fp-note{font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.8;}
+
+/* ===== dynamic tables (rate periods / wells) ===== */
+.dyn-table{width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:10px;}
+.dyn-table th{background:var(--navy-900); color:#fff; padding:7px 8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:500;}
+.dyn-table td{padding:5px 6px; border-bottom:1px solid var(--paper-line);}
+.dyn-table input{width:100%; padding:6px 7px; border:1.3px solid var(--card-border); border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; direction:ltr; text-align:left;}
+.dyn-table .rm-row{background:#fff; color:var(--danger); border:1.3px solid var(--danger); border-radius:6px; padding:4px 9px; cursor:pointer; font-size:12px;}
+
+/* ===== print report (single-page, faithful in spirit to directional suite) ===== */
+#printReport{display:none;}
+@media print{
+  html, body{height:auto !important; overflow:visible !important;}
+  body *{visibility:hidden;}
+  #printReport, #printReport *{visibility:visible;}
+  #printReport{display:block !important; position:absolute; top:0; right:0; left:0; width:100%; margin:0; padding:0;}
+  .sidebar, .topbar, .no-print{display:none !important;}
+}
+#printReport{padding:26px; font-family:'Tajawal',sans-serif; color:#13202b;}
+#printReport .pr-headbar{background:linear-gradient(135deg,var(--navy-950),var(--navy-800)); color:#fff; border-radius:14px; padding:22px 26px; margin-bottom:20px;}
+#printReport .pr-headbar .pr-h1{font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700;}
+#printReport .pr-headbar .pr-h2{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); margin-top:6px; letter-spacing:1px;}
+#printReport .pr-infolist{width:100%; margin:14px 0; font-size:12px;}
+#printReport .pr-infolist div{display:flex; justify-content:space-between; padding:6px 2px; border-bottom:1px dotted #ddd;}
+#printReport .pr-infolist b{color:var(--navy-900);}
+#printReport .pr-kpi-row{display:flex; gap:10px; margin:18px 0; flex-wrap:wrap;}
+#printReport .pr-kpi{flex:1; min-width:120px; border:1.5px solid var(--navy-700); border-top:3px solid var(--navy-700); border-radius:10px; padding:10px 12px;}
+#printReport .pr-kpi .pr-kpi-label{font-size:9px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-transform:uppercase;}
+#printReport .pr-kpi .pr-kpi-val{font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:700; color:var(--navy-900); margin-top:4px;}
+#printReport .pr-section-title{font-family:'Space Grotesk',sans-serif; font-size:14px; color:var(--navy-900); border-bottom:2px solid var(--gold); padding-bottom:6px; margin:20px 0 10px 0;}
+#printReport table.pr-table{width:100%; border-collapse:collapse; font-size:11px; margin-bottom:10px;}
+#printReport table.pr-table th{background:var(--navy-900); color:#fff; padding:6px 8px;}
+#printReport table.pr-table td{padding:5px 8px; border-bottom:1px solid #eee; text-align:center;}
+#printReport .pr-footer{margin-top:26px; padding-top:10px; border-top:1px solid #ddd; font-size:9.5px; color:var(--muted); display:flex; justify-content:space-between;}
+#printReport img.pr-chart{width:100%; max-width:640px; display:block; margin:10px auto;}
+#printReport .pr-page{page-break-after:always; break-after:page;}
+#printReport .pr-page:last-of-type{page-break-after:auto; break-after:auto;}
+#printReport .pr-page-header{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; padding-bottom:10px; border-bottom:2px solid var(--gold);}
+#printReport .pr-page-header .pr-page-title{font-family:'Space Grotesk',sans-serif; font-size:18px; color:var(--navy-900); font-weight:700;}
+#printReport .pr-page-header .pr-page-num{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted-2); text-transform:uppercase;}
+#printReport .pr-eqwrap .formula-panel{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:8px; padding:12px 14px; margin-top:6px;}
+@media print{
+  #printReport table.pr-table{font-size:9.5px;}
+  #printReport .pr-table thead{display:table-header-group;}
+}
+
+/* ===== Mobile: hamburger toggle + off-canvas sidebar ===== */
+.hamburger-btn{display:none; background:var(--navy-900); border:none; color:#fff; width:38px; height:38px; border-radius:8px; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;}
+.sidebar-overlay{display:none; position:fixed; inset:0; background:rgba(5,15,26,0.55); z-index:40; opacity:0; transition:opacity .25s;}
+.sidebar-overlay.show{display:block; opacity:1;}
+
+@media (max-width:900px){
+  #appShell{display:block;}
+  .sidebar{
+    position:fixed; top:0; right:0; height:100vh; width:82%; max-width:320px;
+    transform:translateX(100%); transition:transform .28s ease; z-index:50;
+    box-shadow:-10px 0 30px rgba(0,0,0,0.35);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .main{width:100%;}
+  .hamburger-btn{display:flex;}
+  .topbar{padding:14px 16px; gap:10px;}
+  .ttl{font-size:15.5px;}
+  .crumb{font-size:9px;}
+  .eqtag{display:none;}
+  .content{padding:16px 14px 60px 14px;}
+  .hero-inner{flex-direction:column; padding:26px 22px; text-align:center; gap:16px;}
+  .hero-text h1{font-size:21px;}
+  .hero-text p{font-size:13px;}
+  #heroSvgWrap svg{width:170px; height:170px;}
+  .mod-grid{grid-template-columns:1fr;}
+  .mod-card{grid-column:auto !important;}
+  .card{padding:18px 16px;}
+  .card-head{flex-direction:column; align-items:flex-start; gap:4px;}
+  .kpi-row{gap:8px;}
+  .kpi{min-width:100%;}
+  .gloss-grid{grid-template-columns:1fr;}
+  .vartable, .eqref, .data-table, .dyn-table, .pr-table{font-size:11px;}
+  .toolbar-row, .export-row{gap:8px;}
+  .btn{padding:9px 14px; font-size:12px;}
+  .btn.sm{padding:7px 11px; font-size:11px;}
+  .tabbar{overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch;}
+  .tab-btn{white-space:nowrap; padding:9px 12px; font-size:12.5px;}
+  .diagram-wrap svg{max-width:100% !important;}
+  .formula-panel{padding:14px 12px;}
+  .field-group input, .field-group select{font-size:16px;} /* prevents iOS auto-zoom on focus */
+  .formula-box{padding:12px 14px; margin:10px 0;}
+  .katex-eq .katex{font-size:0.88em;}
+  .fb-label, .fp-title{font-size:9.5px;}
+  .eqn-tag{font-size:9.5px; padding:2px 6px;}
+  .diagram-wrap, .data-table-wrap, .formula-box, .dyn-table-wrap{-webkit-overflow-scrolling:touch;}
+  .card-head .eq{font-size:9.5px;}
+  .example-box{padding:12px 14px;}
+  .step-title{font-size:9px;}
+  .steps-box{font-size:11.5px; padding:12px 14px;}
+  .plot-box{padding:6px;}
+  .plot-box > div{height:320px !important;}
+  .hero{border-radius:14px;}
+  .divider-label{font-size:9.5px; margin:22px 0 10px 2px;}
+}
+@media (max-width:420px){
+  .hero-text h1{font-size:18px;}
+  .brand h1{font-size:16px;}
+}
+
+/* ===== PVT-specific additions ===== */
+.chip-check{display:inline-flex; align-items:center; gap:6px; background:#fff; border:1.5px solid var(--card-border); border-radius:20px; padding:6px 12px; font-size:12px; cursor:pointer; margin:0 6px 8px 0; user-select:none; transition:all .15s;}
+.chip-check:has(input:checked){border-color:var(--gold); background:#fdf9ec; color:var(--navy-900); font-weight:600;}
+.cat-block{border:1px solid var(--card-border); border-radius:10px; padding:12px 14px; margin-bottom:12px; background:#fbfaf6;}
+.cat-check{font-size:13.5px; font-weight:700; margin:0; border-color:var(--navy-700);}
+.cat-check:has(input:checked){border-color:var(--navy-700); background:#eef3f8;}
+.cat-panel{margin-top:10px; padding-top:10px; border-top:1px dashed var(--card-border);}
+.cat-panel.collapsed{display:none;}
+.chip-check input{margin:0; accent-color:var(--gold);}
+.chip-check.active{border-color:var(--gold); background:#fdf9ec; color:var(--navy-900); font-weight:600;}
+.chip-row{display:flex; flex-wrap:wrap; margin-bottom:10px;}
+.subhead{font-family:'Space Grotesk',sans-serif; font-size:14.5px; color:var(--navy-800); margin:20px 0 10px 0; padding-bottom:6px; border-bottom:1px solid var(--paper-line); display:flex; align-items:center; gap:8px;}
+.subhead .subnum{display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px; background:var(--navy-900); color:var(--gold-light); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:700; flex-shrink:0;}
+.info-banner{background:#eef3f8; border:1px solid var(--navy-700); color:var(--navy-800); border-radius:8px; padding:10px 14px; font-size:12.5px; margin-bottom:14px; line-height:1.8;}
+.assumptions-box{background:#fff8e6; border-right:4px solid #e8c766; padding:14px 16px; font-size:12.5px; color:#5c5230; border-radius:8px; line-height:1.95;}
+.mini-form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;}
+@media (max-width:600px){.mini-form-row{grid-template-columns:1fr;}}
+.behavior-row{display:grid; grid-template-columns:1.1fr 1fr; gap:26px; align-items:start;}
+@media (max-width:900px){.behavior-row{grid-template-columns:1fr;}}
+.behavior-text p{margin-bottom:10px;}
+.behavior-chart{position:sticky; top:80px;}
+@media (max-width:900px){.behavior-chart{position:static;}}
+.ref-select-row{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0 16px 0;}
+@media(max-width:900px){ table:not(.pr-table){display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;} }
+.katex-eq::-webkit-scrollbar, .pr-table-wrap::-webkit-scrollbar{ display:none; height:0; }
+.katex-eq, .pr-table-wrap{ scrollbar-width:none; -ms-overflow-style:none; }
+@media print{ .katex-eq, .pr-table-wrap{ overflow:visible !important; } }
+</style>
+</head>
+<body lang="en">
+<div id="appShell">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow">Reservoir Fluid Properties · PVT Analysis</div>
+    <h1>PVT Correlations<br>Suite</h1>
+    <div class="sub">حاسبة تفاعلية لعلاقات الخواص الفيزيائية للموائع: نقطة الفقاعة، الغاز المذاب، معامل الحجم الجوفي، اللزوجة، وعامل انحراف الغاز — بمقارنة بين عدّة معادلات تجريبية معروفة.</div>
+    <span class="chip">Al-Misbar Engineering Solutions</span>
+  </div>
+  <nav id="navList">
+    <div class="nav-group-label">General</div>
+    <div class="nav-item active" data-target="home">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      الرئيسية
+    </div>
+    <div class="nav-item" data-target="learn">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M7 10.5V16c0 1.5 2 3 5 3s5-1.5 5-3v-5.5"/></svg></span>
+      خواص الموائع PVT
+    </div>
+    <div class="nav-group-label">Calculator</div>
+    <div class="nav-item" data-target="calcPVT">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><circle cx="7" cy="17" r="2.2"/><circle cx="12" cy="9" r="2.2"/><circle cx="17" cy="14" r="2.2"/><path d="M7 17L12 9M12 9l5 5"/></svg></span>
+      مقارنة معادلات PVT
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    مبنية على المعادلات التجريبية المعتمدة في هندسة المكامن لتقدير خواص الموائع من قياسات ميدانية أساسية (API، الكثافة النوعية للغاز، الحرارة، ونسبة الغاز المذاب).
+  </div>
+</aside>
+
+<main class="main grid-bg">
+  <div class="topbar no-print">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="فتح القائمة">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+    </button>
+    <div>
+      <div class="crumb" id="crumb">GENERAL / OVERVIEW</div>
+      <div class="ttl" id="pageTitle">منصة علاقات الخواص الفيزيائية للموائع</div>
+    </div>
+    <div class="eqtag" id="eqTag">PVT Correlations</div>
+  </div>
+  <div class="sidebar-overlay no-print" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <div class="content">
+
+    <!-- ============ HOME ============ -->
+    <section class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="eyebrow">PVT PROPERTIES · EMPIRICAL CORRELATIONS</div>
+            <h1>منصة علاقات الخواص الفيزيائية للموائع</h1>
+            <p>حاسبة تقارن بين أشهر المعادلات التجريبية لتقدير خواص النفط والغاز من بيانات ميدانية أساسية: نقطة الفقاعة (Pb)، الغاز المذاب (Rs)، معامل الحجم الجوفي للنفط (Bo) في الحالتين المشبعة وغير المشبعة، لزوجة النفط بمراحلها الثلاث، وعامل انحراف الغاز (Z) مع لزوجة الغاز ومعامل حجمه الجوفي (Bg). تعرض كل حاسبة جدول مقارنة، رسمًا بيانيًا، وتقييمًا لمدى تقارب المعادلات، مع صفحة شرح أكاديمي كامل للأساس النظري وراء كل علاقة.</p>
+          </div>
+          <div id="heroSvgWrap"></div>
+        </div>
+      </div>
+
+      <div class="divider-label">وحدات المنصّة</div>
+      <div class="mod-grid">
+        <div class="mod-card" data-target="learn" style="border-color:var(--gold); grid-column:span 3;"><div class="num">00 / الأساس النظري</div><h3>🎓 خواص الموائع PVT والمعادلات التجريبية</h3><p>شرح تفصيلي: نقطة الفقاعة والغاز المذاب، معامل الحجم الجوفي للنفط، لزوجة النفط بمراحلها، عامل انحراف الغاز والخواص الحرجة الزائفة، لزوجة الغاز ومعامل حجمه — مع نطاق تطبيق وأصل كل معادلة.</p></div>
+
+        <div class="mod-card" data-target="calcPVT" style="grid-column:span 3;"><div class="num">01</div><h3>مقارنة معادلات PVT</h3><p>خمس حاسبات مترابطة في صفحة واحدة: نقطة الفقاعة، الغاز المذاب، معامل الحجم الجوفي، لزوجة النفط، وخواص الغاز — بمقارنة حيّة بين المعادلات المتاحة لكل خاصية.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LEARN ============ -->
+    <section class="section" id="sec-learn">
+
+      <div class="card">
+        <div class="card-head"><h2>مقدمة: خواص الموائع PVT والحاجة إلى المعادلات التجريبية</h2><span class="eq">PVT Fundamentals</span></div>
+        <p class="lead">تحليل الضغط-الحجم-الحرارة (PVT) يصف كيف تتغيّر خواص النفط والغاز داخل المكمن مع الضغط والحرارة: كمية الغاز المذابة في النفط، حجم النفط عند ظروف المكمن مقارنة بظروف السطح، لزوجته، وسلوك الغاز الانضغاطي. القياس المباشر لهذه الخواص يتطلب عيّنة سائل ممثّلة وتحليل مختبري (PVT Study) — وهو مكلف وغير متاح دائمًا، خصوصًا في المراحل الاستكشافية المبكرة.</p>
+        <p>لهذا السبب طُوّرت <strong>معادلات ارتباط تجريبية (Correlations)</strong> تُقدّر هذه الخواص من بيانات سهلة القياس: كثافة النفط API، الكثافة النوعية للغاز g (هواء = 1)، حرارة المكمن T، ونسبة الغاز المذاب المعروفة Rs. كل معادلة اشتُقّت إحصائيًا من مجموعة بيانات مختبرية لمكامن حقيقية في منطقة جغرافية معينة، لذا تختلف دقتها باختلاف مدى تشابه المكمن المدروس مع بيانات المعايرة الأصلية — وهو ما يبرر مقارنة عدّة معادلات معًا بدل الاعتماد على واحدة فقط.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>اختبار PVT المختبري — مصدر البيانات الحقيقي</h2><span class="eq">Laboratory PVT Study</span></div>
+        <p>قبل الحديث عن المعادلات التقريبية، من المفيد فهم الاختبار المختبري الذي يزوّدنا أصلًا بالبيانات "الحقيقية" التي تُقارَن بها كل هذه الارتباطات. يبدأ الاختبار بأخذ <strong>عيّنة مائع ممثّلة</strong> للمكمن، إمّا مباشرة من قاع البئر بأداة أخذ عيّنات تحت الضغط (Bottomhole Sample)، أو بأخذ عيّنتين منفصلتين من النفط والغاز عند فاصل الإنتاج على السطح ثم إعادة دمجهما مخبريًا بنفس نسبة الغاز/النفط الفعلية التي يُنتجها البئر (Recombined Sample). تُحقن العيّنة بعدها في خلية PVT (PVT Cell) قادرة على ضبط الضغط والحرارة بدقة عند حرارة المكمن الفعلية.</p>
+        <h3>التجارب الثلاث الأساسية</h3>
+        <ul>
+          <li><strong>التمدد بثبات التركيب (Constant Composition Expansion, CCE):</strong> يُخفَّض الضغط تدريجيًا داخل الخلية المغلقة دون سحب أي مائع منها (التركيب الكلي يبقى ثابتًا)، ويُسجَّل حجم الخلية عند كل ضغط. النقطة التي ينحني عندها منحنى الحجم-الضغط بشكل واضح هي نقطة الفقاعة P<sub>b</sub> نفسها — وتُستخدم هذه التجربة أيضًا لحساب انضغاطية النفط غير المشبع.</li>
+          <li><strong>التحرر التفاضلي (Differential Liberation, DL):</strong> تحت P<sub>b</sub>، عند كل خطوة انخفاض بالضغط، يُسحَب الغاز المتحرر بالكامل من الخلية قبل الانتقال للخطوة التالية. يحاكي هذا فيزيائيًا ما يحدث داخل المكمن الفعلي، حيث يهاجر الغاز المتحرر بعيدًا عن النفط بسبب اختلاف حراكيته (Mobility) عن النفط. هذه التجربة هي المصدر الأساسي لبيانات R<sub>s</sub> وB<sub>o</sub> وكثافة النفط المتبقي بدلالة الضغط، وهي نفسها التي عُويرت عليها معظم معادلات الارتباط في هذا الفصل.</li>
+          <li><strong>التحرر الومضي (Flash Liberation):</strong> يحاكي مسار النفط الفعلي من المكمن إلى فاصل الإنتاج ثم خزان التخزين على السطح (مرحلة واحدة أو عدّة مراحل)، ويحدّد حجم المرجع القياسي (STB) الذي تُقاس عنده كل النسب (R<sub>s</sub>, B<sub>o</sub>) عمليًا.</li>
+        </ul>
+        <p>تُقاس اللزوجة عند حرارة المكمن عبر مدى الضغوط في تجربة منفصلة (Rolling-Ball أو Capillary Viscometer). مجمل هذه القياسات يُصدَر في "تقرير PVT" رسمي للمكمن — وهو المرجع الأدق دائمًا كلما توفّر، بينما تبقى المعادلات التجريبية بديلًا تقريبيًا عند غيابه أو للتحقق السريع من معقولية بياناته.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>لماذا تتغيّر هذه الخواص هكذا مع الضغط؟</h2><span class="eq">Physical Behavior vs Pressure</span></div>
+        <p>ستة خواص أساسية تصف سلوك المائع مع الضغط: نقطة الفقاعة والغاز المذاب، معامل الحجم الجوفي للنفط، لزوجة النفط، عامل انحراف الغاز، ولزوجة الغاز ومعامل حجمه الجوفي. لكل خاصية أدناه: شرح فيزيائي لسبب سلوكها، ثم استعراض للمعادلات التجريبية المتوفرة لحسابها، ثم رسم تفاعلي خاص بها يمكنك التحكم بضغطه مباشرة (المائع التوضيحي المستخدم لأمثلة النفط: API=35، γ<sub>g</sub>=0.75، T=180°F، R<sub>s</sub>=500 scf/STB بمعادلة Standing؛ ولأمثلة الغاز: نفس γ<sub>g</sub> وT).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>نقطة الفقاعة P<sub>b</sub> والغاز المذاب R<sub>s</sub></h2><span class="eq">Bubble Point &amp; Solution GOR</span></div>
+        <h3>السلوك الفيزيائي: ثابت ثم متناقص</h3>
+        <p>فوق نقطة الفقاعة P<sub>b</sub>، كل الغاز المتاح في النظام ذائب بالكامل داخل النفط — الاثنان يشكّلان محلولًا سائلًا واحدًا متجانسًا. لذلك تبقى R<sub>s</sub> عند قيمتها القصوى الثابتة مهما ارتفع الضغط أكثر؛ لا يوجد غاز إضافي ليذوب، والضغط الزائد يضغط السائل فقط دون تغيير تركيبه.</p>
+        <p>عند انخفاض الضغط دون P<sub>b</sub>، تنخفض <strong>قابلية ذوبان الغاز في النفط</strong> — تمامًا كمشروب غازي يفقد فقاعاته عند فتح غطائه وتحرّر الضغط المحبوس بداخله. جزء من الغاز المذاب يتحرر تدريجيًا من السائل مكوّنًا طورًا غازيًا منفصلًا، وتنخفض R<sub>s</sub> باستمرار كلما تابع الضغط الانخفاض، لأن كمية أقل من الغاز تبقى قادرة على البقاء ذائبة عند كل ضغط أدنى.</p>
+        <p>هذا التحوّل الحاد من الثبات إلى الانخفاض هو بالضبط ما يُستخدم عمليًا لتحديد P<sub>b</sub> مخبريًا: هو الضغط الذي يبدأ عنده منحنى R<sub>s</sub> بالانحناء نزولًا عن خطه الأفقي المسطّح.</p>
+
+        <h3>المعادلات المتوفرة</h3>
+        <p>جميع المعادلات أدناه تُعطي R<sub>s</sub> كدالة في الضغط P؛ لإيجاد نقطة الفقاعة من قيمة R<sub>s</sub> معروفة (كما تُقاس ميدانيًا عند أول إنتاج)، يُحل عكسيًا عدديًا عن P التي تحقق R<sub>s</sub>(P) = R<sub>s,known</sub> — هذا ما تقوم به الحاسبة الأولى في هذه المنصّة.</p>
+
+        <div class="fb-label">Standing (1947)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="R_s = \gamma_g\left[\left(\dfrac{P}{18.2}+1.4\right)\times 10^{0.0125\,API-0.00091\,T}\right]^{1.2048}"></span>
+        </div>
+        <p>أول معادلة ارتباط منشورة لهذا الغرض، اشتُقّت من بيانات مكامن كاليفورنيا؛ لا تزال الأكثر استخدامًا كمرجع عام.</p>
+
+        <div class="fb-label">Vasquez-Beggs (1980)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="R_s = C_1\,\gamma_g\,P^{C_2}\,e^{\,C_3\,API/(T+460)}"></span>
+        </div>
+        <p>الثوابت C₁, C₂, C₃ تختلف حسب فئة النفط: (0.0362, 1.0937, 25.724) لـ API ≤ 30، و(0.0178, 1.1870, 23.931) لـ API &gt; 30. اشتُقّت من أكثر من 600 عيّنة PVT من حقول متعددة حول العالم، ولذا تُعدّ من أكثر المعادلات عمومية.</p>
+
+        <div class="fb-label">Glaso (1980)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="F_p = 10^{\,x}, \quad -0.30218x^2+1.7447x+(1.7669-\log_{10}P)=0, \quad R_s=\gamma_g\left(\dfrac{F_p\cdot API^{0.989}}{T^{0.172}}\right)^{1/0.816}"></span>
+        </div>
+        <p>معايَرة على عيّنات بحر الشمال؛ تتطلب حل معادلة تربيعية للمتغير الوسيط F<sub>p</sub> (معامل الضغط) قبل حساب R<sub>s</sub>.</p>
+
+        <div class="fb-label">Al-Marhoun (1988)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="R_s=\left[\dfrac{P}{a\,\gamma_g^{\,c}\,\gamma_o^{\,d}\,T_R^{\,e}}\right]^{1/b}, \quad \gamma_o=\dfrac{141.5}{131.5+API},\ \ T_R=T+460"></span>
+        </div>
+        <p>a = 5.38088×10⁻³، b = 0.715082، c = −1.87784، d = 3.1437، e = 1.32657. اشتُقّت من أكثر من 160 عيّنة من مكامن الشرق الأوسط (السعودية أساسًا)، وتُفضَّل غالبًا لمكامن المنطقة.</p>
+
+        <div class="fb-label">Petrosky-Farshad (1993)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="R_s=\left[\left(\dfrac{P}{112.727}+12.34\right)\gamma_g^{0.8439}\cdot 10^{X}\right]^{1/0.577421}, \quad X=7.916\times10^{-4}API^{1.541}-4.561\times10^{-5}T^{1.3911}"></span>
+        </div>
+        <p>معايَرة على عيّنات خليج المكسيك؛ من أحدث المعادلات وأكثرها دقة للمكامن ذات الخواص المشابهة.</p>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">النقطة الذهبية تتحرّك على المنحنى مع تحريك المؤشر؛ الخط الأحمر المتقطّع يُظهر موضع نقطة الفقاعة P<sub>b</sub> لهذا المائع التوضيحي.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="rsDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="rsDemoSlider" min="100" max="5000" step="10" value="2500" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="rsDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>نسبة الغاز-النفط الإنتاجية (GOR) — لماذا تختلف عن الغاز المذاب R<sub>s</sub>؟</h2><span class="eq">Producing GOR vs Solution GOR</span></div>
+        <p>الرمز الذي تراه عادة في تقارير الإنتاج اليومية هو <strong>GOR</strong> — نسبة حجم الغاز الفعلي المُنتَج على السطح إلى حجم النفط المُنتَج معه، في نفس الفترة الزمنية. هذا رقم <em>مُقاس ميدانيًا</em> من عدّادات فاصل الإنتاج، وليس خاصية للمائع وحده مثل R<sub>s</sub> — بل نتيجة انسياب مشترك للنفط والغاز داخل المكمن نحو البئر. لهذا السبب لا تتطابق GOR وR<sub>s</sub> دائمًا، رغم أن الاثنين يُقاسان بنفس الوحدة (scf/STB).</p>
+
+        <h3>فوق نقطة الفقاعة: GOR = R<sub>s</sub> بالضبط</h3>
+        <p>طالما ضغط المكمن حول البئر أعلى من P<sub>b</sub>، لا يوجد أي غاز حر داخل المكمن — كل الغاز الذي يصل السطح هو فقط الغاز الذي كان ذائبًا في النفط وتحرر منه في فاصل الإنتاج. لذلك تساوي GOR المُقاسة تمامًا قيمة R<sub>s</sub> عند ضغط المكمن الحالي، ثابتة طالما بقي الضغط فوق P<sub>b</sub>.</p>
+
+        <h3>تحت نقطة الفقاعة: GOR ترتفع فوق R<sub>s</sub>، لا تنخفض معها</h3>
+        <p>هنا يكمن الفارق الجوهري والمهم عمليًا: بمجرد أن ينخفض ضغط المكمن حول البئر دون P<sub>b</sub>، يتحرر غاز حر داخل المسام نفسها. لزوجة الغاز أقل من لزوجة النفط بعشرات المرات، ما يمنحه <strong>حراكية (Mobility) أعلى بكثير</strong> — أي أنه ينساب نحو البئر بسهولة أكبر من النفط نفسه. النتيجة أن الغاز الحر "يتسابق" نحو البئر ويصل بكمية أكبر نسبيًا من النفط، فترتفع GOR المقاسة على السطح فوق قيمة R<sub>s</sub> — بعكس R<sub>s</sub> التي تستمر بالانخفاض. هذا الارتفاع الحاد في GOR الإنتاجية هو أحد أوضح المؤشرات الحقلية على أن ضغط المكمن قد هبط دون نقطة الفقاعة.</p>
+
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="GOR = R_s + \left(\dfrac{k_g}{k_o}\right)\left(\dfrac{\mu_o}{\mu_g}\right)\left(\dfrac{B_o}{B_g}\right)"></span>
+        </div>
+        <p>حيث k<sub>g</sub>/k<sub>o</sub> نسبة النفاذية النسبية للغاز إلى النفط — وهي خاصية صخرية-مائعية مشتركة (Relative Permeability) تعتمد على إشباع الغاز المتحرر في المسام، وتُقاس أو تُنمذَج بشكل منفصل تمامًا عن أي من معادلات PVT في هذا الفصل.</p>
+
+        <div class="info-banner">
+          📌 لهذا السبب تحديدًا لا توجد حاسبة GOR منفصلة في هذه المنصّة: حسابها الدقيق يتطلب منحنيات النفاذية النسبية k<sub>g</sub>/k<sub>o</sub> للصخر — بيانات مختبرية أو نموذج انسياب متعدد الأطوار، وليست معادلة ارتباط PVT للمائع وحده كبقية الخواص في هذه الصفحة. ما تراه هنا هو الإطار المفاهيمي والمعادلة الكاملة لفهم العلاقة، لا حاسبة تفاعلية.
+        </div>
+
+        <div class="diagram-wrap" style="text-align:center; margin-top:16px;">
+          <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="max-width:600px; width:100%;">
+            <line x1="55" y1="255" x2="660" y2="255" stroke="#5c6b78" stroke-width="1.5"/>
+            <line x1="55" y1="255" x2="55" y2="25" stroke="#5c6b78" stroke-width="1.5"/>
+            <text x="672" y="259" font-size="11.5" fill="#13202b" font-family="Space Grotesk">P ←</text>
+            <text x="40" y="20" font-size="11.5" fill="#13202b" font-family="Space Grotesk">GOR</text>
+            <path d="M620 190 L400 190 C 320 190, 300 140, 220 90 C 170 60, 120 45, 80 40" fill="none" stroke="#b5432d" stroke-width="2.6"/>
+            <path d="M620 190 L400 190 C 320 190, 260 220, 150 235 C 110 240, 90 242, 75 243" fill="none" stroke="#0072BD" stroke-width="2.6" stroke-dasharray="0"/>
+            <line x1="400" y1="255" x2="400" y2="25" stroke="#f8de7e" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="400" y="18" text-anchor="middle" font-size="11" fill="#8a6d10" font-family="IBM Plex Mono">Pb</text>
+            <text x="520" y="205" text-anchor="middle" font-size="11.5" fill="#0072BD" font-family="Tajawal">Rs وGOR متطابقتان</text>
+            <text x="230" y="80" text-anchor="middle" font-size="11.5" fill="#b5432d" font-family="Tajawal">GOR ترتفع (حراكية الغاز)</text>
+            <text x="140" y="252" text-anchor="middle" font-size="11" fill="#0072BD" font-family="Tajawal">Rs تنخفض</text>
+          </svg>
+        </div>
+        <p class="diagram-note">رسم تخطيطي توضيحي (غير كمّي) — فوق P<sub>b</sub> ينطبق المنحنيان تمامًا؛ تحته يفترقان: R<sub>s</sub> (الأزرق) تنخفض بينما GOR الفعلية (الأحمر) ترتفع بسبب الحراكية الأعلى للغاز الحر.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>معامل الحجم الجوفي للنفط B<sub>o</sub></h2><span class="eq">Oil Formation Volume Factor</span></div>
+        <h3>السلوك الفيزيائي: ذروة عند P<sub>b</sub></h3>
+        <p><strong>B<sub>o</sub></strong> هو النسبة بين حجم النفط (مع الغاز المذاب فيه) عند ظروف المكمن، وحجمه عند ظروف السطح القياسية (RB/STB). من الضغط الابتدائي وحتى P<sub>b</sub>، النفط غير مشبع: انخفاض الضغط يسمح للسائل بالتمدد الطفيف فقط، بحكم انضغاطيته الصغيرة كسائل — فيرتفع B<sub>o</sub> ارتفاعًا بسيطًا ومطّردًا كلما اقترب الضغط من P<sub>b</sub>، حتى يبلغ <strong>قيمته القصوى تمامًا عند P<sub>b</sub></strong> (تُسمّى B<sub>ob</sub>).</p>
+        <p>تحت P<sub>b</sub>، يبدأ الغاز بالتحرر من النفط، وهذا يعني أمرين يعملان معًا في الاتجاه نفسه: أولًا، يتناقص حجم السائل نفسه لأنه فقد جزءًا منه تحوّل إلى غاز منفصل؛ وثانيًا، يتحوّل ما تبقّى إلى نفط "أثقل" أقل احتواءً على المكوّنات الخفيفة الذائبة التي غادرته مع الغاز. كلا الأثرين يعملان على تقليص حجم السائل نسبةً إلى حجمه القياسي على السطح — فينخفض B<sub>o</sub> تدريجيًا كلما تابع الضغط الانخفاض دون P<sub>b</sub>.</p>
+        <p>النتيجة: منحنى B<sub>o</sub> مقابل الضغط له شكل "قبة" واحدة، قمّتها بالضبط عند نقطة الفقاعة — وهذا من أوضح المؤشرات المخبرية العملية على موقع P<sub>b</sub> في تقرير PVT حقيقي.</p>
+
+        <h3>المعادلات المتوفرة — الحالة المشبعة (P ≤ P<sub>b</sub>)</h3>
+        <div class="fb-label">Standing</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="B_o = 0.9759+0.00012\left[R_s\left(\dfrac{\gamma_g}{\gamma_o}\right)^{0.5}+1.25T\right]^{1.2}"></span>
+        </div>
+        <div class="fb-label">Vasquez-Beggs</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="B_o = 1+C_1R_s+C_2(T-60)\dfrac{API}{\gamma_g}+C_3R_s(T-60)\dfrac{API}{\gamma_g}"></span>
+        </div>
+        <div class="fb-label">Glaso</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="F_b=R_s\left(\dfrac{\gamma_g}{\gamma_o}\right)^{0.526}+0.968T, \quad B_o=1+10^{-6.58511+2.91329\log_{10}F_b-0.27683(\log_{10}F_b)^2}"></span>
+        </div>
+        <div class="fb-label">Al-Marhoun</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="F=R_s^{0.74239}\gamma_g^{0.323294}\gamma_o^{-1.20204}, \quad B_o=0.497069+8.62963\times10^{-4}T_R+1.82594\times10^{-3}F+3.18099\times10^{-6}F^2"></span>
+        </div>
+        <div class="fb-label">Petrosky-Farshad</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="B_o=1.0113+7.2046\times10^{-5}\left[R_s^{0.3738}\left(\dfrac{\gamma_g^{0.2914}}{\gamma_o^{0.6265}}\right)+0.24626T^{0.5371}\right]^{3.0936}"></span>
+        </div>
+        <h3>المعادلة المتوفرة — الحالة غير المشبعة (P &gt; P<sub>b</sub>)</h3>
+        <p>يُحسب أولًا معامل انضغاطية النفط c<sub>o</sub> (فوق P<sub>b</sub>) بمعادلة Vasquez-Beggs:</p>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="c_o=\dfrac{-1433+5R_{sb}+17.2T-1180\gamma_g+12.61API}{10^5\,P}"></span>
+        </div>
+        <p>ثم يُمدَّد B<sub>o</sub> أسّيًا فوق نقطة الفقاعة انطلاقًا من قيمته المشبعة عندها B<sub>ob</sub>:</p>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="B_o = B_{ob}\cdot e^{\,c_o(P_b-P)}"></span>
+        </div>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">لاحظ قمّة المنحنى الواحدة عند P<sub>b</sub> بالضبط — هذا هو نفسه المؤشر المخبري العملي المستخدم لتحديد نقطة الفقاعة من بيانات B<sub>o</sub>.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="boDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="boDemoSlider" min="100" max="5000" step="10" value="2500" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="boDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>لزوجة النفط μ<sub>o</sub></h2><span class="eq">Oil Viscosity — 3 Stages</span></div>
+        <h3>السلوك الفيزيائي: الصورة المعكوسة لِـ B<sub>o</sub></h3>
+        <p>تمر لزوجة النفط بثلاث مراحل مختلفة الفيزياء مع تغيّر الضغط. الغاز المذاب يعمل كمادة "مخفِّفة" (Diluent) تقلّل لزوجة النفط — جزيئات الغاز الخفيفة تتخلّل السائل وتُسهّل انزلاق طبقاته على بعضها. فكلما اقترب الضغط من P<sub>b</sub> نزولًا من الأعلى (والنفط لا يزال يحمل أكبر قدر ممكن من الغاز ذائبًا فيه)، تستمر اللزوجة بالانخفاض التدريجي حتى تبلغ <strong>أدنى قيمة لها تمامًا عند P<sub>b</sub></strong> — النفط في أخف وأقل حالاته لزوجة بالضبط عند هذه النقطة.</p>
+        <p>تحت P<sub>b</sub>، مع تحرر الغاز من السائل، يفقد النفط المتبقي عامل التخفيف هذا تدريجيًا، ويصبح أكثر تركّزًا بالمكوّنات الأثقل التي لم تغادره — فترتفع μ<sub>o</sub> باستمرار كلما تابع الضغط الانخفاض دون P<sub>b</sub>، وقد تصل عند الضغط الجوي إلى عدّة أضعاف قيمتها عند P<sub>b</sub>.</p>
+        <p>لاحظ التماثل العكسي التام مع B<sub>o</sub>: حيث يبلغ الحجم ذروته (أخف نفط، أكبر حجم) تبلغ اللزوجة قاعها (أقل مقاومة للانسياب) — وكلا الحدثين يقعان عند نفس الضغط بالضبط، P<sub>b</sub>.</p>
+
+        <h3>المعادلات المتوفرة</h3>
+        <p><strong>1) لزوجة النفط الميت μ<sub>od</sub></strong> — مستقلة عن الضغط، تعتمد فقط على API والحرارة:</p>
+        <div class="fb-label">Beal (1946)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_{od}=\left(0.32+\dfrac{1.8\times10^7}{API^{4.53}}\right)\left(\dfrac{360}{T+200}\right)^{a}, \quad a=10^{0.43+8.33/API}"></span>
+        </div>
+        <div class="fb-label">Beggs-Robinson (1975)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_{od}=10^{X}-1, \quad X=10^{3.0324-0.02023\,API}\cdot T^{-1.163}"></span>
+        </div>
+        <div class="fb-label">Glaso (1980)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_{od}=3.141\times10^{10}\cdot T^{-3.444}\cdot\left(\log_{10}API\right)^{10.313\log_{10}T-36.447}"></span>
+        </div>
+        <p><strong>2) لزوجة النفط المشبع (الحي) μ<sub>ob</sub></strong> — عند R<sub>s</sub> الحالية:</p>
+        <div class="fb-label">Beggs-Robinson (1975)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_{ob}=a\cdot\mu_{od}^{\,b}, \quad a=10.715(R_s+100)^{-0.515},\ \ b=5.44(R_s+150)^{-0.338}"></span>
+        </div>
+        <div class="fb-label">Chew-Connally (1959)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_{ob}=A\cdot\mu_{od}^{\,B}, \quad A=10^{R_s(2.2\times10^{-7}R_s-7.4\times10^{-4})}"></span>
+        </div>
+        <p><strong>3) لزوجة النفط غير المشبع</strong> — فوق P<sub>b</sub>:</p>
+        <div class="fb-label">Vasquez-Beggs (1980)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_o=\mu_{ob}\left(\dfrac{P}{P_b}\right)^{m}, \quad m=2.6\,P^{1.187}\,e^{-11.513-8.98\times10^{-5}P}"></span>
+        </div>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">قاع المنحنى يقع بالضبط عند P<sub>b</sub> — أخف حالات النفط لزوجةً.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="muDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="muDemoSlider" min="100" max="5000" step="10" value="2500" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="muDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>عامل انحراف الغاز Z</h2><span class="eq">Gas Deviation Factor</span></div>
+        <h3>السلوك الفيزيائي: منحنى على شكل حرف U</h3>
+        <p><strong>عامل الانحراف Z</strong> يصحّح قانون الغاز المثالي ليعكس السلوك الحقيقي للغاز الطبيعي تحت ضغط وحرارة المكمن. عند الضغوط المنخفضة والمتوسطة، تهيمن <strong>قوى التجاذب</strong> بين جزيئات الغاز (Van der Waals)، فتُقرِّبها من بعضها البعض أكثر مما يتنبأ به قانون الغاز المثالي الذي يفترض جزيئات بلا تفاعل بينها. هذا التقارب الإضافي يعني أن الغاز الحقيقي "أكثر انضغاطًا" من المثالي عند هذا المدى، فتنخفض قيمة Z تحت الواحد الصحيح مع ارتفاع الضغط تدريجيًا من الصفر.</p>
+        <p>عند الضغوط المرتفعة جدًا، تصبح الجزيئات قريبة من بعضها لدرجة أن <strong>حجمها الفيزيائي الفعلي</strong> (الذي يتجاهله القانون المثالي تمامًا) يبدأ بالهيمنة بدل قوى التجاذب — الجزيئات نفسها تشغل حيّزًا لا يمكن ضغطه أكثر، فيصبح الغاز الحقيقي أصعب انضغاطًا من المثالي عند هذا المدى، وترتفع Z مجددًا فوق الواحد الصحيح.</p>
+        <p>حصيلة هذين الأثرين المتعاكسين (تجاذب يهيمن أولًا، ثم حجم جزيئي يهيمن لاحقًا) هي المنحنى المميز على شكل حرف U: يبدأ Z من 1 عند الضغط الصفري (سلوك مثالي تقريبًا)، ينخفض إلى قاع عند ضغط متوسط، ثم يرتفع مجددًا مع استمرار زيادة الضغط.</p>
+
+        <h3>المعادلات المتوفرة</h3>
+        <p>تُحسب Z غالبًا كدالة في الضغط والحرارة الزائفين المختزلين (P<sub>pr</sub>, T<sub>pr</sub>)، المشتقّين من الخواص الحرجة الزائفة للغاز:</p>
+        <div class="fb-label">الخواص الحرجة الزائفة (Standing، غاز جاف)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="T_{pc}=168+325\gamma_g-12.5\gamma_g^2 \ \ [^\circ R], \qquad P_{pc}=677+15\gamma_g-37.5\gamma_g^2 \ \ [psia]"></span>
+        </div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="P_{pr}=\dfrac{P}{P_{pc}}, \qquad T_{pr}=\dfrac{T+460}{T_{pc}}"></span>
+        </div>
+        <div class="fb-label">Dranchuk – Abou-Kassem (1975)</div>
+        <p>معادلة حالة صريحة الشكل شبه التجريبية، تُحل ضمنيًا عن Z عدديًا (لأن الكثافة المختزلة ρ<sub>r</sub> تعتمد على Z نفسها):</p>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="Z = 1+\left(A_1+\dfrac{A_2}{T_{pr}}+\dfrac{A_3}{T_{pr}^3}+\dfrac{A_4}{T_{pr}^4}+\dfrac{A_5}{T_{pr}^5}\right)\rho_r+\left(A_6+\dfrac{A_7}{T_{pr}}+\dfrac{A_8}{T_{pr}^2}\right)\rho_r^2"></span>
+          <span class="katex-eq" data-tex="\qquad -A_9\left(\dfrac{A_7}{T_{pr}}+\dfrac{A_8}{T_{pr}^2}\right)\rho_r^5+A_{10}(1+A_{11}\rho_r^2)\dfrac{\rho_r^2}{T_{pr}^3}e^{-A_{11}\rho_r^2}, \qquad \rho_r=\dfrac{0.27P_{pr}}{ZT_{pr}}"></span>
+        </div>
+        <div class="fb-label">Hall-Yarborough (1973)</div>
+        <p>يُحل ضمنيًا عن متغير وسيط Y (الكثافة المختزلة) عدديًا، ثم يُستخرج Z منه مباشرة:</p>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="0=-0.06125\,P_{pr}\,t\,e^{-1.2(1-t)^2}+\dfrac{Y+Y^2+Y^3-Y^4}{(1-Y)^3}-(14.76t-9.76t^2+4.58t^3)Y^2+(90.7t-242.2t^2+42.4t^3)Y^{2.18+2.82t}"></span>
+          <span class="katex-eq" data-tex="t=\dfrac{1}{T_{pr}}, \qquad Z=\dfrac{0.06125\,P_{pr}\,t\,e^{-1.2(1-t)^2}}{Y}"></span>
+        </div>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">شكل حرف U واضح: انخفاض عند الضغوط المنخفضة-المتوسطة، ثم ارتفاع مجدّد عند الضغوط المرتفعة.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="zDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="zDemoSlider" min="100" max="8000" step="20" value="3000" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="zDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>لزوجة الغاز μ<sub>g</sub></h2><span class="eq">Gas Viscosity</span></div>
+        <h3>السلوك الفيزيائي: ارتفاع تدريجي وسلس مع الضغط</h3>
+        <p>على عكس لزوجة النفط، لا تمر لزوجة الغاز بأي تحوّل طوري (لا يوجد "P<sub>b</sub>" لغاز أحادي الطور)، لذا سلوكها أبسط وأكثر سلاسة. عند حرارة ثابتة، رفع الضغط يزيد <strong>كثافة الغاز</strong> مباشرة — تتقارب الجزيئات من بعضها أكثر. في الغازات المخفّفة (ضغط منخفض)، تنتقل الحركة عبر تصادمات نادرة بين جزيئات متباعدة، فتكون اللزوجة منخفضة وشبه مستقلة عن الضغط. لكن مع ارتفاع الكثافة عند الضغوط المرتفعة، ينتقل الزخم بين الجزيئات المتقاربة بكفاءة أكبر (يشابه سلوك السوائل)، فترتفع اللزوجة بشكل مطّرد وملحوظ كلما ارتفع الضغط أكثر.</p>
+        <p>النتيجة: منحنى μ<sub>g</sub> مقابل الضغط تصاعدي بسيط تقريبًا طوال المدى، بلا ذروة أو قاع — خلافًا لكل من μ<sub>o</sub> وB<sub>o</sub> اللذين يتمحوران حول P<sub>b</sub>.</p>
+
+        <h3>المعادلة المتوفرة</h3>
+        <div class="fb-label">Lee, Gonzalez &amp; Eakin (1966)</div>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="\mu_g=K\times10^{-4}\cdot e^{X\rho_g^{\,Y}}"></span>
+          <span class="katex-eq" data-tex="K=\dfrac{(9.4+0.02M_g)T_R^{1.5}}{209+19M_g+T_R}, \quad X=3.5+\dfrac{986}{T_R}+0.01M_g, \quad Y=2.4-0.2X"></span>
+        </div>
+        <p>حيث M<sub>g</sub> = 28.97γ<sub>g</sub> الوزن الجزيئي الظاهري للغاز، وρ<sub>g</sub> = 1.4935×10⁻³PM<sub>g</sub>/(ZT<sub>R</sub>) كثافة الغاز عند ظروف المكمن (g/cm³) — وهذا بالضبط ما يجعل μ<sub>g</sub> مرتبطة مباشرة بالضغط عبر كثافة الغاز.</p>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">ارتفاع تصاعدي مطّرد بلا ذروة أو قاع — سلوك مختلف جذريًا عن لزوجة النفط.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="muGDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="muGDemoSlider" min="100" max="8000" step="20" value="3000" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="muGDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>معامل الحجم الجوفي للغاز B<sub>g</sub></h2><span class="eq">Gas Formation Volume Factor</span></div>
+        <h3>السلوك الفيزيائي: انخفاض حاد شبه زائدي</h3>
+        <p>يمثّل B<sub>g</sub> نسبة حجم الغاز عند ظروف المكمن إلى حجمه عند الظروف القياسية على السطح. الغاز — خلافًا للسائل — شديد الانضغاطية: مضاعفة الضغط تقارب من تنصيف حجمه (بحسب قانون الغاز، مع تصحيح Z). لذلك ينخفض B<sub>g</sub> بشكل حاد وشبه زائدي (Hyperbolic) مع ارتفاع الضغط — من قيم كبيرة نسبيًا عند الضغط المنخفض إلى قيم صغيرة جدًا عند الضغط المرتفع، وقد يتغيّر بمقدار مرتبتين كاملتين من الحجم عبر مدى ضغط المكمن النموذجي.</p>
+        <p>هذه الحساسية الشديدة للضغط هي جوهر الفرق بين مكامن الغاز ومكامن النفط: انخفاض بسيط في ضغط مكمن غازي يُترجَم إلى تمدد كبير جدًا في حجم الغاز المُنتَج، وهو ما يجعل آلية الإنتاج بالنضوب وحدها (Depletion Drive) فعّالة جدًا في مكامن الغاز دون الحاجة لدعم ضغط خارجي، خلافًا لمعظم مكامن النفط.</p>
+
+        <h3>المعادلة المتوفرة</h3>
+        <div class="formula-box">
+          <span class="katex-eq" data-tex="B_g = 0.02827\,\dfrac{Z(T+460)}{P} \quad [\text{rcf/scf}]"></span>
+        </div>
+        <p>لاحظ أن B<sub>g</sub> يتناسب عكسيًا تقريبًا مع P (بعد تصحيح Z)، على عكس B<sub>o</sub> الذي يتغيّر ببطء نسبيًا ضمن مدى ضيق حول 1.0-1.3 — فرق جوهري آخر بين انضغاطية الغاز وانضغاطية السائل.</p>
+
+        <div class="behavior-row" style="margin-top:20px;">
+          <div class="behavior-text">
+            <p class="diagram-note" style="text-align:right;">انخفاض حاد شبه زائدي — لاحظ حجم التغيّر الكبير عبر مدى الضغط مقارنة بخواص النفط.</p>
+          </div>
+          <div class="behavior-chart">
+            <div class="plot-box"><div id="bgDemoPlot" style="height:300px;"></div></div>
+            <input type="range" id="bgDemoSlider" min="100" max="8000" step="20" value="3000" style="width:100%; accent-color:var(--gold); height:8px; margin-top:10px;">
+            <div class="kpi-row" id="bgDemoKpi" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>مرجع سريع للمعادلات</h2><span class="eq">Quick Reference</span></div>
+        <table class="eqref">
+          <tr><th>الخاصية</th><th>المعادلات المتاحة</th><th>أصل المعايرة / النطاق</th></tr>
+          <tr><td class="eqno">R<sub>s</sub>, P<sub>b</sub></td><td>Standing · Vasquez-Beggs · Glaso · Al-Marhoun · Petrosky-Farshad</td><td>كاليفورنيا · عالمي · بحر الشمال · الشرق الأوسط · خليج المكسيك</td></tr>
+          <tr><td class="eqno">B<sub>o</sub></td><td>نفس أسماء R<sub>s</sub> (مرتبطة بها) + امتداد Vasquez-Beggs غير المشبع</td><td>نفس مناطق المعايرة أعلاه</td></tr>
+          <tr><td class="eqno">μ<sub>od</sub></td><td>Beal · Beggs-Robinson · Glaso</td><td>عامة، مستقلة عن الضغط</td></tr>
+          <tr><td class="eqno">μ<sub>ob</sub></td><td>Beggs-Robinson · Chew-Connally</td><td>عامة، تعتمد على R<sub>s</sub></td></tr>
+          <tr><td class="eqno">μ<sub>o</sub> (P &gt; P<sub>b</sub>)</td><td>Vasquez-Beggs</td><td>امتداد أسّي فوق نقطة الفقاعة</td></tr>
+          <tr><td class="eqno">Z</td><td>Dranchuk-Abou-Kassem · Hall-Yarborough</td><td>خواص حرجة زائفة قياسية (Standing، غاز جاف)</td></tr>
+          <tr><td class="eqno">μ<sub>g</sub>, B<sub>g</sub></td><td>Lee-Gonzalez-Eakin</td><td>عامة لغازات الهيدروكربون</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>لماذا تختلف نتائج المعادلات عن بعضها لنفس المدخلات؟</h2><span class="eq">Why Correlations Diverge</span></div>
+        <h3>السبب الجذري: كل معادلة "معايَرة" إحصائيًا، لا مُشتقّة فيزيائيًا بحتًا</h3>
+        <p>معادلات R<sub>s</sub> وB<sub>o</sub> وμ<sub>o</sub> ليست قوانين فيزيائية أساسية مثل قانون الغاز المثالي — بل هي دوال رياضية (عادة أُسّية أو لوغاريتمية) رُكِّبَت إحصائيًا (Regression) لتُطابق أفضل مطابقة ممكنة مجموعة بيانات PVT مخبرية حقيقية جُمعت من حقول بعينها. Standing استُخدمت عيّنات كاليفورنيا فقط، Glaso عيّنات بحر الشمال، Al-Marhoun عيّنات الشرق الأوسط، وVasquez-Beggs مجموعة عالمية أوسع تجاوزت 600 عيّنة. النتيجة: كل معادلة "تتذكر" جيدًا خواص النفط القريبة من مدى API ونسبة الغاز المذاب ودرجة الحرارة التي عايرتها، وتبدأ بالانحراف كلما ابتعدت مدخلاتك عن ذلك المدى.</p>
+
+        <h3>متى تتقارب النتائج ومتى تتباعد؟</h3>
+        <p>عمليًا، تتقارب المعادلات الأربع بشكل جيد لنفط متوسط الكثافة (API بين 25 و40 تقريبًا) وضغوط ودرجات حرارة معتدلة — لأن هذا المدى مشترك بين أغلب قواعد بيانات المعايرة الأصلية. الفارق يكبر بوضوح عند الأطراف: نفط ثقيل جدًا (API منخفض) أو خفيف جدًا (API مرتفع جدًا)، أو نسب غاز مذاب عالية جدًا خارج مدى القياس الأصلي — عندها تعمل كل معادلة كاستقراء (Extrapolation) خارج بياناتها المعايرة عليها، وتتضخم أخطاء الاستقراء بسرعة وبنسب مختلفة عن بعضها.</p>
+
+        <h3>أيّها "الصحيحة"؟</h3>
+        <p>لا توجد إجابة مطلقة — المرجع الأدق دائمًا هو تقرير PVT مخبري فعلي لعيّنة من نفس المكمن إن وُجد. في غيابه، القاعدة العملية: اختر المعادلة الأقرب جغرافيًا/جيولوجيًا لمنطقة المكمن (مثلاً Al-Marhoun لحقول الشرق الأوسط)، أو استخدم Vasquez-Beggs كخيار عام متوسط المخاطر لعدم توفر بديل إقليمي. تشغيل عدة معادلات معًا ومقارنة تشتّتها (وهو ما تتيحه صناديق الاختيار المتعددة في كل خاصية أعلاه) هو أفضل مؤشر عملي متاح لحجم عدم اليقين في غياب بيانات مخبرية.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>ملاحظات ومحاذير منهجية</h2><span class="eq">Assumptions &amp; Limitations</span></div>
+        <div class="assumptions-box">
+          <b>📌 ملاحظات:</b> جميع المعادلات تجريبية ومناطقية النشأة — Standing عن مكامن كاليفورنيا، Vasquez-Beggs عالمية/أمريكا الشمالية، Glaso عن بحر الشمال، Al-Marhoun عن الشرق الأوسط، Petrosky-Farshad عن خليج المكسيك. الأنسب مقارنة نتائجها ببيانات PVT مختبرية فعلية متى توفّرت، بدل الاعتماد على معادلة واحدة بلا تحقق. عامل الانحراف Z يستخدم هنا الخواص الحرجة الزائفة لغاز جاف حسب Standing؛ لغازات المكثفات (Gas Condensate) يلزم تصحيح إضافي قبل الاستخدام.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>قاموس المتغيرات والمصطلحات</h2><span class="eq">اضغط لعرض التفاصيل</span></div>
+        <div class="gloss-grid" id="glossaryGrid"></div>
+      </div>
+
+    </section>
+
+    <!-- ============ CALCULATOR : PVT Correlations ============ -->
+    <section class="section" id="sec-calcPVT">
+      <div class="card">
+        <div class="card-head"><h2>مقارنة معادلات PVT</h2><span class="eq">Pb · Rs · Bo · μo · Z, μg, Bg</span></div>
+        <p>حدّد أولًا ما تريد حسابه ومعادلة كل خاصية، أدخل بيانات المائع الأساسية، ثم اضغط "احسب" لعرض النتائج في تبويبات مطابقة لما اخترته فقط.</p>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-head"><h2>البيانات الأساسية</h2></div>
+        <div class="toolbar-row">
+          <button class="btn ghost sm" onclick="loadExamplePVT()">🔄 إدخال بيانات تجريبية</button>
+          <button class="btn danger sm" onclick="clearPVT()">🗑️ مسح الحقول</button>
+        </div>
+        <div class="mini-form-row">
+          <div class="field-group"><label>كثافة النفط API</label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_API"></div>
+          <div class="field-group"><label>الكثافة النوعية للغاز γ<sub>g</sub> <span class="unit">air=1</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_g"></div>
+        </div>
+        <div class="mini-form-row">
+          <div class="field-group"><label>حرارة المكمن T <span class="unit">°F</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_T"></div>
+          <div class="field-group"><label>الغاز المذاب المعروف R<sub>s</sub> <span class="unit">scf/STB</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_Rs"></div>
+        </div>
+        <div class="mini-form-row">
+          <div class="field-group"><label>ضغط التقييم P <span class="unit">psia</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_P"></div>
+          <div class="field-group"><label>أقصى ضغط للرسوم البيانية P<sub>max</sub> <span class="unit">psia</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_Pmax"></div>
+        </div>
+      </div>
+
+      <div class="card no-print" id="pvtSelectionCard">
+        <div class="card-head"><h2>ماذا تريد أن تحسب؟</h2><span class="eq">اختر الخواص والمعادلات قبل الحساب</span></div>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:6px;">علّم الخواص المطلوبة، وحدّد لكل واحدة المعادلات التي تريد مقارنتها. يُحسب فقط ما تختاره هنا، وتظهر التبويبات المطابقة له بعد الضغط على "احسب".</p>
+        <div class="toolbar-row">
+          <button class="btn ghost sm" onclick="selectAllPVT(true)">✅ تحديد الكل</button>
+          <button class="btn ghost sm" onclick="selectAllPVT(false)">◻️ إلغاء تحديد الكل</button>
+        </div>
+
+        <div class="cat-block">
+          <label class="chip-check cat-check"><input type="checkbox" id="catPb" onchange="toggleCatPanel('catPb','panelPb')"> 🫧 نقطة الفقاعة (Pb)</label>
+          <div class="cat-panel collapsed" id="panelPb">
+            <div class="chip-row" id="pv1_chips">
+              <label class="chip-check"><input type="checkbox" id="pv1chk_standing"> Standing (1947)</label>
+              <label class="chip-check"><input type="checkbox" id="pv1chk_vb"> Vasquez-Beggs (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv1chk_glaso"> Glaso (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv1chk_am"> Al-Marhoun (1988)</label>
+              <label class="chip-check"><input type="checkbox" id="pv1chk_pf"> Petrosky-Farshad (1993)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block">
+          <label class="chip-check cat-check"><input type="checkbox" id="catRs" onchange="toggleCatPanel('catRs','panelRs')"> 💧 الغاز المذاب (Rs)</label>
+          <div class="cat-panel collapsed" id="panelRs">
+            <div class="chip-row" id="pv2_chips">
+              <label class="chip-check"><input type="checkbox" id="pv2chk_standing"> Standing (1947)</label>
+              <label class="chip-check"><input type="checkbox" id="pv2chk_vb"> Vasquez-Beggs (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv2chk_glaso"> Glaso (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv2chk_am"> Al-Marhoun (1988)</label>
+              <label class="chip-check"><input type="checkbox" id="pv2chk_pf"> Petrosky-Farshad (1993)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block">
+          <label class="chip-check cat-check"><input type="checkbox" id="catBo" onchange="toggleCatPanel('catBo','panelBo')"> 🛢️ معامل الحجم الجوفي (Bo)</label>
+          <div class="cat-panel collapsed" id="panelBo">
+            <div class="chip-row" id="pv3_chips">
+              <label class="chip-check"><input type="checkbox" id="pv3chk_standing"> Standing (1947)</label>
+              <label class="chip-check"><input type="checkbox" id="pv3chk_vb"> Vasquez-Beggs (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv3chk_glaso"> Glaso (1980)</label>
+              <label class="chip-check"><input type="checkbox" id="pv3chk_am"> Al-Marhoun (1988)</label>
+              <label class="chip-check"><input type="checkbox" id="pv3chk_pf"> Petrosky-Farshad (1993)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block">
+          <label class="chip-check cat-check"><input type="checkbox" id="catVisc" onchange="toggleCatPanel('catVisc','panelVisc')"> 🌊 لزوجة النفط</label>
+          <div class="cat-panel collapsed" id="panelVisc">
+            <div style="font-size:11.5px; color:var(--muted); margin-bottom:4px;">لزوجة النفط الميت μ<sub>od</sub>:</div>
+            <div class="chip-row" id="pv4a_chips">
+              <label class="chip-check"><input type="checkbox" id="pv4achk_beal"> Beal (1946)</label>
+              <label class="chip-check"><input type="checkbox" id="pv4achk_br"> Beggs-Robinson (1975)</label>
+              <label class="chip-check"><input type="checkbox" id="pv4achk_glaso"> Glaso (1980)</label>
+            </div>
+            <div style="font-size:11.5px; color:var(--muted); margin:8px 0 4px 0;">لزوجة النفط المشبع μ<sub>ob</sub>:</div>
+            <div class="chip-row" id="pv4b_chips">
+              <label class="chip-check"><input type="checkbox" id="pv4bchk_br"> Beggs-Robinson (1975)</label>
+              <label class="chip-check"><input type="checkbox" id="pv4bchk_cc"> Chew-Connally (1959)</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block">
+          <label class="chip-check cat-check"><input type="checkbox" id="catGas" onchange="toggleCatPanel('catGas','panelGas')"> 💨 خواص الغاز (Z, μg, Bg)</label>
+          <div class="cat-panel collapsed" id="panelGas">
+            <div style="font-size:11.5px; color:var(--muted); margin-bottom:4px;">معادلات عامل الانحراف Z:</div>
+            <div class="chip-row" id="pv5_chips">
+              <label class="chip-check"><input type="checkbox" id="pv5chk_dak"> Dranchuk-Abou-Kassem (1975)</label>
+              <label class="chip-check"><input type="checkbox" id="pv5chk_hy"> Hall-Yarborough (1973)</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="calc-btn" onclick="pvtCalculate()">⚡ احسب</button>
+        <div id="pvt_status" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card no-print" id="pvt_resultsCard" style="display:none;">
+        <div class="tabbar" id="tabbarPVT">
+          <button class="tab-btn active" data-tab="pv1" id="tabbtn-pv1">🫧 نقطة الفقاعة</button>
+          <button class="tab-btn" data-tab="pv2" id="tabbtn-pv2">💧 الغاز المذاب Rs</button>
+          <button class="tab-btn" data-tab="pv3" id="tabbtn-pv3">🛢️ معامل الحجم Bo</button>
+          <button class="tab-btn" data-tab="pv4" id="tabbtn-pv4">🌊 لزوجة النفط</button>
+          <button class="tab-btn" data-tab="pv5" id="tabbtn-pv5">💨 خواص الغاز</button>
+        </div>
+
+        <!-- TAB 1: Pb -->
+        <div class="tab-panel active" id="tab-pv1">
+          <div class="kpi-row" id="pv1_kpiRow"></div>
+          <div id="pv1_statusMsg"></div>
+          <div class="data-table-wrap" id="pv1_tableWrap"></div>
+          <div class="plot-box"><div id="pv1_plot" style="height:400px;"></div></div>
+          <div class="export-row" style="margin-top:14px;">
+            <button class="btn ghost sm" onclick="exportCSV_generic('pv1')">📄 CSV</button>
+            <button class="btn ghost sm" onclick="exportExcel_generic('pv1')">📊 Excel</button>
+            <button class="btn gold sm" onclick="printReportGeneric('pv1')">📕 تقرير</button>
+          </div>
+          <div class="formula-panel" id="pv1_formulaPanel" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- TAB 2: Rs -->
+        <div class="tab-panel" id="tab-pv2">
+          <div class="plot-box"><div id="pv2_plot" style="height:420px;"></div></div>
+          <p class="diagram-note">تبقى R<sub>s</sub> ثابتة عند القيمة المعروفة فوق نقطة الفقاعة الخاصة بكل معادلة (الخط الأفقي المسطّح).</p>
+          <div class="subhead"><span class="subnum">2</span>جدول كامل النتائج (كل نقاط المسح)</div>
+          <div class="data-table-wrap scrollable" id="pv2_tableWrap"></div>
+          <div class="export-row" style="margin-top:6px;">
+            <button class="btn ghost sm" onclick="exportCSV_generic('pv2')">📄 CSV</button>
+            <button class="btn ghost sm" onclick="exportExcel_generic('pv2')">📊 Excel</button>
+            <button class="btn gold sm" onclick="printReportGeneric('pv2')">📕 تقرير</button>
+          </div>
+          <div class="formula-panel" id="pv2_formulaPanel" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- TAB 3: Bo -->
+        <div class="tab-panel" id="tab-pv3">
+          <div class="data-table-wrap" id="pv3_tableWrap"></div>
+          <div class="plot-box"><div id="pv3_plot" style="height:420px;"></div></div>
+          <p class="diagram-note">الخطوط المنقطة الرأسية تمثّل نقطة الفقاعة P<sub>b</sub> الخاصة بكل معادلة — يتغيّر سلوك B<sub>o</sub> هناك من الارتفاع (مشبع) إلى الانخفاض الطفيف (غير مشبع).</p>
+          <div class="export-row" style="margin-top:6px;">
+            <button class="btn ghost sm" onclick="exportCSV_generic('pv3')">📄 CSV</button>
+            <button class="btn ghost sm" onclick="exportExcel_generic('pv3')">📊 Excel</button>
+            <button class="btn gold sm" onclick="printReportGeneric('pv3')">📕 تقرير</button>
+          </div>
+          <div class="formula-panel" id="pv3_formulaPanel" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- TAB 4: Oil Viscosity -->
+        <div class="tab-panel" id="tab-pv4">
+          <div class="subhead"><span class="subnum">1</span>لزوجة النفط الميت μ<sub>od</sub> (مستقلة عن الضغط)</div>
+          <div class="data-table-wrap" id="pv4a_tableWrap"></div>
+
+          <div class="subhead"><span class="subnum">2</span>لزوجة النفط المشبع μ<sub>ob</sub> عند R<sub>s</sub> الحالية</div>
+          <div class="ref-select-row">
+            <div class="field-group" style="margin:0;"><label>استخدم قيمة μ<sub>od</sub> من:</label>
+              <select id="pv4_refMuod" onchange="renderMuobView()"></select>
+            </div>
+          </div>
+          <div class="data-table-wrap" id="pv4b_tableWrap"></div>
+
+          <div class="subhead"><span class="subnum">3</span>المنحنى الكامل للزوجة مقابل الضغط</div>
+          <div class="ref-select-row">
+            <div class="field-group" style="margin:0;"><label>استخدم μ<sub>ob</sub> عند P<sub>b</sub> من:</label>
+              <select id="pv4_refMuob" onchange="renderMuProfile()"></select>
+            </div>
+            <div class="field-group" style="margin:0;"><label>استخدم P<sub>b</sub> من معادلة:</label>
+              <select id="pv4_refPb" onchange="renderMuProfile()"></select>
+            </div>
+          </div>
+          <button class="btn ghost sm" onclick="renderMuProfile()">🔄 رسم المنحنى الكامل</button>
+          <div class="plot-box" style="margin-top:12px;"><div id="pv4_plot" style="height:400px;"></div></div>
+          <p class="diagram-note">اللزوجة تنخفض من قيمة Dead Oil عند الضغط الجوي حتى أدنى نقطة عند P<sub>b</sub> (بسبب الغاز المذاب)، ثم ترتفع تدريجيًا فوق P<sub>b</sub> بسبب الانضغاطية.</p>
+          <div class="subhead"><span class="subnum">4</span>جدول كامل النتائج (كل نقاط المنحنى)</div>
+          <div class="data-table-wrap scrollable" id="pv4c_tableWrap"></div>
+          <div class="export-row" style="margin-top:6px;">
+            <button class="btn ghost sm" onclick="exportCSV_generic('pv4')">📄 CSV</button>
+            <button class="btn ghost sm" onclick="exportExcel_generic('pv4')">📊 Excel</button>
+            <button class="btn gold sm" onclick="printReportGeneric('pv4')">📕 تقرير</button>
+          </div>
+          <div class="formula-panel" id="pv4_formulaPanel" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- TAB 5: Gas Properties -->
+        <div class="tab-panel" id="tab-pv5">
+          <div class="subhead"><span class="subnum">1</span>ظروف الغاز</div>
+          <p style="font-size:11px; color:var(--muted); margin:2px 0 8px;">تُحسب خواص الغاز تلقائيًا عند ضغط الحساب (P) وحرارته (T) الأساسيين فور الضغط على "احسب" أعلاه. غيّر القيمتين هنا واضغط الزر أدناه فقط إذا تريد حساب خواص الغاز عند ضغط/حرارة مختلفين عن حالة النفط.</p>
+          <div class="mini-form-row">
+            <div class="field-group" style="margin:0;"><label>ضغط الغاز P<sub>gas</sub> <span class="unit">psia</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_Pgas"></div>
+            <div class="field-group" style="margin:0;"><label>حرارة الغاز T<sub>gas</sub> <span class="unit">°F</span></label><input type="text" inputmode="decimal" lang="en" dir="ltr" id="pvt_Tgas"></div>
+          </div>
+          <button class="btn ghost sm" style="margin-top:10px;" onclick="pvtCalcGas()">⚡ إعادة الحساب بظروف مختلفة</button>
+          <div id="pv5_info" style="margin-top:14px;"></div>
+          <div class="data-table-wrap" id="pv5_tableWrap"></div>
+          <div class="kpi-row" id="pv5_kpiRow"></div>
+          <div class="plot-box"><div id="pv5_plot" style="height:400px;"></div></div>
+          <h3 style="font-size:13px; margin:16px 0 4px;">لزوجة الغاز μ<sub>g</sub> (Lee-Gonzalez-Eakin) وB<sub>g</sub> مقابل الضغط</h3>
+          <p style="font-size:11px; color:var(--muted); margin-bottom:8px;">كلا الخاصيتين تعتمدان على عامل الانحراف Z، الذي يتغيّر مع الضغط — لذلك تُرسمان كدالة بالضغط مثل Z تمامًا، باستخدام متوسط Z للمعادلات المختارة أعلاه عند كل نقطة ضغط.</p>
+          <div class="grid2">
+            <div class="plot-box"><div id="pv5_muGasPlot" style="height:300px;"></div></div>
+            <div class="plot-box"><div id="pv5_bgPlot" style="height:300px;"></div></div>
+          </div>
+          <div class="export-row" style="margin-top:6px;">
+            <button class="btn ghost sm" onclick="exportCSV_generic('pv5')">📄 CSV</button>
+            <button class="btn ghost sm" onclick="exportExcel_generic('pv5')">📊 Excel</button>
+            <button class="btn gold sm" onclick="printReportGeneric('pv5')">📕 تقرير</button>
+          </div>
+          <div class="formula-panel" id="pv5_formulaPanel" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+      <div class="card no-print" id="pvt_summaryWrap" style="display:none;">
+        <div class="card-head"><h2>🔀 ملخص موحّد — كل المعادلات المختارة جنبًا إلى جنب</h2></div>
+        <div id="pvt_summaryBody"></div>
+        <div class="export-row" style="margin-top:12px;">
+          <button class="btn ghost sm" onclick="exportPvtSummaryCSV()">📄 CSV</button>
+          <button class="btn ghost sm" onclick="exportPvtSummaryExcel()">📊 Excel</button>
+        </div>
+      </div>
+
+      <div class="card no-print" id="pvt_downloadCard" style="display:none;">
+        <div class="card-head"><h2>📥 تنزيل شامل لكل النتائج</h2></div>
+        <div class="export-row">
+          <button class="btn ghost" onclick="exportCSV_PVT_Summary()">📄 ملخّص شامل CSV</button>
+          <button class="btn ghost" onclick="exportExcel_PVT_Summary()">📊 ملخّص شامل Excel (عدّة أوراق)</button>
+          <button class="btn gold" onclick="printReportPVTFull()">📕 تقرير PDF شامل</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+</div>
+
+<!-- ============ HIDDEN PRINT REPORT CONTAINER ============ -->
+<div id="printReport"></div>
+<script>
+/* ============================================================
+   DIGIT-SAFE PARSING
+   ============================================================ */
+function parseFloatSafe(v, def=NaN){
+  if(v===null || v===undefined) return def;
+  const s = String(v).trim();
+  if(s==='') return def;
+  const arabicDigits='٠١٢٣٤٥٦٧٨٩'; let clean=s;
+  for(let i=0;i<10;i++) clean = clean.split(arabicDigits[i]).join(String(i));
+  clean = clean.replace(',', '.');
+  const f = parseFloat(clean);
+  return isNaN(f) ? def : f;
+}
+function gv(id){ return parseFloatSafe(document.getElementById(id).value); }
+function fmt(v, d=2){ if(!isFinite(v)) return "—"; return Number(v).toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d}); }
+function fmtSci(v){ if(!isFinite(v)) return "—"; return Number(v).toExponential(3); }
+function tableHTML(head, rows){
+  return `<table class="data-table"><tr>${head.map(h=>'<th>'+h+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')}</table>`;
+}
+
+/* ============================================================
+   NAVIGATION + MOBILE SIDEBAR
+   ============================================================ */
+const PAGE_META = {
+  home:   {crumb:"GENERAL / OVERVIEW", title:"منصة علاقات الخواص الفيزيائية للموائع", tag:"PVT Correlations"},
+  learn:  {crumb:"GENERAL / THEORY", title:"خواص الموائع PVT والمعادلات التجريبية", tag:"PVT Theory"},
+  calcPVT:{crumb:"CALCULATOR", title:"مقارنة معادلات PVT", tag:"Pb · Rs · Bo · μo · Z"}
+};
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+function goTo(target){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+target).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  const meta = PAGE_META[target];
+  if(meta){
+    document.getElementById('crumb').textContent = meta.crumb;
+    document.getElementById('pageTitle').textContent = meta.title;
+    document.getElementById('eqTag').textContent = meta.tag;
+  }
+  if(target==='learn'){ initDemoPlotIfNeeded(); }
+  closeSidebar();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+document.querySelectorAll('[data-target]').forEach(el=>{
+  el.addEventListener('click', ()=>goTo(el.dataset.target));
+});
+document.querySelectorAll('#tabbarPVT .tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('#tabbarPVT .tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================================================
+   GENERIC EXPORT HELPERS (CSV / Excel / Print Report)
+   ============================================================ */
+function downloadCSVRows(headArr, rowsArr, filename){
+  let csv = headArr.join(',') + '\n';
+  rowsArr.forEach(r => { csv += r.join(',') + '\n'; });
+  const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.target='_blank'; link.click();
+}
+function downloadExcelRows(headArr, rowsArr, filename, sheetName){
+  const aoa = [headArr, ...rowsArr];
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName||'Results');
+  XLSX.writeFile(wb, filename);
+}
+function prHTML({title, subtitle, inputsArr, kpisArr, tableHeadArr, tableRowsArr, chartImgUrl, equationsHtml}){
+  let html = `<div class="pr-page"><div class="pr-headbar"><div class="pr-h1">${title}</div><div class="pr-h2">${subtitle} — ${new Date().toLocaleString('en-US')}</div></div>`;
+  if(inputsArr && inputsArr.length){
+    html += `<div class="pr-section-title">Input Parameters</div><div class="pr-infolist">` + inputsArr.map(p=>`<div><span>${p[0]}</span><b>${p[1]}</b></div>`).join('') + `</div>`;
+  }
+  if(kpisArr && kpisArr.length){
+    html += `<div class="pr-section-title">Results Summary</div><div class="pr-kpi-row">` + kpisArr.map(p=>`<div class="pr-kpi"><div class="pr-kpi-label">${p[0]}</div><div class="pr-kpi-val">${p[1]}${p[2]?(' '+p[2]):''}</div></div>`).join('') + `</div>`;
+  }
+  if(chartImgUrl){
+    const imgs = Array.isArray(chartImgUrl) ? chartImgUrl.filter(Boolean) : [chartImgUrl];
+    if(imgs.length){
+      html += `<div class="pr-section-title">Chart${imgs.length>1?'s':''}</div>` + imgs.map(u=>`<img class="pr-chart" src="${u}">`).join('');
+    }
+  }
+  if(tableHeadArr && tableRowsArr && tableRowsArr.length){
+    html += `<div class="pr-section-title">Full Results Table</div><table class="pr-table"><tr>${tableHeadArr.map(h=>`<th>${h}</th>`).join('')}</tr>` + tableRowsArr.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') + `</table>`;
+  }
+  if(equationsHtml){
+    html += `<div class="pr-section-title">Equations Used</div><div class="pr-eqwrap">${equationsHtml}</div>`;
+  }
+  html += `<div class="pr-footer"><span>Al-Misbar Engineering Solutions — PVT Correlations Suite</span><span>${new Date().toLocaleDateString('en-US')}</span></div></div>`;
+  return html;
+}
+function prCoverPage(title, subtitle, inputsArr){
+  return `<div class="pr-page">
+    <div class="pr-headbar"><div class="pr-h1">${title}</div><div class="pr-h2">${subtitle} — ${new Date().toLocaleString('en-US')}</div></div>
+    <div class="pr-section-title">Input Parameters</div>
+    <div class="pr-infolist">${inputsArr.map(p=>`<div><span>${p[0]}</span><b>${p[1]}</b></div>`).join('')}</div>
+    <div class="pr-footer"><span>Al-Misbar Engineering Solutions — PVT Correlations Suite</span><span>${new Date().toLocaleDateString('en-US')}</span></div>
+  </div>`;
+}
+function prResultPage(pageIndex, totalPages, pageTitle, kpisArr, tableHeadArr, tableRowsArr, chartImgUrl, equationsHtml){
+  let html = `<div class="pr-page">
+    <div class="pr-page-header"><div class="pr-page-title">${pageTitle}</div><div class="pr-page-num">PAGE ${pageIndex} / ${totalPages}</div></div>`;
+  if(kpisArr && kpisArr.length){
+    html += `<div class="pr-kpi-row">${kpisArr.map(p=>`<div class="pr-kpi"><div class="pr-kpi-label">${p[0]}</div><div class="pr-kpi-val">${p[1]}${p[2]?(' '+p[2]):''}</div></div>`).join('')}</div>`;
+  }
+  if(chartImgUrl){
+    const imgs = Array.isArray(chartImgUrl) ? chartImgUrl.filter(Boolean) : [chartImgUrl];
+    if(imgs.length){
+      html += `<div class="pr-section-title">Chart${imgs.length>1?'s':''}</div>` + imgs.map(u=>`<img class="pr-chart" src="${u}">`).join('');
+    }
+  }
+  if(tableHeadArr && tableRowsArr && tableRowsArr.length){
+    html += `<div class="pr-section-title">Full Results Table (${tableRowsArr.length} rows)</div><table class="pr-table"><thead><tr>${tableHeadArr.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>` + tableRowsArr.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('') + `</tbody></table>`;
+  }
+  if(equationsHtml){
+    html += `<div class="pr-section-title">Equations Used</div><div class="pr-eqwrap">${equationsHtml}</div>`;
+  }
+  html += `<div class="pr-footer"><span>Al-Misbar Engineering Solutions — PVT Correlations Suite</span><span>${new Date().toLocaleDateString('en-US')}</span></div></div>`;
+  return html;
+}
+function firePrint(html){
+  document.getElementById('printReport').innerHTML = html;
+  setTimeout(()=>window.print(), 60);
+}
+
+/* ============================================================
+   CORRELATION LIBRARY
+   ============================================================ */
+function bisect(f, lo, hi, tol=1e-7, maxIter=200){
+  let flo=f(lo), fhi=f(hi);
+  if(isNaN(flo) || isNaN(fhi) || flo*fhi>0) return NaN;
+  for(let i=0;i<maxIter;i++){
+    const mid=(lo+hi)/2, fmid=f(mid);
+    if(isNaN(fmid)) return NaN;
+    if(Math.abs(fmid)<tol || (hi-lo)/2<tol) return mid;
+    if(flo*fmid<0){ hi=mid; fhi=fmid; } else { lo=mid; flo=fmid; }
+  }
+  return (lo+hi)/2;
+}
+const PALETTE = ['#0072BD','#D2691E','#2ECC71','#9B59B6','#E74C3C','#1ABC9C','#F39C12'];
+
+// ---- Rs(P) ----
+function rsStanding(P,g,API,T){ return g*Math.pow((P/18.2+1.4)*Math.pow(10,0.0125*API-0.00091*T), 1.2048); }
+function rsVasquezBeggs(P,g,API,T){
+  let C1,C2,C3;
+  if(API<=30){ C1=0.0362; C2=1.0937; C3=25.7240; } else { C1=0.0178; C2=1.1870; C3=23.9310; }
+  return C1*g*Math.pow(P,C2)*Math.exp(C3*API/(T+460));
+}
+function rsGlaso(P,g,API,T){
+  const a=-0.30218, b=1.7447, c=1.7669-Math.log10(P);
+  const disc = b*b-4*a*c;
+  if(disc<0) return NaN;
+  const x=(-b+Math.sqrt(disc))/(2*a);
+  const Fp = Math.pow(10,x);
+  return g*Math.pow(Fp*Math.pow(API,0.989)/Math.pow(T,0.172), 1/0.816);
+}
+function rsAlMarhoun(P,g,API,T){
+  const a=5.38088e-3, b=0.715082, c=-1.87784, d=3.1437, e=1.32657;
+  const go = 141.5/(131.5+API), Tr = T+460;
+  return Math.pow(P/(a*Math.pow(g,c)*Math.pow(go,d)*Math.pow(Tr,e)), 1/b);
+}
+function rsPetrosky(P,g,API,T){
+  const X = 7.916e-4*Math.pow(API,1.5410) - 4.561e-5*Math.pow(T,1.3911);
+  const val = (P/112.727+12.34)*Math.pow(g,0.8439)*Math.pow(10,X);
+  return Math.pow(val, 1/0.577421);
+}
+const RS_CORR = {
+  standing:{label:'Standing (1947)', fn:rsStanding},
+  vb:{label:'Vasquez-Beggs (1980)', fn:rsVasquezBeggs},
+  glaso:{label:'Glaso (1980)', fn:rsGlaso},
+  am:{label:'Al-Marhoun (1988)', fn:rsAlMarhoun},
+  pf:{label:'Petrosky-Farshad (1993)', fn:rsPetrosky},
+};
+function pbFromRs(fn, RsKnown, g, API, T){
+  return bisect(P => fn(P,g,API,T) - RsKnown, 14.7, 9000);
+}
+
+// ---- Bo(Rs) saturated ----
+function boStanding(Rs,g,API,T){
+  const go=141.5/(131.5+API);
+  return 0.9759+0.00012*Math.pow(Rs*Math.pow(g/go,0.5)+1.25*T, 1.2);
+}
+function boVasquezBeggs(Rs,g,API,T){
+  let C1,C2,C3;
+  if(API<=30){ C1=4.677e-4; C2=1.751e-5; C3=-1.811e-8; } else { C1=4.670e-4; C2=1.100e-5; C3=1.337e-9; }
+  return 1+C1*Rs+C2*(T-60)*(API/g)+C3*Rs*(T-60)*(API/g);
+}
+function boGlaso(Rs,g,API,T){
+  const go=141.5/(131.5+API);
+  const Fb = Rs*Math.pow(g/go,0.526)+0.968*T;
+  return 1+Math.pow(10, -6.58511+2.91329*Math.log10(Fb)-0.27683*Math.pow(Math.log10(Fb),2));
+}
+function boAlMarhoun(Rs,g,API,T){
+  const go=141.5/(131.5+API), Tr=T+460;
+  const F = Math.pow(Rs,0.742390)*Math.pow(g,0.323294)*Math.pow(go,-1.202040);
+  return 0.497069+0.862963e-3*Tr+0.182594e-2*F+0.318099e-5*F*F;
+}
+function boPetrosky(Rs,g,API,T){
+  const go=141.5/(131.5+API);
+  return 1.0113+7.2046e-5*Math.pow(Math.pow(Rs,0.3738)*(Math.pow(g,0.2914)/Math.pow(go,0.6265))+0.24626*Math.pow(T,0.5371), 3.0936);
+}
+const BO_CORR = {
+  standing:{label:'Standing (1947)', fn:boStanding},
+  vb:{label:'Vasquez-Beggs (1980)', fn:boVasquezBeggs},
+  glaso:{label:'Glaso (1980)', fn:boGlaso},
+  am:{label:'Al-Marhoun (1988)', fn:boAlMarhoun},
+  pf:{label:'Petrosky-Farshad (1993)', fn:boPetrosky},
+};
+function coVasquezBeggs(P,Rsb,T,g,API){ return (-1433+5*Rsb+17.2*T-1180*g+12.61*API)/(1e5*P); }
+function boUndersaturated(Bob,co,Pb,P){ return Bob*Math.exp(co*(Pb-P)); }
+
+// ---- Oil viscosity ----
+function muodBeal(API,T){
+  const a = Math.pow(10, 0.43+8.33/API);
+  return (0.32+1.8e7/Math.pow(API,4.53))*Math.pow(360/(T+200), a);
+}
+function muodBeggsRobinson(API,T){
+  const X = Math.pow(10, 3.0324-0.02023*API)*Math.pow(T,-1.163);
+  return Math.pow(10,X)-1;
+}
+function muodGlaso(API,T){
+  return 3.141e10*Math.pow(T,-3.444)*Math.pow(Math.log10(API), 10.313*Math.log10(T)-36.447);
+}
+const MUOD_CORR = {
+  beal:{label:'Beal (1946)', fn:muodBeal},
+  br:{label:'Beggs-Robinson (1975)', fn:muodBeggsRobinson},
+  glaso:{label:'Glaso (1980)', fn:muodGlaso},
+};
+function muobBeggsRobinson(muod,Rs){
+  const a=10.715*Math.pow(Rs+100,-0.515), b=5.44*Math.pow(Rs+150,-0.338);
+  return a*Math.pow(muod,b);
+}
+function muobChewConnally(muod,Rs){
+  const A = Math.pow(10, Rs*(2.2e-7*Rs-7.4e-4));
+  const B = (0.68/Math.pow(10,8.62e-5*Rs)) + (0.25/Math.pow(10,1.1e-3*Rs)) + (0.062/Math.pow(10,3.74e-3*Rs));
+  return A*Math.pow(muod,B);
+}
+const MUOB_CORR = {
+  br:{label:'Beggs-Robinson (1975)', fn:muobBeggsRobinson},
+  cc:{label:'Chew-Connally (1959)', fn:muobChewConnally},
+};
+function muUndersaturatedVB(muob,P,Pb){
+  const m = 2.6*Math.pow(P,1.187)*Math.exp(-11.513-8.98e-5*P);
+  return muob*Math.pow(P/Pb, m);
+}
+
+// ---- Gas Z-factor ----
+function pseudoCriticalStanding(g){
+  return {Tpc: 168+325*g-12.5*g*g, Ppc: 677+15*g-37.5*g*g};
+}
+function zDranchukAboukassem(Ppr,Tpr){
+  const A1=0.3265,A2=-1.0700,A3=-0.5339,A4=0.01569,A5=-0.05165;
+  const A6=0.5475,A7=-0.7361,A8=0.1844,A9=0.1056,A10=0.6134,A11=0.7210;
+  function resid(z){
+    const rho_r = 0.27*Ppr/(z*Tpr);
+    const term1 = (A1+A2/Tpr+A3/Math.pow(Tpr,3)+A4/Math.pow(Tpr,4)+A5/Math.pow(Tpr,5))*rho_r;
+    const term2 = (A6+A7/Tpr+A8/Math.pow(Tpr,2))*rho_r*rho_r;
+    const term3 = -A9*(A7/Tpr+A8/Math.pow(Tpr,2))*Math.pow(rho_r,5);
+    const term4 = A10*(1+A11*rho_r*rho_r)*(rho_r*rho_r/Math.pow(Tpr,3))*Math.exp(-A11*rho_r*rho_r);
+    return 1+term1+term2+term3+term4 - z;
+  }
+  return bisect(resid, 0.25, 3.0);
+}
+function zHallYarborough(Ppr,Tpr){
+  const t=1/Tpr;
+  function resid(Y){
+    const term1 = -0.06125*Ppr*t*Math.exp(-1.2*Math.pow(1-t,2));
+    const term2 = (Y+Y*Y+Math.pow(Y,3)-Math.pow(Y,4))/Math.pow(1-Y,3);
+    const term3 = -(14.76*t-9.76*t*t+4.58*Math.pow(t,3))*Y*Y;
+    const term4 = (90.7*t-242.2*t*t+42.4*Math.pow(t,3))*Math.pow(Y, 2.18+2.82*t);
+    return term1+term2+term3+term4;
+  }
+  const Y = bisect(resid, 1e-6, 0.9999);
+  if(isNaN(Y)) return NaN;
+  return 0.06125*Ppr*t*Math.exp(-1.2*Math.pow(1-t,2))/Y;
+}
+const Z_CORR = {
+  dak:{label:'Dranchuk-Abou-Kassem (1975)', fn:zDranchukAboukassem},
+  hy:{label:'Hall-Yarborough (1973)', fn:zHallYarborough},
+};
+function gasViscosityLee(P,T,z,g){
+  const Mg=28.97*g, Tr=T+460;
+  const K=(9.4+0.02*Mg)*Math.pow(Tr,1.5)/(209+19*Mg+Tr);
+  const X=3.5+986/Tr+0.01*Mg;
+  const Y=2.4-0.2*X;
+  const rho_g=1.4935e-3*P*Mg/(z*Tr);
+  return K*1e-4*Math.exp(X*Math.pow(rho_g,Y));
+}
+function gasFvf(z,T,P){ return 0.02827*z*(T+460)/P; }
+
+/* ============================================================
+   EQUATION LIBRARY (LaTeX) — for dynamic formula panels
+   ============================================================ */
+const RS_EQ = {
+  standing: "R_s = \\gamma_g\\left[\\left(\\dfrac{P}{18.2}+1.4\\right)\\times 10^{0.0125\\,API-0.00091\\,T}\\right]^{1.2048}",
+  vb: "R_s = C_1\\gamma_g P^{C_2} e^{\\,C_3 API/(T+460)}, \\quad (C_1,C_2,C_3)=(0.0362,1.0937,25.724)_{API\\le30} \\text{ or } (0.0178,1.1870,23.931)_{API>30}",
+  glaso: "F_p=10^{x} \\text{ from } -0.30218x^2{+}1.7447x{+}(1.7669{-}\\log_{10}P)=0, \\quad R_s=\\gamma_g\\left(\\dfrac{F_p\\cdot API^{0.989}}{T^{0.172}}\\right)^{1/0.816}",
+  am: "R_s=\\left[\\dfrac{P}{a\\,\\gamma_g^{\\,c}\\,\\gamma_o^{\\,d}\\,T_R^{\\,e}}\\right]^{1/b}, \\ \\gamma_o=\\dfrac{141.5}{131.5+API}",
+  pf: "R_s=\\left[\\left(\\dfrac{P}{112.727}+12.34\\right)\\gamma_g^{0.8439}\\cdot 10^{X}\\right]^{1/0.577421}, \\ X=7.916\\times10^{-4}API^{1.541}-4.561\\times10^{-5}T^{1.3911}"
+};
+const BO_EQ = {
+  standing: "B_o = 0.9759+0.00012\\left[R_s\\left(\\dfrac{\\gamma_g}{\\gamma_o}\\right)^{0.5}+1.25T\\right]^{1.2}",
+  vb: "B_o = 1+C_1R_s+C_2(T-60)\\dfrac{API}{\\gamma_g}+C_3R_s(T-60)\\dfrac{API}{\\gamma_g}",
+  glaso: "F_b=R_s\\left(\\dfrac{\\gamma_g}{\\gamma_o}\\right)^{0.526}+0.968T, \\quad B_o=1+10^{-6.58511+2.91329\\log_{10}F_b-0.27683(\\log_{10}F_b)^2}",
+  am: "F=R_s^{0.74239}\\gamma_g^{0.323294}\\gamma_o^{-1.20204}, \\quad B_o=0.497069+8.62963\\times10^{-4}T_R+1.82594\\times10^{-3}F+3.18099\\times10^{-6}F^2",
+  pf: "B_o=1.0113+7.2046\\times10^{-5}\\left[R_s^{0.3738}\\left(\\dfrac{\\gamma_g^{0.2914}}{\\gamma_o^{0.6265}}\\right)+0.24626T^{0.5371}\\right]^{3.0936}"
+};
+const MUOD_EQ = {
+  beal: "\\mu_{od}=\\left(0.32+\\dfrac{1.8\\times10^7}{API^{4.53}}\\right)\\left(\\dfrac{360}{T+200}\\right)^{a}, \\quad a=10^{0.43+8.33/API}",
+  br: "\\mu_{od}=10^{X}-1, \\quad X=10^{3.0324-0.02023\\,API}\\cdot T^{-1.163}",
+  glaso: "\\mu_{od}=3.141\\times10^{10}\\cdot T^{-3.444}\\cdot\\left(\\log_{10}API\\right)^{10.313\\log_{10}T-36.447}"
+};
+const MUOB_EQ = {
+  br: "\\mu_{ob}=a\\cdot\\mu_{od}^{\\,b}, \\quad a=10.715(R_s+100)^{-0.515},\\ \\ b=5.44(R_s+150)^{-0.338}",
+  cc: "\\mu_{ob}=A\\cdot\\mu_{od}^{\\,B}, \\quad A=10^{R_s(2.2\\times10^{-7}R_s-7.4\\times10^{-4})}"
+};
+const Z_EQ = {
+  dak: "Z = 1+\\left(A_1+\\dfrac{A_2}{T_{pr}}+\\dfrac{A_3}{T_{pr}^3}+\\dfrac{A_4}{T_{pr}^4}+\\dfrac{A_5}{T_{pr}^5}\\right)\\rho_r+\\left(A_6+\\dfrac{A_7}{T_{pr}}+\\dfrac{A_8}{T_{pr}^2}\\right)\\rho_r^2-A_9\\left(\\dfrac{A_7}{T_{pr}}+\\dfrac{A_8}{T_{pr}^2}\\right)\\rho_r^5+A_{10}(1+A_{11}\\rho_r^2)\\dfrac{\\rho_r^2}{T_{pr}^3}e^{-A_{11}\\rho_r^2}",
+  hy: "0=-0.06125P_{pr}te^{-1.2(1-t)^2}+\\dfrac{Y+Y^2+Y^3-Y^4}{(1-Y)^3}-(14.76t-9.76t^2+4.58t^3)Y^2+(90.7t-242.2t^2+42.4t^3)Y^{2.18+2.82t}, \\ \\ Z=\\dfrac{0.06125P_{pr}te^{-1.2(1-t)^2}}{Y}"
+};
+const PB_FIND_EQ = "\\text{Find } P_b \\text{ such that } R_s(P_b,\\gamma_g,API,T) = R_{s,known}";
+const RS_PLATEAU_EQ = "R_s(P) \\text{ for } P \\le P_b, \\qquad R_s = R_{s,known} \\text{ for } P > P_b";
+const BO_UNDERSAT_EQ = "c_o=\\dfrac{-1433+5R_{sb}+17.2T-1180\\gamma_g+12.61API}{10^5P}, \\qquad B_o = B_{ob}\\cdot e^{\\,c_o(P_b-P)} \\quad (P > P_b)";
+const MU_UNDERSAT_EQ = "\\mu_o=\\mu_{ob}(P/P_b)^{m}, \\quad m=2.6P^{1.187}e^{-11.513-8.98\\times10^{-5}P}";
+const PSEUDOCRIT_EQ = "T_{pc}=168+325\\gamma_g-12.5\\gamma_g^2, \\qquad P_{pc}=677+15\\gamma_g-37.5\\gamma_g^2, \\qquad P_{pr}=\\dfrac{P}{P_{pc}}, \\quad T_{pr}=\\dfrac{T+460}{T_{pc}}";
+const MUG_BG_EQ = "\\mu_g=K\\times10^{-4}e^{X\\rho_g^Y}, \\ K=\\dfrac{(9.4+0.02M_g)T_R^{1.5}}{209+19M_g+T_R}, \\ X=3.5+\\dfrac{986}{T_R}+0.01M_g, \\qquad B_g=0.02827\\dfrac{Z(T+460)}{P}";
+
+/* Build a formula panel dynamically from a list of {label, tex} items */
+function buildFormulaPanel(containerId, items){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  let html = '';
+  items.forEach((item,i)=>{
+    if(item.header){ html += `<div class="fp-title" style="margin-top:${i===0?'0':'14px'};">${item.header}</div>`; }
+    if(item.tex){ html += `<div class="fp-eq" id="${containerId}_eq${i}"></div>`; }
+    if(item.note){ html += `<div class="fp-note">${item.note}</div>`; }
+  });
+  container.innerHTML = html;
+  items.forEach((item,i)=>{
+    if(!item.tex) return;
+    const el = document.getElementById(containerId+'_eq'+i);
+    try{ katex.render(item.tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent = item.tex; }
+  });
+}
+
+/* ============================================================
+   STATE + INPUT HELPERS
+   ============================================================ */
+const PVT = {};
+let pv1_last=null, pv2_last=null, pv3_last=null, pv4_last=null, pv5_last=null;
+function inputsArrCommon(){
+  const {API,g,T,Rs_known,P,Pmax} = PVT.inputs;
+  return [['API',fmt(API,1)],['gamma_g',fmt(g,3)],['T (F)',fmt(T,1)],['Rs known (scf/STB)',fmt(Rs_known,1)],['P (psia)',fmt(P,1)],['Pmax (psia)',fmt(Pmax,1)]];
+}
+function buildChips(containerId, corrDict, prefix, onChangeFnName){
+  document.getElementById(containerId).innerHTML = Object.keys(corrDict).map(k=>
+    `<label class="chip-check"><input type="checkbox" id="${prefix}_${k}" checked onchange="${onChangeFnName}()"> ${corrDict[k].label}</label>`
+  ).join('');
+}
+function getChecked(prefix, corrDict){
+  return Object.keys(corrDict).filter(k=>{ const el=document.getElementById(prefix+'_'+k); return el && el.checked; });
+}
+function anyChecked(prefix, corrDict){
+  return Object.keys(corrDict).some(k=>{ const el=document.getElementById(prefix+'_'+k); return el && el.checked; });
+}
+function toggleCatPanel(checkboxId, panelId){
+  const checked = document.getElementById(checkboxId).checked;
+  document.getElementById(panelId).classList.toggle('collapsed', !checked);
+}
+function selectAllPVT(state){
+  document.querySelectorAll('#pvtSelectionCard input[type="checkbox"]').forEach(cb=> cb.checked = state);
+  const catToPanel = {catPb:'panelPb', catRs:'panelRs', catBo:'panelBo', catVisc:'panelVisc', catGas:'panelGas'};
+  Object.keys(catToPanel).forEach(catId=> toggleCatPanel(catId, catToPanel[catId]));
+}
+
+/* ============================================================
+   MAIN INPUTS: example / clear / calculate
+   ============================================================ */
+function loadExamplePVT(){
+  document.getElementById('pvt_API').value='35';
+  document.getElementById('pvt_g').value='0.75';
+  document.getElementById('pvt_T').value='180';
+  document.getElementById('pvt_Rs').value='500';
+  document.getElementById('pvt_P').value='2500';
+  document.getElementById('pvt_Pmax').value='5000';
+  document.getElementById('pvt_Pgas').value='3000';
+  document.getElementById('pvt_Tgas').value='200';
+  pvtCalculate();
+}
+function clearPVT(){
+  ['API','g','T','Rs','P','Pmax','Pgas','Tgas'].forEach(f=>{ const el=document.getElementById('pvt_'+f); if(el) el.value=''; });
+  document.getElementById('pvt_status').innerHTML='';
+  document.getElementById('pvt_resultsCard').style.display='none';
+  document.getElementById('pvt_downloadCard').style.display='none';
+  document.getElementById('pv5_info').innerHTML='';
+  PVT.inputs=null; PVT.pbResults=null; PVT.gas=null; PVT.muobVals=null;
+  pv1_last=pv2_last=pv3_last=pv4_last=pv5_last=null;
+  ['pv1_plot','pv2_plot','pv3_plot','pv4_plot','pv5_plot'].forEach(id=>{
+    try{ Plotly.purge(id); }catch(e){}
+    const el = document.getElementById(id); if(el) el.innerHTML='';
+  });
+  ['pv1_tableWrap','pv2_tableWrap','pv3_tableWrap','pv4a_tableWrap','pv4b_tableWrap','pv4c_tableWrap','pv5_tableWrap'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.innerHTML='';
+  });
+  ['pv1_formulaPanel','pv2_formulaPanel','pv3_formulaPanel','pv4_formulaPanel','pv5_formulaPanel'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.innerHTML='';
+  });
+  ['tabbtn-pv1','tabbtn-pv2','tabbtn-pv3','tabbtn-pv4','tabbtn-pv5'].forEach(id=>{ document.getElementById(id).style.display=''; });
+}
+function pvtCalculate(){
+  const API=gv('pvt_API'), g=gv('pvt_g'), T=gv('pvt_T'), Rs_known=gv('pvt_Rs'), P=gv('pvt_P'), Pmax=gv('pvt_Pmax');
+  const statusEl = document.getElementById('pvt_status');
+  if([API,g,T,Rs_known,P,Pmax].some(v=>isNaN(v)) || API<=0 || g<=0 || Rs_known<=0 || Pmax<=14.7){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ الرجاء تعبئة جميع الحقول بأرقام موجبة صحيحة (وP<sub>max</sub> أكبر من 14.7)، أو استخدام زر البيانات التجريبية.</div>`;
+    document.getElementById('pvt_resultsCard').style.display='none';
+    document.getElementById('pvt_downloadCard').style.display='none';
+    return;
+  }
+
+  const wantPb = document.getElementById('catPb').checked;
+  const wantRs = document.getElementById('catRs').checked;
+  const wantBo = document.getElementById('catBo').checked;
+  const wantVisc = document.getElementById('catVisc').checked;
+  const wantGas = document.getElementById('catGas').checked;
+
+  if(!wantPb && !wantRs && !wantBo && !wantVisc && !wantGas){
+    statusEl.innerHTML = `<div class="status-line bad">⚠ اختر خاصية واحدة على الأقل من قائمة "ماذا تريد أن تحسب؟" قبل الضغط على احسب.</div>`;
+    document.getElementById('pvt_resultsCard').style.display='none';
+    document.getElementById('pvt_downloadCard').style.display='none';
+    return;
+  }
+  if(wantPb && !anyChecked('pv1chk', RS_CORR)){ statusEl.innerHTML = `<div class="status-line bad">⚠ اختر معادلة واحدة على الأقل لنقطة الفقاعة (Pb).</div>`; return; }
+  if(wantRs && !anyChecked('pv2chk', RS_CORR)){ statusEl.innerHTML = `<div class="status-line bad">⚠ اختر معادلة واحدة على الأقل للغاز المذاب (Rs).</div>`; return; }
+  if(wantBo && !anyChecked('pv3chk', RS_CORR)){ statusEl.innerHTML = `<div class="status-line bad">⚠ اختر معادلة واحدة على الأقل لمعامل الحجم الجوفي (Bo).</div>`; return; }
+  if(wantVisc && (!anyChecked('pv4achk', MUOD_CORR) || !anyChecked('pv4bchk', MUOB_CORR))){ statusEl.innerHTML = `<div class="status-line bad">⚠ اختر معادلة واحدة على الأقل لكل من لزوجة النفط الميت والمشبع.</div>`; return; }
+  if(wantGas && !anyChecked('pv5chk', Z_CORR)){ statusEl.innerHTML = `<div class="status-line bad">⚠ اختر معادلة واحدة على الأقل لعامل الانحراف Z.</div>`; return; }
+
+  statusEl.innerHTML = `<div class="status-line ok">✓ تم الحساب بنجاح — تصفّح التبويبات أدناه.</div>`;
+  PVT.inputs = {API,g,T,Rs_known,P,Pmax};
+
+  PVT.pbResults = {};
+  Object.keys(RS_CORR).forEach(k=> PVT.pbResults[k] = pbFromRs(RS_CORR[k].fn, Rs_known, g, API, T));
+
+  const N=60;
+  PVT.P_range = Array.from({length:N}, (_,i)=> 14.7 + (Pmax-14.7)*i/(N-1));
+
+  PVT.rsSweep = {};
+  Object.keys(RS_CORR).forEach(k=>{
+    const pbc = PVT.pbResults[k];
+    PVT.rsSweep[k] = PVT.P_range.map(p=>{
+      if(isNaN(pbc)) return NaN;
+      if(p >= pbc) return Rs_known;
+      return RS_CORR[k].fn(p, g, API, T);
+    });
+  });
+
+  PVT.boAtP = {}; PVT.boSweep = {};
+  Object.keys(RS_CORR).forEach(k=>{
+    const rsFn = RS_CORR[k].fn, boFn = BO_CORR[k].fn, pbc = PVT.pbResults[k];
+    if(isNaN(pbc)){ PVT.boAtP[k]=NaN; PVT.boSweep[k]=PVT.P_range.map(()=>NaN); return; }
+    const Bob = boFn(Rs_known, g, API, T);
+    if(P <= pbc){
+      const rsP = rsFn(P, g, API, T);
+      PVT.boAtP[k] = boFn(rsP, g, API, T);
+    } else {
+      const co = coVasquezBeggs(P, Rs_known, T, g, API);
+      PVT.boAtP[k] = boUndersaturated(Bob, co, pbc, P);
+    }
+    PVT.boSweep[k] = PVT.P_range.map(p=>{
+      if(p <= pbc){
+        const rsp = rsFn(p, g, API, T);
+        return boFn(rsp, g, API, T);
+      } else {
+        const cop = coVasquezBeggs(p, Rs_known, T, g, API);
+        return boUndersaturated(Bob, cop, pbc, p);
+      }
+    });
+  });
+
+  PVT.muodVals = {};
+  Object.keys(MUOD_CORR).forEach(k=> PVT.muodVals[k] = MUOD_CORR[k].fn(API, T));
+
+  document.getElementById('pv4_refPb').innerHTML = Object.keys(RS_CORR).map(k=>`<option value="${k}">${RS_CORR[k].label}</option>`).join('');
+
+  if(wantPb) renderPbView();
+  if(wantRs) renderRsView();
+  if(wantBo) renderBoView();
+  if(wantVisc) renderMuodView();
+
+  document.getElementById('pv5_info').innerHTML = '';
+  document.getElementById('pv5_tableWrap').innerHTML = '';
+  document.getElementById('pv5_kpiRow').innerHTML = '';
+  document.getElementById('pv5_formulaPanel').innerHTML = '';
+  try{ Plotly.purge('pv5_plot'); }catch(e){}
+  PVT.gas = null; pv5_last=null; PVT.gasSummary=null;
+
+  if(wantGas){
+    const pgasEl = document.getElementById('pvt_Pgas'), tgasEl = document.getElementById('pvt_Tgas');
+    if(!pgasEl.value || isNaN(gv('pvt_Pgas'))) pgasEl.value = P;
+    if(!tgasEl.value || isNaN(gv('pvt_Tgas'))) tgasEl.value = T;
+    pvtCalcGas();
+  }
+
+  if(!wantPb){ document.getElementById('pv1_tableWrap').innerHTML=''; document.getElementById('pv1_kpiRow').innerHTML=''; document.getElementById('pv1_statusMsg').innerHTML=''; document.getElementById('pv1_formulaPanel').innerHTML=''; try{Plotly.purge('pv1_plot');}catch(e){} pv1_last=null; }
+  if(!wantRs){ document.getElementById('pv2_tableWrap').innerHTML=''; document.getElementById('pv2_formulaPanel').innerHTML=''; try{Plotly.purge('pv2_plot');}catch(e){} pv2_last=null; }
+  if(!wantBo){ document.getElementById('pv3_tableWrap').innerHTML=''; document.getElementById('pv3_formulaPanel').innerHTML=''; try{Plotly.purge('pv3_plot');}catch(e){} pv3_last=null; }
+  if(!wantVisc){ document.getElementById('pv4a_tableWrap').innerHTML=''; document.getElementById('pv4b_tableWrap').innerHTML=''; document.getElementById('pv4c_tableWrap').innerHTML=''; document.getElementById('pv4_formulaPanel').innerHTML=''; try{Plotly.purge('pv4_plot');}catch(e){} pv4_last=null; }
+
+  const catMap = {pv1:wantPb, pv2:wantRs, pv3:wantBo, pv4:wantVisc, pv5:wantGas};
+  let firstVisible=null;
+  Object.keys(catMap).forEach(tabId=>{
+    const btn = document.getElementById('tabbtn-'+tabId);
+    if(catMap[tabId]){ btn.style.display=''; if(!firstVisible) firstVisible=tabId; }
+    else { btn.style.display='none'; }
+  });
+  document.querySelectorAll('#tabbarPVT .tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  if(firstVisible){
+    document.getElementById('tabbtn-'+firstVisible).classList.add('active');
+    document.getElementById('tab-'+firstVisible).classList.add('active');
+  }
+
+  document.getElementById('pvt_resultsCard').style.display='block';
+  document.getElementById('pvt_downloadCard').style.display='block';
+  renderUnifiedSummary();
+}
+
+/* ============================================================
+   UNIFIED CROSS-PROPERTY SUMMARY — one row per correlation,
+   gathering Pb/Rs/Bo (same correlation family, RS_CORR keys)
+   and a separate small table for dead-oil viscosity (different
+   correlation family, MUOD_CORR keys) so the user can compare
+   every checked correlation's numbers in one place.
+   ============================================================ */
+let pvtSummaryData = null;
+function renderUnifiedSummary(){
+  const wrap = document.getElementById('pvt_summaryWrap');
+  const wantPb = document.getElementById('catPb').checked;
+  const wantRs = document.getElementById('catRs').checked;
+  const wantBo = document.getElementById('catBo').checked;
+  const wantVisc = document.getElementById('catVisc').checked;
+  const wantGas = document.getElementById('catGas').checked;
+  if(!(wantPb||wantRs||wantBo||wantVisc||wantGas)){ wrap.style.display='none'; return; }
+  const {API,g,T,Rs_known,P} = PVT.inputs;
+  const pbKeys = wantPb ? getChecked('pv1chk', RS_CORR) : [];
+  const rsKeys = wantRs ? getChecked('pv2chk', RS_CORR) : [];
+  const boKeys = wantBo ? getChecked('pv3chk', RS_CORR) : [];
+  const mainKeys = Array.from(new Set([...pbKeys, ...rsKeys, ...boKeys]));
+
+  let rows1 = [];
+  if(mainKeys.length){
+    rows1 = mainKeys.map(k=>{
+      const pb = PVT.pbResults[k];
+      const rsAtP = (!isNaN(pb) && P<pb) ? RS_CORR[k].fn(P,g,API,T) : Rs_known;
+      const boAtP = PVT.boAtP[k];
+      return {Correlation:RS_CORR[k].label, Pb: wantPb?pb:null, RsAtP: wantRs?rsAtP:null, BoAtP: wantBo?boAtP:null};
+    });
+  }
+  const viscKeys = wantVisc ? getChecked('pv4achk', MUOD_CORR) : [];
+  const rows2 = viscKeys.map(k=>({Correlation:MUOD_CORR[k].label, MuodAtT: PVT.muodVals[k]}));
+  const gasRow = (wantGas && PVT.gasSummary) ? PVT.gasSummary : null;
+
+  pvtSummaryData = {rows1, rows2, wantPb, wantRs, wantBo, wantVisc};
+
+  let html='';
+  if(rows1.length){
+    const cols=[]; if(wantPb) cols.push(['Pb','psia']); if(wantRs) cols.push(['Rs @ P','scf/STB']); if(wantBo) cols.push(['Bo @ P','bbl/STB']);
+    html += `<h3 class="pvt-sum-title">Pb / Rs / Bo</h3><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Correlation</th>${cols.map(c=>'<th>'+c[0]+' ('+c[1]+')</th>').join('')}</tr></thead><tbody>`;
+    html += rows1.map(r=>`<tr><td><b>${r.Correlation}</b></td>${wantPb?'<td>'+(isNaN(r.Pb)?'—':fmt(r.Pb))+'</td>':''}${wantRs?'<td>'+(isNaN(r.RsAtP)?'—':fmt(r.RsAtP))+'</td>':''}${wantBo?'<td>'+(isNaN(r.BoAtP)?'—':r.BoAtP.toFixed(4))+'</td>':''}</tr>`).join('');
+    html += `</tbody></table></div>`;
+    if(wantPb && rows1.length>1){
+      const pbVals = rows1.map(r=>r.Pb).filter(v=>!isNaN(v));
+      const spread = Math.max(...pbVals)-Math.min(...pbVals);
+      const spreadPct = 100*spread/(pbVals.reduce((a,b)=>a+b,0)/pbVals.length);
+      html += `<p class="pvt-sum-note">تشتت Pb بين المعادلات المختارة: ${fmt(spread)} psia (≈${spreadPct.toFixed(1)}% من المتوسط) — راجع قسم "لماذا تختلف نتائج المعادلات" في صفحة الشرح لتفسير السبب.</p>`;
+    }
+  }
+  if(rows2.length){
+    html += `<h3 class="pvt-sum-title">لزوجة النفط الميت μ<sub>od</sub></h3><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Correlation</th><th>μod (cp)</th></tr></thead><tbody>`;
+    html += rows2.map(r=>`<tr><td><b>${r.Correlation}</b></td><td>${isNaN(r.MuodAtT)?'—':r.MuodAtT.toFixed(3)}</td></tr>`).join('');
+    html += `</tbody></table></div>`;
+  }
+  if(gasRow){
+    html += `<h3 class="pvt-sum-title">خواص الغاز عند P = ${fmt(gasRow.Pgas,1)} psia</h3><div class="data-table-wrap"><table class="data-table"><thead><tr><th>Z-Factor (متوسط)</th><th>μg (cp)</th><th>Bg (rcf/scf)</th></tr></thead><tbody>`;
+    html += `<tr><td>${fmt(gasRow.zAvg,4)}</td><td>${fmt(gasRow.muG,5)}</td><td>${fmt(gasRow.bg,6)}</td></tr>`;
+    html += `</tbody></table></div>`;
+  }
+  document.getElementById('pvt_summaryBody').innerHTML = html || '<p style="font-size:12px; color:var(--muted);">لا توجد بيانات كافية لعرض ملخص موحّد.</p>';
+  wrap.style.display = html ? 'block' : 'none';
+}
+
+function exportPvtSummaryCSV(){ exportCSV_PVT_Summary(); }
+function exportPvtSummaryExcel(){ exportExcel_PVT_Summary(); }
+
+/* ============================================================
+   TAB 1: Bubble Point
+   ============================================================ */
+function renderPbView(){
+  const sel = getChecked('pv1chk', RS_CORR);
+  const tableEl = document.getElementById('pv1_tableWrap');
+  const kpiEl = document.getElementById('pv1_kpiRow');
+  const statusMsgEl = document.getElementById('pv1_statusMsg');
+  if(sel.length===0){ tableEl.innerHTML=''; kpiEl.innerHTML=''; statusMsgEl.innerHTML=''; try{Plotly.purge('pv1_plot');}catch(e){} pv1_last=null; document.getElementById('pv1_formulaPanel').innerHTML=''; return; }
+  const vals = sel.map(k=>PVT.pbResults[k]);
+  const mean = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const head=['Correlation','Pb (psia)','Delta from Mean (%)'];
+  const rows = sel.map((k,i)=>[RS_CORR[k].label, fmt(vals[i],1), fmt((vals[i]-mean)/mean*100,1)]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  kpiEl.innerHTML = `<div class="kpi"><div class="kpi-label">متوسط نقطة الفقاعة</div><div class="kpi-value">${fmt(mean,1)}</div><div class="kpi-sub">psia</div></div>`;
+  const spread = (Math.max(...vals)-Math.min(...vals))/mean*100;
+  statusMsgEl.innerHTML = spread<25
+    ? `<div class="status-line ok">✅ تقارب جيد بين المعادلات (فرق ${fmt(spread,1)}% من المتوسط).</div>`
+    : `<div class="status-line bad">⚠️ تباين كبير بين المعادلات (${fmt(spread,1)}%) — يُنصح بمقارنة مع بيانات مختبرية فعلية إن توفرت.</div>`;
+  Plotly.newPlot('pv1_plot', [{x:sel.map(k=>RS_CORR[k].label), y:vals, type:'bar', marker:{color:sel.map((_,i)=>PALETTE[i%PALETTE.length])}}], {
+    margin:{l:60,r:20,t:20,b:100}, yaxis:{title:'Pb (psia)'},
+    shapes:[{type:'line', x0:-0.5, x1:sel.length-0.5, y0:mean, y1:mean, line:{dash:'dash', color:'gray'}}],
+    font:{family:'IBM Plex Mono', size:10.5}
+  }, {displayModeBar:false, responsive:true});
+  pv1_last = {head, rows, kpis:[['Mean Pb',fmt(mean,1),'psia'],['Spread',fmt(spread,1),'%']], inputsArr: inputsArrCommon()};
+
+  const items1 = [{header:'Bubble Point — Solved Implicitly from Rs(P) = Rs,known', tex:PB_FIND_EQ}];
+  sel.forEach(k=> items1.push({header:RS_CORR[k].label, tex:RS_EQ[k]}));
+  items1.push({note:'يُحل عدديًا (Bisection) لكل معادلة أعلاه على حدة ضمن المجال [14.7, 9000] psia بحيث تحقق Rs(Pb)=Rs,known.'});
+  buildFormulaPanel('pv1_formulaPanel', items1);
+}
+
+/* ============================================================
+   TAB 2: Rs sweep
+   ============================================================ */
+function renderRsView(){
+  const sel = getChecked('pv2chk', RS_CORR);
+  const tableEl = document.getElementById('pv2_tableWrap');
+  if(sel.length===0){ try{Plotly.purge('pv2_plot');}catch(e){} tableEl.innerHTML=''; pv2_last=null; document.getElementById('pv2_formulaPanel').innerHTML=''; return; }
+  const traces = sel.map((k,i)=>({x:PVT.P_range, y:PVT.rsSweep[k], mode:'lines', name:RS_CORR[k].label, line:{color:PALETTE[i%PALETTE.length], width:2.5}}));
+  Plotly.newPlot('pv2_plot', traces, {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'Rs (scf/STB)'}, legend:{orientation:'h', y:-0.22}, font:{family:'IBM Plex Mono', size:10.5}}, {displayModeBar:false, responsive:true});
+  const head = ['P (psia)', ...sel.map(k=>RS_CORR[k].label)];
+  const rows = PVT.P_range.map((p,i)=>[fmt(p,1), ...sel.map(k=>fmt(PVT.rsSweep[k][i],1))]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  pv2_last = {head, rows, kpis:[['Sweep Points',String(PVT.P_range.length),''],['Correlations Shown',String(sel.length),'']], inputsArr: inputsArrCommon()};
+
+  const items2 = [{header:'Solution GOR — Direct Correlation Equations', tex:RS_PLATEAU_EQ}];
+  sel.forEach(k=> items2.push({header:RS_CORR[k].label, tex:RS_EQ[k]}));
+  items2.push({note:'كل معادلة تُطبَّق مباشرة عند P ≤ Pb الخاص بها؛ فوق ذلك تبقى Rs ثابتة عند القيمة المعروفة.'});
+  buildFormulaPanel('pv2_formulaPanel', items2);
+}
+
+/* ============================================================
+   TAB 3: Bo
+   ============================================================ */
+function renderBoView(){
+  const sel = getChecked('pv3chk', RS_CORR);
+  const tableEl = document.getElementById('pv3_tableWrap');
+  if(sel.length===0){ tableEl.innerHTML=''; try{Plotly.purge('pv3_plot');}catch(e){} pv3_last=null; document.getElementById('pv3_formulaPanel').innerHTML=''; return; }
+  const head=['Correlation', `Bo @ P=${fmt(PVT.inputs.P,0)} (rb/STB)`];
+  const rows = sel.map(k=>[RS_CORR[k].label, fmt(PVT.boAtP[k],4)]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  const traces = sel.map((k,i)=>({x:PVT.P_range, y:PVT.boSweep[k], mode:'lines', name:RS_CORR[k].label, line:{color:PALETTE[i%PALETTE.length], width:2.5}}));
+  const shapes = sel.map((k,i)=> isNaN(PVT.pbResults[k]) ? null : {type:'line', x0:PVT.pbResults[k], x1:PVT.pbResults[k], y0:0, y1:1, yref:'paper', line:{dash:'dot', color:PALETTE[i%PALETTE.length], width:1.5}, opacity:0.55}).filter(Boolean);
+  Plotly.newPlot('pv3_plot', traces, {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'Bo (rb/STB)'}, legend:{orientation:'h', y:-0.22}, shapes, font:{family:'IBM Plex Mono', size:10.5}}, {displayModeBar:false, responsive:true});
+  pv3_last = {head, rows, kpis: sel.map(k=>[RS_CORR[k].label, fmt(PVT.boAtP[k],4), 'rb/STB']), inputsArr: inputsArrCommon()};
+
+  const items3 = [];
+  sel.forEach((k,i)=> items3.push({header:'Saturated — '+RS_CORR[k].label, tex:BO_EQ[k]}));
+  items3.push({header:'Undersaturated Extension (P &gt; Pb) — Vasquez-Beggs Compressibility', tex:BO_UNDERSAT_EQ});
+  buildFormulaPanel('pv3_formulaPanel', items3);
+}
+
+/* ============================================================
+   TAB 4: Oil Viscosity
+   ============================================================ */
+function renderMuodView(){
+  const sel = getChecked('pv4achk', MUOD_CORR);
+  const tableEl = document.getElementById('pv4a_tableWrap');
+  const refSel = document.getElementById('pv4_refMuod');
+  if(sel.length===0){ tableEl.innerHTML=''; refSel.innerHTML=''; document.getElementById('pv4b_tableWrap').innerHTML=''; return; }
+  const head=['Correlation','mu_od (cp)'];
+  const rows = sel.map(k=>[MUOD_CORR[k].label, fmt(PVT.muodVals[k],3)]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  const prevVal = refSel.value;
+  refSel.innerHTML = sel.map(k=>`<option value="${k}">${MUOD_CORR[k].label}</option>`).join('');
+  if(sel.includes(prevVal)) refSel.value = prevVal;
+  renderMuobView();
+}
+function renderMuobView(){
+  const refKey = document.getElementById('pv4_refMuod').value;
+  const refMuod = PVT.muodVals ? PVT.muodVals[refKey] : undefined;
+  const sel = getChecked('pv4bchk', MUOB_CORR);
+  const tableEl = document.getElementById('pv4b_tableWrap');
+  if(sel.length===0 || refMuod===undefined){ tableEl.innerHTML=''; updateViscFormulaPanel(); return; }
+  PVT.muobVals = {};
+  sel.forEach(k=> PVT.muobVals[k] = MUOB_CORR[k].fn(refMuod, PVT.inputs.Rs_known));
+  const head=['Correlation','mu_ob (cp)'];
+  const rows = sel.map(k=>[MUOB_CORR[k].label, fmt(PVT.muobVals[k],4)]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  const refMuobSel = document.getElementById('pv4_refMuob');
+  const prevVal = refMuobSel.value;
+  refMuobSel.innerHTML = sel.map(k=>`<option value="${k}">${MUOB_CORR[k].label}</option>`).join('');
+  if(sel.includes(prevVal)) refMuobSel.value = prevVal;
+  pv4_last = {head, rows, kpis: rows.map(r=>[r[0],r[1],'cp']), inputsArr: inputsArrCommon()};
+  updateViscFormulaPanel();
+  // auto-render the full pressure profile so the chart/table are never left empty
+  if(document.getElementById('pv4_refMuob').options.length > 0 && document.getElementById('pv4_refPb').options.length > 0){
+    renderMuProfile();
+  }
+}
+function updateViscFormulaPanel(){
+  const selA = getChecked('pv4achk', MUOD_CORR);
+  const selB = getChecked('pv4bchk', MUOB_CORR);
+  const items = [];
+  if(selA.length){
+    items.push({header:'Dead Oil Viscosity μ_od (pressure-independent)'});
+    selA.forEach(k=> items.push({header:MUOD_CORR[k].label, tex:MUOD_EQ[k]}));
+  }
+  if(selB.length){
+    items.push({header:'Saturated (Live) Oil Viscosity μ_ob at current Rs'});
+    selB.forEach(k=> items.push({header:MUOB_CORR[k].label, tex:MUOB_EQ[k]}));
+  }
+  items.push({header:'Undersaturated Extension (P &gt; Pb)', tex:MU_UNDERSAT_EQ});
+  buildFormulaPanel('pv4_formulaPanel', items);
+}
+function renderMuProfile(){
+  const refMuobKey = document.getElementById('pv4_refMuob').value;
+  const refPbKey = document.getElementById('pv4_refPb').value;
+  if(!PVT.muobVals || !refMuobKey || !(refMuobKey in PVT.muobVals)){
+    alert('الرجاء التأكد من وجود لزوجة مشبعة محسوبة أولاً (القسم 2 أعلاه).');
+    return;
+  }
+  const refPb = PVT.pbResults[refPbKey];
+  if(isNaN(refPb)){ alert('نقطة الفقاعة لهذه المعادلة غير صالحة عدديًا.'); return; }
+  const refMuob = PVT.muobVals[refMuobKey];
+  const refMuodKey = document.getElementById('pv4_refMuod').value;
+  const refMuod = PVT.muodVals[refMuodKey];
+  const refRsFn = RS_CORR[refPbKey].fn;
+  const muobFn = MUOB_CORR[refMuobKey].fn;
+  const {API,g,T} = PVT.inputs;
+  const profile = PVT.P_range.map(p=>{
+    if(p <= refPb){
+      const rsP = refRsFn(p, g, API, T);
+      return muobFn(refMuod, rsP);
+    } else {
+      return muUndersaturatedVB(refMuob, p, refPb);
+    }
+  });
+  Plotly.newPlot('pv4_plot', [{x:PVT.P_range, y:profile, mode:'lines', name:'Oil Viscosity', line:{color:'#0072BD', width:3}}], {
+    margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'Oil Viscosity (cp)'},
+    shapes:[{type:'line', x0:refPb, x1:refPb, y0:0, y1:1, yref:'paper', line:{dash:'dash', color:'red'}}],
+    font:{family:'IBM Plex Mono', size:10.5}
+  }, {displayModeBar:false, responsive:true});
+  pv4_last = {
+    head:['P (psia)','Oil Viscosity (cp)'],
+    rows: PVT.P_range.map((p,i)=>[fmt(p,1), fmt(profile[i],4)]),
+    kpis:[['Reference Pb',fmt(refPb,1),'psia'],['Min Viscosity',fmt(Math.min(...profile),4),'cp'],['Max Viscosity',fmt(Math.max(...profile),4),'cp']],
+    inputsArr: inputsArrCommon()
+  };
+  document.getElementById('pv4c_tableWrap').innerHTML = tableHTML(pv4_last.head, pv4_last.rows);
+}
+
+/* ============================================================
+   TAB 5: Gas Properties
+   ============================================================ */
+function pvtCalcGas(){
+  const Pgas=gv('pvt_Pgas'), Tgas=gv('pvt_Tgas');
+  const infoEl = document.getElementById('pv5_info');
+  if(!PVT.inputs){ infoEl.innerHTML = `<div class="status-line bad">⚠ الرجاء حساب البيانات الأساسية أولاً من أعلى الصفحة.</div>`; return; }
+  if(isNaN(Pgas) || isNaN(Tgas) || Pgas<=0){
+    infoEl.innerHTML = `<div class="status-line bad">⚠ الرجاء إدخال ضغط وحرارة الغاز بأرقام صحيحة.</div>`;
+    return;
+  }
+  const {Tpc, Ppc} = pseudoCriticalStanding(PVT.inputs.g);
+  const Ppr = Pgas/Ppc, Tpr = (Tgas+460)/Tpc;
+  PVT.gas = {Pgas, Tgas, Tpc, Ppc, Ppr, Tpr};
+  infoEl.innerHTML = `<div class="info-banner">الخواص الحرجة الزائفة (Standing، غاز جاف): T<sub>pc</sub> = ${fmt(Tpc,1)} °R، P<sub>pc</sub> = ${fmt(Ppc,1)} psia → P<sub>pr</sub> = ${fmt(Ppr,3)}، T<sub>pr</sub> = ${fmt(Tpr,3)}</div>`;
+  renderZView();
+}
+function renderZView(){
+  if(!PVT.gas) return;
+  const sel = getChecked('pv5chk', Z_CORR);
+  const tableEl = document.getElementById('pv5_tableWrap');
+  const kpiEl = document.getElementById('pv5_kpiRow');
+  if(sel.length===0){ tableEl.innerHTML=''; kpiEl.innerHTML=''; try{Plotly.purge('pv5_plot');}catch(e){} pv5_last=null; document.getElementById('pv5_formulaPanel').innerHTML=''; return; }
+  const {Ppr,Tpr,Pgas,Tgas,Ppc} = PVT.gas;
+  const zVals = {};
+  sel.forEach(k=> zVals[k] = Z_CORR[k].fn(Ppr,Tpr));
+  const head=['Correlation','Z-Factor'];
+  const rows = sel.map(k=>[Z_CORR[k].label, fmt(zVals[k],4)]);
+  tableEl.innerHTML = tableHTML(head, rows);
+  const validZ = sel.map(k=>zVals[k]).filter(v=>!isNaN(v));
+  const zAvg = validZ.reduce((a,b)=>a+b,0)/validZ.length;
+  const muG = gasViscosityLee(Pgas, Tgas, zAvg, PVT.inputs.g);
+  const bg = gasFvf(zAvg, Tgas, Pgas);
+  kpiEl.innerHTML = `
+    <div class="kpi"><div class="kpi-label">Z-Factor (متوسط)</div><div class="kpi-value">${fmt(zAvg,4)}</div><div class="kpi-sub">—</div></div>
+    <div class="kpi"><div class="kpi-label">لزوجة الغاز (Lee et al.)</div><div class="kpi-value">${fmt(muG,5)}</div><div class="kpi-sub">cp</div></div>
+    <div class="kpi"><div class="kpi-label">معامل الحجم B<sub>g</sub></div><div class="kpi-value">${fmt(bg,6)}</div><div class="kpi-sub">rcf/scf</div></div>`;
+  const PgasRange = Array.from({length:50},(_,i)=> 100 + (PVT.inputs.Pmax-100)*i/49);
+  const traces = sel.map((k,i)=>({x:PgasRange, y:PgasRange.map(p=>Z_CORR[k].fn(p/Ppc, Tpr)), mode:'lines', name:Z_CORR[k].label, line:{color:PALETTE[i%PALETTE.length], width:2.5}}));
+  Plotly.newPlot('pv5_plot', traces, {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'Z-Factor'}, legend:{orientation:'h', y:-0.22}, font:{family:'IBM Plex Mono', size:10.5}}, {displayModeBar:false, responsive:true});
+
+  const zAvgCurve = PgasRange.map(p=>{
+    const zs = sel.map(k=>Z_CORR[k].fn(p/Ppc, Tpr)).filter(v=>!isNaN(v));
+    return zs.reduce((a,b)=>a+b,0)/zs.length;
+  });
+  const muGCurve = PgasRange.map((p,i)=> gasViscosityLee(p, Tgas, zAvgCurve[i], PVT.inputs.g));
+  const bgCurve = PgasRange.map((p,i)=> gasFvf(zAvgCurve[i], Tgas, p));
+  Plotly.newPlot('pv5_muGasPlot', [{x:PgasRange, y:muGCurve, mode:'lines', name:'μg', line:{color:PALETTE[0], width:2.5}}],
+    {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'μg (cp)'}, font:{family:'IBM Plex Mono', size:10.5}}, {displayModeBar:false, responsive:true});
+  Plotly.newPlot('pv5_bgPlot', [{x:PgasRange, y:bgCurve, mode:'lines', name:'Bg', line:{color:PALETTE[1], width:2.5}}],
+    {margin:{l:60,r:20,t:20,b:46}, xaxis:{title:'Pressure (psia)'}, yaxis:{title:'Bg (rcf/scf)', type:'log'}, font:{family:'IBM Plex Mono', size:10.5}}, {displayModeBar:false, responsive:true});
+  pv5_last = {head, rows, kpis:[['Z avg',fmt(zAvg,4),''],['Gas Viscosity',fmt(muG,5),'cp'],['Bg',fmt(bg,6),'rcf/scf']],
+    inputsArr:[...inputsArrCommon(), ['Pgas (psia)',fmt(Pgas,1)],['Tgas (F)',fmt(Tgas,1)]]};
+  PVT.gasSummary = {zAvg, muG, bg, Pgas, Tgas};
+  renderUnifiedSummary();
+
+  const items5 = [{header:'Pseudo-Critical Properties &amp; Reduced Pressure/Temperature (Standing, dry gas)', tex:PSEUDOCRIT_EQ}];
+  sel.forEach(k=> items5.push({header:'Z-Factor — '+Z_CORR[k].label, tex:Z_EQ[k]}));
+  items5.push({header:'Gas Viscosity (Lee-Gonzalez-Eakin) &amp; Formation Volume Factor', tex:MUG_BG_EQ});
+  buildFormulaPanel('pv5_formulaPanel', items5);
+}
+
+/* ============================================================
+   PER-TAB EXPORT (CSV / Excel / Print)
+   ============================================================ */
+function getPVLast(tab){ return {pv1:pv1_last, pv2:pv2_last, pv3:pv3_last, pv4:pv4_last, pv5:pv5_last}[tab]; }
+function exportCSV_generic(tab){
+  const d = getPVLast(tab); if(!d){ alert('لا توجد نتائج محسوبة لهذا التبويب بعد.'); return; }
+  downloadCSVRows(d.head, d.rows, tab+'_result.csv');
+}
+function exportExcel_generic(tab){
+  const d = getPVLast(tab); if(!d){ alert('لا توجد نتائج محسوبة لهذا التبويب بعد.'); return; }
+  downloadExcelRows(d.head, d.rows, tab+'_result.xlsx', 'Result');
+}
+function hasPlotData(plotId){
+  const el = document.getElementById(plotId);
+  return !!(el && el.data && el.data.length > 0);
+}
+async function printReportGeneric(tab){
+  const d = getPVLast(tab); if(!d){ alert('لا توجد نتائج محسوبة لهذا التبويب بعد.'); return; }
+  let imgUrl=null;
+  if(hasPlotData(tab+'_plot')){
+    try{ imgUrl = await Plotly.toImage(tab+'_plot', {format:'png', width:900, height:440, scale:2}); }catch(e){}
+  }
+  if(tab==='pv5'){
+    const extra = [];
+    for(const plotId of ['pv5_muGasPlot','pv5_bgPlot']){
+      if(hasPlotData(plotId)){
+        try{ extra.push(await Plotly.toImage(plotId, {format:'png', width:600, height:340, scale:2})); }catch(e){}
+      }
+    }
+    imgUrl = [imgUrl, ...extra];
+  }
+  const eqHtml = document.querySelector('#tab-'+tab+' .formula-panel').outerHTML;
+  const titles = {pv1:'Bubble Point Pressure Comparison', pv2:'Solution GOR Sweep', pv3:'Oil FVF Comparison', pv4:'Oil Viscosity Profile', pv5:'Gas Properties'};
+  const html = prHTML({title:'PVT Correlations Suite', subtitle:titles[tab], inputsArr:d.inputsArr, kpisArr:d.kpis, tableHeadArr:d.head, tableRowsArr:d.rows, chartImgUrl:imgUrl, equationsHtml:eqHtml});
+  firePrint(html);
+}
+
+/* ============================================================
+   COMBINED SUMMARY EXPORT
+   ============================================================ */
+function nearestPIndex(){
+  let idx=0, best=Infinity;
+  PVT.P_range.forEach((p,i)=>{ const d=Math.abs(p-PVT.inputs.P); if(d<best){ best=d; idx=i; } });
+  return idx;
+}
+function exportCSV_PVT_Summary(){
+  if(!PVT.pbResults){ alert('الرجاء الحساب أولاً.'); return; }
+  const idx = nearestPIndex();
+  const head=['Correlation','Pb (psia)', `Rs @ P=${fmt(PVT.inputs.P,0)}`, `Bo @ P=${fmt(PVT.inputs.P,0)}`];
+  const rows = Object.keys(RS_CORR).map(k=>[RS_CORR[k].label, fmt(PVT.pbResults[k],1), fmt(PVT.rsSweep[k][idx],1), fmt(PVT.boAtP[k],4)]);
+  downloadCSVRows(head, rows, 'pvt_summary.csv');
+}
+function exportExcel_PVT_Summary(){
+  if(!PVT.pbResults){ alert('الرجاء الحساب أولاً.'); return; }
+  const idx = nearestPIndex();
+  const wb = XLSX.utils.book_new();
+  const summaryHead=['Correlation','Pb (psia)', `Rs @ P=${fmt(PVT.inputs.P,0)}`, `Bo @ P=${fmt(PVT.inputs.P,0)}`];
+  const summaryRows = Object.keys(RS_CORR).map(k=>[RS_CORR[k].label, PVT.pbResults[k], PVT.rsSweep[k][idx], PVT.boAtP[k]]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([summaryHead, ...summaryRows]), 'Summary');
+  const rsHead = ['P', ...Object.keys(RS_CORR).map(k=>RS_CORR[k].label)];
+  const rsRows = PVT.P_range.map((p,i)=>[p, ...Object.keys(RS_CORR).map(k=>PVT.rsSweep[k][i])]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([rsHead, ...rsRows]), 'Rs_sweep');
+  const boHead = ['P', ...Object.keys(RS_CORR).map(k=>RS_CORR[k].label)];
+  const boRows = PVT.P_range.map((p,i)=>[p, ...Object.keys(RS_CORR).map(k=>PVT.boSweep[k][i])]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([boHead, ...boRows]), 'Bo_sweep');
+  XLSX.writeFile(wb, 'pvt_summary.xlsx');
+}
+async function printReportPVTFull(){
+  if(!PVT.pbResults){ alert('الرجاء الحساب أولاً.'); return; }
+  const order = ['pv1','pv2','pv3','pv4','pv5'];
+  const titles = {
+    pv1:'Bubble Point Pressure — Full Results',
+    pv2:'Solution GOR Sweep — Full Results',
+    pv3:'Oil FVF — Full Results',
+    pv4:'Oil Viscosity Profile — Full Results',
+    pv5:'Gas Properties — Full Results'
+  };
+  const available = order.filter(tab=>getPVLast(tab));
+  if(available.length===0){ alert('لا توجد نتائج محسوبة لبناء التقرير — احسب خاصية واحدة على الأقل أولًا.'); return; }
+
+  const pages = [];
+  for(const tab of available){
+    const d = getPVLast(tab);
+    let imgUrl=null;
+    if(hasPlotData(tab+'_plot')){
+      try{ imgUrl = await Plotly.toImage(tab+'_plot', {format:'png', width:900, height:420, scale:2}); }catch(e){}
+    }
+    if(tab==='pv5'){
+      const extra = [];
+      for(const plotId of ['pv5_muGasPlot','pv5_bgPlot']){
+        if(hasPlotData(plotId)){
+          try{ extra.push(await Plotly.toImage(plotId, {format:'png', width:600, height:340, scale:2})); }catch(e){}
+        }
+      }
+      imgUrl = [imgUrl, ...extra];
+    }
+    const eqEl = document.querySelector('#tab-'+tab+' .formula-panel');
+    const eqHtml = eqEl ? eqEl.outerHTML : '';
+    pages.push({tab, title:titles[tab], d, imgUrl, eqHtml});
+  }
+
+  let html = prCoverPage('PVT Correlations Suite', `Comprehensive PVT Report — ${pages.length} Result Page(s)`, inputsArrCommon());
+  pages.forEach((pg,i)=>{
+    html += prResultPage(i+1, pages.length, pg.title, pg.d.kpis, pg.d.head, pg.d.rows, pg.imgUrl, pg.eqHtml);
+  });
+  firePrint(html);
+}
+
+/* ============================================================
+   GLOSSARY
+   ============================================================ */
+const GLOSSARY = [
+  {term:'API', ar:'كثافة النفط API', text:'مقياس لكثافة النفط الخام مقارنة بالماء (درجات API) — كلما ارتفعت القيمة، كان النفط أخف.'},
+  {term:'γ_g', ar:'الكثافة النوعية للغاز', text:'نسبة كثافة الغاز المصاحب إلى كثافة الهواء عند نفس الظروف (الهواء = 1)، بلا وحدة.'},
+  {term:'T', ar:'حرارة المكمن', text:'درجة حرارة التكوين التي تُقاس عندها الخواص، بوحدة فهرنهايت.'},
+  {term:'R_s', ar:'الغاز المذاب (Solution GOR)', text:'حجم الغاز الذائب في برميل نفط قياسي واحد عند ضغط وحرارة معينين (scf/STB).'},
+  {term:'P_b', ar:'نقطة الفقاعة', text:'الضغط الذي يبدأ عنده تحرر أول فقاعة غاز من النفط أثناء انخفاض الضغط.'},
+  {term:'B_o', ar:'معامل الحجم الجوفي للنفط', text:'نسبة حجم النفط عند ظروف المكمن إلى حجمه عند ظروف السطح القياسية (RB/STB).'},
+  {term:'c_o', ar:'انضغاطية النفط غير المشبع', text:'معدّل تغيّر حجم النفط مع الضغط فوق نقطة الفقاعة، حيث لا يتحرر غاز إضافي (psi⁻¹).'},
+  {term:'μ_od, μ_ob, μ_o', ar:'لزوجة النفط الميت/المشبع/غير المشبع', text:'ثلاث مراحل للزوجة النفط: عند الضغط الجوي بلا غاز مذاب (dead)، عند R_s الحالية تحت P_b (saturated)، وفوق P_b (undersaturated).'},
+  {term:'Z', ar:'عامل انحراف الغاز', text:'معامل تصحيح يعكس ابتعاد سلوك الغاز الحقيقي عن قانون الغاز المثالي تحت ضغط وحرارة المكمن.'},
+  {term:'T_pc, P_pc', ar:'الخواص الحرجة الزائفة', text:'حرارة وضغط حرجان زائفان للغاز الطبيعي (خليط)، يُشتقان من الكثافة النوعية للغاز.'},
+  {term:'T_pr, P_pr', ar:'الحرارة والضغط الزائفان المختزلان', text:'نسبة الحرارة/الضغط الفعليين إلى القيم الحرجة الزائفة، تُستخدم كمدخلات لمعادلات عامل الانحراف Z.'},
+  {term:'μ_g, B_g', ar:'لزوجة الغاز ومعامل حجمه الجوفي', text:'μ_g لزوجة الغاز عند ظروف المكمن (cp)، وB_g نسبة حجم الغاز عند ظروف المكمن إلى حجمه القياسي على السطح (rcf/scf).'},
+];
+function renderGlossary(){
+  const grid=document.getElementById('glossaryGrid');
+  if(!grid) return;
+  grid.innerHTML = GLOSSARY.map((g,i)=>`
+    <div class="gloss-card" id="gc-${i}" onclick="toggleGloss(${i})">
+      <div class="gc-head">
+        <div><div class="gc-term">${g.term}</div><div class="gc-ar">${g.ar}</div></div>
+        <span class="gc-chev">▸</span>
+      </div>
+      <div class="gc-body"><p>${g.text}</p></div>
+    </div>`).join('');
+}
+function toggleGloss(i){
+  const card = document.getElementById('gc-'+i);
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.gloss-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen) card.classList.add('open');
+}
+renderGlossary();
+
+/* ============================================================
+   INTERACTIVE DEMOS: one dedicated chart+slider per property (Learn page)
+   ============================================================ */
+const DEMO_API=35, DEMO_G=0.75, DEMO_T=180, DEMO_RS=500;
+let DEMO_PB, DEMO_BOB, DEMO_MUOD, DEMO_MUOB, DEMO_PRANGE, DEMO_RS_CURVE, DEMO_BO_CURVE, DEMO_MU_CURVE;
+let DEMO_ZPPC, DEMO_ZTPC, DEMO_ZTPR, DEMO_ZPRANGE, DEMO_Z_CURVE, DEMO_MUG_CURVE, DEMO_BG_CURVE;
+let demoInitialized = false;
+
+function demoRsAt(p){ return p>=DEMO_PB ? DEMO_RS : RS_CORR.standing.fn(p,DEMO_G,DEMO_API,DEMO_T); }
+function demoBoAt(p){
+  if(p<=DEMO_PB){
+    const rsp = RS_CORR.standing.fn(p,DEMO_G,DEMO_API,DEMO_T);
+    return BO_CORR.standing.fn(rsp,DEMO_G,DEMO_API,DEMO_T);
+  } else {
+    const co = coVasquezBeggs(p, DEMO_RS, DEMO_T, DEMO_G, DEMO_API);
+    return boUndersaturated(DEMO_BOB, co, DEMO_PB, p);
+  }
+}
+function demoMuAt(p){
+  if(p<=DEMO_PB){
+    const rsp = RS_CORR.standing.fn(p,DEMO_G,DEMO_API,DEMO_T);
+    return MUOB_CORR.br.fn(DEMO_MUOD, rsp);
+  } else {
+    return muUndersaturatedVB(DEMO_MUOB, p, DEMO_PB);
+  }
+}
+function demoZAt(p){ return zDranchukAboukassem(p/DEMO_ZPPC, DEMO_ZTPR); }
+function demoMuGAt(p){ return gasViscosityLee(p, DEMO_T, demoZAt(p), DEMO_G); }
+function demoBgAt(p){ return gasFvf(demoZAt(p), DEMO_T, p); }
+
+function initDemoData(){
+  DEMO_PB = pbFromRs(RS_CORR.standing.fn, DEMO_RS, DEMO_G, DEMO_API, DEMO_T);
+  DEMO_BOB = BO_CORR.standing.fn(DEMO_RS, DEMO_G, DEMO_API, DEMO_T);
+  DEMO_MUOD = MUOD_CORR.beal.fn(DEMO_API, DEMO_T);
+  DEMO_MUOB = MUOB_CORR.br.fn(DEMO_MUOD, DEMO_RS);
+  const N=90, Pmin=100, Pmax=5000;
+  DEMO_PRANGE = Array.from({length:N}, (_,i)=> Pmin + (Pmax-Pmin)*i/(N-1));
+  DEMO_RS_CURVE = DEMO_PRANGE.map(demoRsAt);
+  DEMO_BO_CURVE = DEMO_PRANGE.map(demoBoAt);
+  DEMO_MU_CURVE = DEMO_PRANGE.map(demoMuAt);
+
+  const {Tpc, Ppc} = pseudoCriticalStanding(DEMO_G);
+  DEMO_ZPPC = Ppc; DEMO_ZTPC = Tpc;
+  DEMO_ZTPR = (DEMO_T+460)/Tpc;
+  const Nz=90, PzMin=100, PzMax=8000;
+  DEMO_ZPRANGE = Array.from({length:Nz}, (_,i)=> PzMin + (PzMax-PzMin)*i/(Nz-1));
+  DEMO_Z_CURVE = DEMO_ZPRANGE.map(demoZAt);
+  DEMO_MUG_CURVE = DEMO_ZPRANGE.map(demoMuGAt);
+  DEMO_BG_CURVE = DEMO_ZPRANGE.map(demoBgAt);
+}
+
+function singlePropChart(plotId, x, y, color, yTitle, pbLine, startIdx){
+  const shapes = [];
+  if(pbLine!==undefined) shapes.push({type:'line', xref:'x', x0:pbLine, x1:pbLine, yref:'paper', y0:0, y1:1, line:{color:'#b5432d', width:1.5, dash:'dot'}});
+  Plotly.newPlot(plotId, [
+    {x, y, mode:'lines', line:{color, width:2.6}, hoverinfo:'skip'},
+    {x:[x[startIdx]], y:[y[startIdx]], mode:'markers', marker:{color:'#f8de7e', size:11, line:{color:'#183033', width:2}}, hoverinfo:'skip'}
+  ], {
+    margin:{l:55,r:15,t:14,b:42},
+    xaxis:{title:'Pressure (psia)'},
+    yaxis:{title:yTitle},
+    shapes,
+    showlegend:false,
+    font:{family:'IBM Plex Mono', size:10}
+  }, {displayModeBar:false, responsive:true});
+}
+
+function initOneDemo(sliderId, plotId, kpiId, valFn, color, yTitle, unit, kpiLabel, curveX, curveY, pbLine){
+  const slider = document.getElementById(sliderId);
+  if(!slider) return;
+  function refresh(){
+    const p = +slider.value;
+    const v = valFn(p);
+    document.getElementById(kpiId).innerHTML = `
+      <div class="kpi"><div class="kpi-label">الضغط</div><div class="kpi-value">${fmt(p,0)}</div><div class="kpi-sub">psia</div></div>
+      <div class="kpi"><div class="kpi-label">${kpiLabel}</div><div class="kpi-value">${fmt(v, unit==='scf/STB'?1:4)}</div><div class="kpi-sub">${unit}</div></div>`;
+    Plotly.restyle(plotId, {x:[[p]], y:[[v]]}, [1]);
+  }
+  const startIdx = Math.floor(curveX.length/2);
+  singlePropChart(plotId, curveX, curveY, color, yTitle, pbLine, startIdx);
+  refresh();
+  slider.addEventListener('input', refresh);
+}
+
+function initDemoPlotIfNeeded(){
+  if(demoInitialized){
+    ['rsDemoPlot','boDemoPlot','muDemoPlot','zDemoPlot','muGDemoPlot','bgDemoPlot'].forEach(id=>{ try{ Plotly.Plots.resize(id); }catch(e){} });
+    return;
+  }
+  if(!document.getElementById('rsDemoSlider')) return;
+  initDemoData();
+  initOneDemo('rsDemoSlider','rsDemoPlot','rsDemoKpi', demoRsAt, '#0072BD', 'Rs (scf/STB)', 'scf/STB', 'Rs', DEMO_PRANGE, DEMO_RS_CURVE, DEMO_PB);
+  initOneDemo('boDemoSlider','boDemoPlot','boDemoKpi', demoBoAt, '#2ECC71', 'Bo (rb/STB)', 'rb/STB', 'Bo', DEMO_PRANGE, DEMO_BO_CURVE, DEMO_PB);
+  initOneDemo('muDemoSlider','muDemoPlot','muDemoKpi', demoMuAt, '#D2691E', 'μo (cp)', 'cp', 'μo', DEMO_PRANGE, DEMO_MU_CURVE, DEMO_PB);
+  initOneDemo('zDemoSlider','zDemoPlot','zDemoKpi', demoZAt, '#9B59B6', 'Z-Factor', '', 'Z', DEMO_ZPRANGE, DEMO_Z_CURVE, undefined);
+  initOneDemo('muGDemoSlider','muGDemoPlot','muGDemoKpi', demoMuGAt, '#E67E22', 'μg (cp)', 'cp', 'μg', DEMO_ZPRANGE, DEMO_MUG_CURVE, undefined);
+  initOneDemo('bgDemoSlider','bgDemoPlot','bgDemoKpi', demoBgAt, '#16A085', 'Bg (rcf/scf)', 'rcf/scf', 'Bg', DEMO_ZPRANGE, DEMO_BG_CURVE, undefined);
+  demoInitialized = true;
+}
+
+
+/* ============================================================
+   HERO DIAGRAM
+   ============================================================ */
+(function(){
+  const svg = `
+  <svg width="230" height="230" viewBox="0 0 230 230" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="115" cy="150" r="55" fill="none" stroke="#3d7a81" stroke-width="1.6"/>
+    <circle cx="115" cy="150" r="55" fill="#224347" opacity="0.35"/>
+    <circle cx="95" cy="120" r="8" fill="#fcf1ca" opacity="0.9"/>
+    <circle cx="130" cy="100" r="5" fill="#fcf1ca" opacity="0.75"/>
+    <circle cx="112" cy="80" r="4" fill="#fcf1ca" opacity="0.6"/>
+    <circle cx="140" cy="60" r="3" fill="#fcf1ca" opacity="0.45"/>
+    <line x1="30" y1="200" x2="200" y2="200" stroke="#c4d1de" stroke-width="1.4"/>
+    <text x="115" y="220" text-anchor="middle" font-size="10" fill="#c4d1de" font-family="IBM Plex Mono">PVT</text>
+    <text x="115" y="155" text-anchor="middle" font-size="9" fill="#f0d989" font-family="IBM Plex Mono">Rs, Bo</text>
+  </svg>`;
+  document.getElementById("heroSvgWrap").innerHTML = svg;
+})();
+
+/* ============================================================
+   KaTeX rendering
+   ============================================================ */
+function renderAllKatex(){
+  if(typeof katex === 'undefined'){ setTimeout(renderAllKatex, 150); return; }
+  document.querySelectorAll('.katex-eq').forEach(el=>{
+    const tex = el.dataset.tex;
+    try{ katex.render(tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent = tex; }
+  });
+}
+renderAllKatex();
+</script>
+</body>
+</html>

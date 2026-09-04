@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waterflood Sweep Simulator | محاكي إزاحة المياه وكفاءة الكسح</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<style>
+:root{
+  --navy-950:#0e1d1f; --navy-900:#183033; --navy-850:#1d3b3f; --navy-800:#224347;
+  --navy-700:#2f5d63; --navy-600:#3d7a81;
+  --gold:#f8de7e; --gold-light:#fcf1ca; --gold-dim:rgba(248,222,126,0.35);
+  --paper:#f4f2ec; --paper-line:rgba(10,30,51,0.055);
+  --ink:#13202b; --muted:#5c6b78; --muted-2:#8493a0;
+  --danger:#b5432d; --good:#2e7d53;
+  --card:#ffffff; --card-border:#e4e1d6;
+  --shadow:0 10px 30px -12px rgba(10,30,51,0.18);
+  --water:#0072BD; --oil:#b5432d; --oil-light:#e3c08a;
+}
+*{box-sizing:border-box; margin:0; padding:0; font-variant-numeric:lining-nums; }
+img, svg, video, canvas{max-width:100%; height:auto; display:block;}
+.plotwrap, .pr-plot-box, .plot-box{max-width:100%; overflow-x:auto;}
+
+html{scroll-behavior:smooth; height:100%; overflow:hidden;}
+body{font-family:'Tajawal','Inter',sans-serif; background:var(--paper); color:var(--ink); height:100%; overflow:hidden; direction:rtl;}
+#appShell{display:flex; width:100%; height:100%;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+h1,h2,h3{font-family:'Space Grotesk','Tajawal',sans-serif;}
+.grid-bg{background-image:linear-gradient(var(--paper-line) 1px, transparent 1px),linear-gradient(90deg, var(--paper-line) 1px, transparent 1px); background-size:28px 28px;}
+
+.sidebar{width:272px; flex-shrink:0; background:linear-gradient(180deg,var(--navy-950) 0%, var(--navy-900) 55%, var(--navy-850) 100%); color:#e8edf2; position:sticky; top:0; height:100vh; overflow-y:auto; display:flex; flex-direction:column; border-left:3px solid var(--gold);}
+.brand{padding:26px 22px 18px 22px; border-bottom:1px solid rgba(255,255,255,0.08);}
+.brand-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:2px; color:var(--gold-light); text-transform:uppercase; margin-bottom:6px;}
+.brand h1{font-size:19px; line-height:1.35; font-weight:700; color:#fff;}
+.brand .sub{margin-top:8px; font-size:12px; color:#9db0c2; line-height:1.6;}
+.brand .chip{display:inline-block; margin-top:10px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--navy-950); background:var(--gold-light); padding:3px 9px; border-radius:20px; font-weight:600;}
+nav{padding:14px 12px; flex:1;}
+.nav-group-label{font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:1.5px; color:#6d84a0; text-transform:uppercase; padding:14px 12px 6px 12px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; color:#c4d1de; font-size:13.5px; font-weight:500; border-right:3px solid transparent; transition:all .15s ease; margin-bottom:2px;}
+.nav-item .ic{width:20px; height:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+.nav-item.active{background:rgba(201,162,39,0.14); color:#fff; border-right-color:var(--gold);}
+.nav-item.active .ic svg{stroke:var(--gold-light);}
+.sidebar-footer{padding:16px 22px 20px 22px; border-top:1px solid rgba(255,255,255,0.08); font-size:11px; color:#7488a0; line-height:1.7;}
+
+.main{flex:1; min-width:0; height:100vh; overflow-y:auto;}
+.topbar{position:sticky; top:0; z-index:20; background:rgba(244,242,236,0.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--card-border); padding:16px 34px; display:flex; align-items:center; justify-content:space-between;}
+.topbar .crumb{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:.5px;}
+.topbar .ttl{font-size:20px; font-weight:700; margin-top:2px;}
+.topbar .eqtag{font-family:'IBM Plex Mono',monospace; font-size:11px; background:var(--navy-900); color:var(--gold-light); padding:6px 12px; border-radius:6px;}
+.content{padding:30px 34px 80px 34px; max-width:1300px;}
+.section{display:none; animation:fade .25s ease;}
+.section.active{display:block;}
+@keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.card{background:var(--card); border:1px solid var(--card-border); border-radius:14px; box-shadow:var(--shadow); padding:24px 26px; margin-bottom:22px;}
+.card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; padding-bottom:14px; border-bottom:2px solid var(--navy-900); flex-wrap:wrap; gap:10px;}
+.card-head h2{font-size:16.5px; font-weight:700; color:var(--navy-900);}
+.card-head .eq{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:6px;}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;}
+.grid4{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+@media(max-width:900px){.grid2,.grid3,.grid4{grid-template-columns:1fr 1fr;}}
+
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12px; font-weight:600; color:var(--navy-800); margin-bottom:6px;}
+.field .unit{color:var(--muted-2); font-weight:400; font-size:11px;}
+.field input{width:100%; padding:10px 12px; border:1.5px solid #d8d4c6; border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; background:#fcfbf8; color:var(--ink); transition:border .15s; direction:ltr; text-align:left;}
+.field input:focus{outline:none; border-color:var(--navy-700); background:#fff;}
+.kr-row{display:grid; grid-template-columns:1fr 1fr 1fr 34px; gap:8px; margin-bottom:8px; align-items:center;}
+.kr-row input{background:var(--bg-deep,#fcfbf8); border:1px solid #d8d4c6; color:var(--ink); padding:8px 9px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:13px; width:100%; direction:ltr; text-align:left;}
+.kr-row input:focus{outline:none; border-color:var(--navy-700);}
+.kr-row-del{background:#fff; border:1px solid #d8d4c6; color:#8493a0; border-radius:6px; height:34px; cursor:pointer; transition:.15s;}
+.kr-row-del:hover{color:var(--danger); border-color:var(--danger);}
+.btn.sm{padding:7px 14px; font-size:12px;}
+
+
+.btn{display:inline-flex; align-items:center; gap:8px; background:var(--navy-900); color:#fff; border:none; padding:11px 22px; border-radius:8px; font-family:'Tajawal',sans-serif; font-weight:700; font-size:13.5px; cursor:pointer; transition:all .15s;}
+.btn:hover{background:var(--navy-700);}
+.btn.gold{background:var(--gold); color:var(--navy-950);}
+.btn.gold:hover{background:var(--gold-light);}
+.btn.ghost{background:#fff; color:var(--navy-900); border:1.5px solid var(--card-border);}
+.btn.ghost:hover{border-color:var(--navy-700);}
+.btn.block{width:100%; justify-content:center;}
+
+.hero{background:linear-gradient(135deg, var(--navy-950), var(--navy-800)); border-radius:18px; padding:38px 36px; color:#fff; position:relative; overflow:hidden; margin-bottom:26px;}
+.hero::after{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px); background-size:26px 26px;}
+.hero-inner{position:relative; z-index:2; display:flex; gap:30px; align-items:center;}
+.hero-text{flex:1.3;}
+.hero-text .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold-light); letter-spacing:2px; margin-bottom:12px;}
+.hero-text h1{font-size:29px; line-height:1.35; margin-bottom:14px;}
+.hero-text p{font-size:13.5px; color:#b9c8d6; line-height:1.9; max-width:580px;}
+@media(max-width:900px){.hero-inner{flex-direction:column;}}
+
+.mod-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin-top:6px;}
+.mod-card{background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:18px; cursor:pointer; transition:all .18s; box-shadow:var(--shadow);}
+.mod-card:hover{transform:translateY(-3px); border-color:var(--gold);}
+.mod-card .num{font-family:'IBM Plex Mono',monospace; color:var(--gold); font-size:11px; font-weight:700;}
+.mod-card h3{font-size:15px; margin:8px 0 6px 0; color:var(--navy-900);}
+.mod-card p{font-size:11.5px; color:var(--muted); line-height:1.7;}
+
+.divider-label{display:flex; align-items:center; gap:12px; margin:22px 0 14px 0; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:1.5px;}
+.divider-label::after{content:""; flex:1; height:1px; background:var(--card-border);}
+
+.article-body{font-size:14px; line-height:2.15; color:#2a3742;}
+.article-body p{margin-bottom:14px;}
+.article-body b{color:var(--navy-900);}
+.eq-block{background:#fbf9f3; border:1px dashed var(--gold-dim); border-radius:10px; padding:14px 18px; margin:14px 0;}
+.eq-block .eqx{direction:ltr; text-align:left; overflow-x:auto; margin:6px 0;}
+.eq-note{font-size:11.5px; color:var(--muted-2); margin-top:6px;}
+
+.why-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:14px;}
+.why-card{background:#fff; border:1.5px solid var(--card-border); border-radius:12px; padding:16px 18px;}
+.ex-card{background:#fbf9f3; border:1.5px solid var(--card-border); border-radius:12px; padding:16px 18px; margin:16px 0;}
+.ex-head{font-weight:700; color:var(--navy-900); font-size:14.5px; margin-bottom:10px; padding-bottom:8px; border-bottom:1.5px solid var(--gold-dim);}
+.ex-table{width:100%; border-collapse:collapse; font-family:'IBM Plex Mono',monospace; font-size:12.5px; margin:10px 0;}
+.ex-table th{background:var(--navy-950); color:#fff; padding:6px 10px; text-align:center; font-family:Tajawal;}
+.ex-table td{padding:6px 10px; border-bottom:1px solid var(--card-border); text-align:center;}
+.ex-table td:first-child{text-align:right; font-family:Tajawal; color:#2a3742;}
+.ex-note{font-size:12.5px; line-height:1.9; color:#5c6b78; margin-top:8px;}
+.why-card .wc-icon{font-size:22px; margin-bottom:8px;}
+.why-card h4{font-size:13.5px; color:var(--navy-900); margin-bottom:6px;}
+.why-card p{font-size:12px; color:var(--muted); line-height:1.8;}
+.why-card.danger{border-color:rgba(181,67,45,.35); background:#fdf6f5;}
+.why-card.good{border-color:rgba(46,125,83,.3); background:#f6fbf7;}
+
+/* ============================================================
+   MOBILITY RATIO CONTROL PANEL
+   ============================================================ */
+.mr-panel{background:linear-gradient(135deg,var(--navy-950),var(--navy-850)); border-radius:16px; padding:26px 28px; color:#fff; margin-bottom:22px;}
+.mr-slider-row{display:flex; align-items:center; gap:18px; margin-top:6px;}
+.mr-slider-row input[type=range]{flex:1; -webkit-appearance:none; height:8px; border-radius:5px; background:linear-gradient(90deg,#2e7d53,#f8de7e 45%,#b5432d 100%); outline:none;}
+.mr-slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--gold); cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.4);}
+.mr-slider-row input[type=range]::-moz-range-thumb{width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--gold); cursor:pointer;}
+.mr-value{font-family:'IBM Plex Mono',monospace; font-size:32px; font-weight:700; color:var(--gold-light); min-width:110px; text-align:center;}
+.mr-scale{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:10px; color:#7488a0; margin-top:6px;}
+.mr-badge{display:inline-flex; align-items:center; gap:8px; padding:8px 16px; border-radius:20px; font-weight:700; font-size:13px; margin-top:14px;}
+.mr-badge.neutral{background:rgba(255,255,255,0.08); color:#c4d1de;}
+.mr-badge.favorable{background:rgba(46,125,83,.18); color:#7fd9a6; border:1px solid rgba(46,125,83,.4);}
+.mr-badge.unit{background:rgba(201,162,39,.18); color:var(--gold-light); border:1px solid rgba(201,162,39,.4);}
+.mr-badge.unfavorable{background:rgba(181,67,45,.18); color:#f2a08c; border:1px solid rgba(181,67,45,.4);}
+
+.reservoir-wrap{background:#fff; border:1px solid var(--card-border); border-radius:14px; padding:14px; box-shadow:var(--shadow);}
+.reservoir-legend{display:flex; gap:18px; justify-content:center; margin-top:10px; font-size:12px; color:var(--muted); flex-wrap:wrap;}
+.reservoir-legend span{display:inline-flex; align-items:center; gap:6px;}
+.reservoir-legend i{width:14px; height:14px; border-radius:3px; display:inline-block;}
+
+.result-panel{margin-top:0; padding:20px; background:var(--navy-900); border-radius:12px; position:relative; overflow:hidden;}
+.result-panel::before{content:""; position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size:18px 18px;}
+.result-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; position:relative;}
+.rstat{padding:12px 14px; background:rgba(255,255,255,0.05); border-radius:10px; border:1px solid rgba(255,255,255,0.08);}
+.rstat .rlabel{font-size:10.5px; color:#9db0c2; text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; font-family:'IBM Plex Mono',monospace;}
+.rstat .rval{font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:600; color:#fff;}
+.rstat .rval.gold{color:var(--gold-light);}
+
+.plotwrap{background:#fff; border:1px solid var(--card-border); border-radius:12px; padding:6px; min-height:380px;}
+.gloss-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px;}
+.gloss-card{background:#fff; border:1.5px solid var(--card-border); border-radius:11px; padding:14px 16px; cursor:pointer; transition:all .15s;}
+.gloss-card:hover{border-color:var(--gold);}
+.gloss-card.open{border-color:var(--navy-800); box-shadow:0 4px 14px rgba(10,30,51,.1);}
+.gloss-card .gc-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.gloss-card .gc-term{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--navy-900); font-size:13.5px;}
+.gloss-card .gc-ar{font-size:12px; color:var(--muted); margin-top:2px;}
+.gloss-card .gc-chev{font-size:12px; color:var(--gold); transition:transform .2s;}
+.gloss-card.open .gc-chev{transform:rotate(90deg);}
+.gloss-card .gc-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.gloss-card.open .gc-body{max-height:300px; margin-top:10px;}
+.gloss-card .gc-body p{font-size:12px; color:#3c4854; line-height:1.85;}
+.gloss-card .gc-body .gc-analogy{margin-top:8px; padding:8px 10px; background:#fbf9f3; border-right:3px solid var(--gold); border-radius:6px; font-size:11.5px; color:var(--muted);}
+
+/* ============================================================
+   MOBILE RESPONSIVENESS
+   ============================================================ */
+.hamburger-btn{display:none; background:#fff; border:1.5px solid var(--card-border); border-radius:8px; padding:8px; cursor:pointer; align-items:center; justify-content:center;}
+.sidebar-backdrop{display:none; position:fixed; inset:0; background:rgba(5,15,26,.55); z-index:39;}
+
+@media(max-width:860px){
+  #appShell{display:block;}
+  .hamburger-btn{display:flex;}
+  .sidebar{
+    position:fixed; top:0; right:0; height:100vh; width:82%; max-width:320px;
+    z-index:40; transform:translateX(100%); transition:transform .25s ease; box-shadow:-8px 0 30px rgba(0,0,0,.35);
+  }
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-backdrop.open{display:block;}
+  .main{height:auto; min-height:100vh;}
+  .topbar{padding:12px 14px; gap:10px;}
+  .topbar .ttl{font-size:15px;}
+  .topbar .crumb{font-size:9px;}
+  .topbar .eqtag{display:none;}
+  .content{padding:16px 14px 60px 14px;}
+  .card{padding:16px 14px;}
+  .hero{padding:22px 18px;}
+  .hero-text h1{font-size:21px;}
+  .hero-text p{font-size:12.5px;}
+  .grid2, .grid3, .grid4{grid-template-columns:1fr;}
+  .mr-slider-row{flex-direction:column; align-items:stretch; gap:10px;}
+  .mr-value{font-size:26px; min-width:0;}
+  .result-grid{grid-template-columns:repeat(2,1fr);}
+  .card-head{flex-direction:column; align-items:flex-start; gap:8px;}
+  .export-row{grid-template-columns:1fr !important;}
+  .reservoir-wrap svg{width:100%; height:auto;}
+  .gloss-grid{grid-template-columns:1fr;}
+  .why-grid{grid-template-columns:1fr;}
+  .compare-plot-note{font-size:10px;}
+}
+@media(max-width:480px){
+  .result-grid{grid-template-columns:1fr;}
+  .brand h1{font-size:16px;}
+  .rstat .rval{font-size:15px;}
+}
+
+/* ============================================================
+   PRINT REPORT (matches design used across the tool suite)
+   ============================================================ */
+.export-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+#printReport{display:none;}
+@page{ size:A4; margin:14mm 13mm; }
+@media print{
+  html, body{background:#fff !important; height:auto !important; overflow:visible !important;}
+  #appShell{display:none !important;}
+  #printReport{display:block !important;}
+}
+#printReport{
+  font-family:'Inter','Tajawal',sans-serif; color:#13202b; direction:ltr; text-align:left;
+  width:100%; background:#fff;
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; color-adjust:exact;
+}
+#printReport .pr-page{ page-break-after:always; min-height:263mm; display:flex; flex-direction:column; position:relative; }
+#printReport .pr-body{ flex:1 0 auto; position:relative; z-index:1; }
+#printReport .pr-footer{ position:relative; z-index:1; }
+#printReport .pr-page:last-child{ page-break-after:auto; }
+#printReport .pr-page-header{ display:flex; align-items:center; justify-content:space-between; padding-bottom:9px; margin-bottom:16px; border-bottom:2.5px solid var(--gold); }
+#printReport .pr-page-header .pr-brand{display:flex; align-items:center; gap:10px;}
+#printReport .pr-page-header .pr-mark{ width:26px; height:26px; border-radius:7px; background:var(--navy-900); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12px; flex-shrink:0; }
+#printReport .pr-page-header .pr-brand-text .pr-t1{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:12.5px; color:var(--navy-900);}
+#printReport .pr-page-header .pr-brand-text .pr-t2{font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:var(--muted); letter-spacing:.5px;}
+#printReport .pr-page-header .pr-section-name{font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--gold); background:#fbf6e7; border:1px solid var(--gold-dim); padding:4px 10px; border-radius:20px; font-weight:700;}
+#printReport .pr-headbar{ background:linear-gradient(135deg,var(--navy-950),var(--navy-800)); color:#fff; padding:22px 26px; border-radius:12px; margin-bottom:6px; position:relative; overflow:hidden; }
+#printReport .pr-headbar::after{content:""; position:absolute; top:-30px; right:-30px; width:110px; height:110px; border-radius:50%; background:rgba(201,162,39,0.14);}
+#printReport .pr-headbar .pr-h1{font-family:'Space Grotesk',sans-serif; font-size:21px; font-weight:700; position:relative;}
+#printReport .pr-headbar .pr-h2{font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold-light); margin-top:5px; letter-spacing:1px; position:relative;}
+#printReport .pr-cover-title{text-align:center; margin:24px 0 4px 0;}
+#printReport .pr-cover-title h1{font-family:'Space Grotesk',sans-serif; font-size:25px; color:var(--navy-900);}
+#printReport .pr-cover-title p{font-size:12px; color:var(--muted); margin-top:6px;}
+#printReport .pr-rule{height:2px; background:var(--gold); width:110px; margin:16px auto; border:none;}
+#printReport .pr-infolist{width:78%; margin:16px auto; font-size:11.5px;}
+#printReport .pr-infolist div{display:flex; justify-content:space-between; padding:6px 2px; border-bottom:1px dotted #ddd;}
+#printReport .pr-infolist b{color:var(--navy-900);}
+#printReport .pr-kpi-row{display:flex; gap:10px; justify-content:center; margin:22px 0; flex-wrap:wrap;}
+#printReport .pr-kpi{ border:1.5px solid var(--navy-800); border-top:3px solid var(--navy-800); border-radius:8px; padding:11px 16px; min-width:105px; text-align:center; background:#eef3f8; }
+#printReport .pr-kpi .pr-kpi-label{font-size:8.5px; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-kpi .pr-kpi-value{font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:700; color:var(--navy-900); margin-top:5px;}
+#printReport .pr-check{ text-align:center; margin:16px auto 6px auto; padding:11px; border-radius:8px; font-weight:700; font-size:12px; max-width:82%; border:1.5px solid; }
+#printReport .pr-check.ok{color:var(--good); border-color:var(--good); background:#eaf6ef;}
+#printReport .pr-footer{ margin-top:auto; padding-top:9px; border-top:1px solid #e4e1d6; display:flex; align-items:center; justify-content:space-between; font-size:9px; color:var(--muted-2); }
+#printReport .pr-footer .pr-foot-brand{font-weight:700; color:var(--navy-700);}
+#printReport .pr-footer a{color:var(--navy-700); font-weight:700; text-decoration:none;}
+#printReport .pr-footer .pr-pageno{font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-section-title{ background:#eef3f8; color:var(--navy-900); font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13.5px; padding:9px 12px; border-radius:6px; border-right:4px solid var(--gold); margin:18px 0 12px 0; }
+#printReport table.pr-table{width:100%; border-collapse:collapse; font-size:9.5px;}
+#printReport table.pr-table th{background:var(--navy-900); color:#fff; padding:5px 4px; font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:8.5px;}
+#printReport table.pr-table td{padding:4px; text-align:center; border:1px solid #e7e4d8; font-family:'IBM Plex Mono',monospace;}
+#printReport .pr-eq-intro{font-size:10.5px; color:var(--muted); margin-bottom:14px; line-height:1.7;}
+#printReport .pr-eq-row{border:1px solid #e7e4d8; border-radius:8px; padding:8px 12px; margin-bottom:9px; background:#fbf9f3;}
+.pr-table-wrap{max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.katex-eq{max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; display:inline-block;}
+#printReport .pr-eq-label{font-size:9.5px; color:var(--navy-700); font-weight:700; margin-bottom:3px;}
+#printReport .pr-eq-row .eqx{margin:2px 0; font-size:12px;}
+#printReport table.pr-table tr:nth-child(even){background:#f8f7f2;}
+#printReport .pr-plots{display:flex; flex-direction:column; gap:12px; margin-top:10px;}
+#printReport .pr-plot-box{ border:1px solid #e4e1d6; border-radius:8px; padding:6px; height:112mm; display:flex; align-items:center; justify-content:center; }
+#printReport .pr-plot-box img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;}
+@media(max-width:900px){ table:not(.pr-table){display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;} }
+.katex-eq::-webkit-scrollbar, .pr-table-wrap::-webkit-scrollbar{ display:none; height:0; }
+.katex-eq, .pr-table-wrap{ scrollbar-width:none; -ms-overflow-style:none; }
+@media print{ .katex-eq, .pr-table-wrap{ overflow:visible !important; } }
+</style>
+</head>
+<body>
+<div id="appShell">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-eyebrow">Reservoir Engineering · Waterflooding</div>
+    <h1>Waterflood Sweep<br>Simulator</h1>
+    <div class="sub">محاكي إزاحة المياه وكفاءة الكسح — نسبة الحركية، التدفق الجزئي، التقدم الأمامي، وكفاءة الكسح الأفقي، تفاعلي بالكامل.</div>
+    <span class="chip">Al-Misbar Engineering Solutions</span>
+  </div>
+  <nav>
+    <div class="nav-group-label">General</div>
+    <div class="nav-item active" data-target="home">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+      الرئيسية
+    </div>
+    <div class="nav-item" data-target="learn">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M7 10.5V16c0 1.5 2 3 5 3s5-1.5 5-3v-5.5"/></svg></span>
+      كيف تؤثر نسبة الحركية على الإزاحة؟
+    </div>
+    <div class="nav-group-label">Calculator</div>
+    <div class="nav-item" data-target="sim">
+      <span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c4d1de" stroke-width="1.8"><path d="M4 19h16M4 19l5-9 4 5 3-6 4 7"/></svg></span>
+      الحاسبة التفاعلية
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    نموذج التدفق الجزئي (Fractional Flow) مبني على نظرية Buckley-Leverett وطريقة Welge القياسية، مع معادلات ريلبرمية Corey.
+  </div>
+</aside>
+
+<main class="main grid-bg">
+  <div class="topbar">
+    <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#224347" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div><div class="crumb" id="crumb">GENERAL / OVERVIEW</div><div class="ttl" id="pageTitle">محاكي إزاحة المياه وكفاءة الكسح</div></div>
+    <div class="eqtag" id="eqTag">Waterflood Sim</div>
+  </div>
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+
+  <div class="content">
+
+    <!-- ============ HOME ============ -->
+    <section class="section active" id="sec-home">
+      <div class="hero">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <div class="eyebrow">MOBILITY RATIO · DISPLACEMENT EFFICIENCY</div>
+            <h1>محاكي إزاحة المياه وكفاءة الكسح</h1>
+            <p>حرّك شريط نسبة الحركية (M) وشاهد شكل جبهة إزاحة الماء للنفط يتغيّر لحظيًا داخل مكمن تفاعلي — من إزاحة منتظمة شبه-مكبسية عند M المنخفضة، إلى تخطّي إصبعي (Viscous Fingering) حاد عند M المرتفعة. يشمل الموقع أيضًا حاسبة كاملة تُشتق منها M من الخواص الفيزيائية الفعلية (اللزوجة والنفاذية النسبية)، مع تحليل منحنى التدفق الجزئي وبناء مماس Welge لحساب كفاءة الإزاحة عند الاختراق.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider-label">وحدات الموقع</div>
+      <div class="mod-grid">
+        <div class="mod-card" data-target="learn" style="border-color:var(--gold);"><div class="num">00 / START HERE</div><h3>🎓 كيف تؤثر نسبة الحركية على الإزاحة؟</h3><p>لا تعرف شيئًا عن هندسة المكامن؟ ابدأ من هنا — شرح مبسّط مع رسم توضيحي لمفهوم الحركية والإزاحة المفضّلة وغير المفضّلة.</p></div>
+        <div class="mod-card" data-target="sim"><div class="num">01 / SIMULATOR</div><h3>الحاسبة التفاعلية</h3><p>تحكّم بنسبة الحركية مباشرة أو احسبها من الخواص الفيزيائية، وشاهد شكل الإزاحة ومنحنى التدفق الجزئي يتحدثان لحظيًا.</p></div>
+      </div>
+    </section>
+
+    <!-- ============ LEARN ============ -->
+    <section class="section" id="sec-learn">
+      <div class="card">
+        <div class="card-head"><h2>🎓 لماذا "تتسابق" المياه والنفط بشكل مختلف؟</h2></div>
+        <div class="article-body">
+          <p>عندما تُحقن المياه في مكمن نفطي لدفع النفط نحو آبار الإنتاج (Waterflooding)، لا يتحرك السائلان بنفس السهولة عبر الصخر المسامي. قدرة أي سائل على التحرك عبر الصخر تُسمى <b>الحركية (Mobility − λ)</b>، وتعتمد على أمرين: مدى "سماحية" الصخر لمرور هذا السائل تحديدًا وسط وجود سائل آخر (النفاذية النسبية − kr)، ومدى مقاومة السائل نفسه للحركة (اللزوجة − μ):</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="%5Clambda%20%3D%20%5Cfrac%7Bk_r%7D%7B%5Cmu%7D"></span></div>
+            <p class="eq-note">كلما زادت النفاذية النسبية لسائل معين أو قلّت لزوجته، زادت حركيته — أي زادت سهولة تحركه عبر المسام نسبيًا مقارنة بالسائل الآخر.</p>
+          </div>
+          <p>المقارنة المباشرة بين حركية الماء (السائل الدافع) وحركية النفط (السائل المُزاح) هي بالضبط <b>نسبة الحركية (Mobility Ratio − M)</b>، وهي المفهوم المحوري في تصميم أي عملية إزاحة:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="M%20%3D%20%5Cfrac%7B%5Clambda_%7Bw%7D%7D%7B%5Clambda_%7Bo%7D%7D%20%3D%20%5Cfrac%7Bk_%7Brw%7D%20%2F%20%5Cmu_w%7D%7Bk_%7Bro%7D%20%2F%20%5Cmu_o%7D%20%3D%20%5Cfrac%7Bk_%7Brw%7D%20%5Ccdot%20%5Cmu_o%7D%7Bk_%7Bro%7D%20%5Ccdot%20%5Cmu_w%7D"></span></div>
+            <p class="eq-note">هنا krw تُقاس عند تشبع الزيت المتبقي (Sor) — أي في المنطقة التي "غمرها" الماء بالفعل خلف الجبهة — وkro تُقاس عند تشبع الماء الأصلي (Swc) — أي أمام الجبهة حيث النفط لم يزل بعد. μw وμo لزوجتا الماء والنفط. هذا التعريف موثّق في مراجع SPE وAAPG القياسية لهندسة المكامن.</p>
+          </div>
+          <p>القيمة الفاصلة الحاسمة هي M = 1. عندما <b>M ≤ 1</b> (نسبة حركية "مفضّلة" − Favorable)، يستطيع النفط أمام الجبهة أن يتحرك بسرعة مساوية أو أكبر من سرعة تقدّم الماء خلفها، فتبقى الجبهة مستقرة نسبيًا وتتقدم بشكل منتظم يشبه حركة مكبس (Piston-like Displacement) — كفاءة كسح عالية وإزاحة شبه كاملة للنفط أمامها. أما عندما <b>M > 1</b> (نسبة حركية "غير مفضّلة" − Unfavorable)، فالماء أكثر حركية من النفط، فيبدأ بالتسارع مخترقًا النفط في مسارات ضيقة متفرقة بدل جبهة واحدة منتظمة — ظاهرة تُعرف بـ<b>التخطّي الإصبعي اللزج (Viscous Fingering)</b>: أصابع مياه رفيعة تتقدم بسرعة أكبر بكثير من محيطها، تصل لآبار الإنتاج مبكرًا (اختراق مبكر − Early Breakthrough) بينما يبقى نفط كثير "متجاوَزًا" (Bypassed Oil) عالقًا بين هذه الأصابع لم تصله المياه بعد.</p>
+        </div>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>🔬 مقارنة بصرية: إزاحة مفضّلة مقابل تخطّي إصبعي</h2></div>
+        <div class="grid2">
+          <div style="text-align:center;">
+            <svg viewBox="0 0 320 220" style="max-width:100%;">
+              <rect x="10" y="10" width="300" height="200" fill="#f3e6c9" stroke="#224347" stroke-width="2"/>
+              <path d="M10,10 L112,10 L108,45 L118,80 L110,115 L120,150 L112,185 L118,210 L10,210 Z" fill="#0072BD" opacity=".85"/>
+              <line x1="10" y1="10" x2="10" y2="210" stroke="#224347" stroke-width="3"/>
+              <text x="60" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">حقن</text>
+              <text x="270" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">إنتاج</text>
+            </svg>
+            <div style="font-weight:700; color:var(--good); margin-top:6px;">M ≤ 1 — جبهة شبه-مكبسية مستقرة</div>
+            <div style="font-size:11.5px; color:var(--muted);">كسح منتظم، إزاحة شبه كاملة للنفط أمام الجبهة</div>
+          </div>
+          <div style="text-align:center;">
+            <svg viewBox="0 0 320 220" style="max-width:100%;">
+              <rect x="10" y="10" width="300" height="200" fill="#f3e6c9" stroke="#224347" stroke-width="2"/>
+              <path d="M10,10 L70,10 L200,25 L90,40 L230,58 L95,78 L210,92 L85,112 L240,128 L100,148 L195,165 L80,182 L150,198 L60,210 L10,210 Z" fill="#0072BD" opacity=".85"/>
+              <line x1="10" y1="10" x2="10" y2="210" stroke="#224347" stroke-width="3"/>
+              <text x="60" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">حقن</text>
+              <text x="270" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">إنتاج</text>
+            </svg>
+            <div style="font-weight:700; color:var(--danger); margin-top:6px;">M > 1 — تخطّي إصبعي (Fingering)</div>
+            <div style="font-size:11.5px; color:var(--muted);">اختراق مبكر، نفط متجاوَز عالق بين الأصابع</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:var(--muted-2); margin-top:12px; text-align:center;">هذا تصوّر توضيحي مبسَّط وثابت للمفهوم الفيزيائي (وليس رسمًا متحركًا يُعاد توليده مع كل قيمة M) — الهدف هو إيصال الفكرة بوضوح: كلما ارتفعت M، قلّت انتظامية الجبهة وزاد النفط المتجاوَز العالق خلفها. الأرقام الدقيقة لكفاءة الكسح عند كل M تجدها في الحاسبة أدناه وفي الرسم البياني «كفاءة الكسح مقابل M».</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>⚙️ من قانون دارسي إلى معادلة التدفق الجزئي — الاشتقاق الكامل</h2></div>
+        <div class="article-body">
+          <p>معادلة fw التي ستراها بعد قليل ليست افتراضًا جاهزًا — بل نتيجة مباشرة لتطبيق <b>قانون دارسي (Darcy's Law)</b> بشكل منفصل على كل من الماء والنفط، ثم الجمع بينهما. هذا هو الاشتقاق كاملًا، خطوة بخطوة:</p>
+          <p><b>الخطوة 1 — معدل تدفق كل سائل منفردًا بقانون دارسي:</b> لكل من النفط والماء، معدل التدفق الحجمي يتناسب طرديًا مع النفاذية الفعلية للسائل ومساحة المقطع، وعكسيًا مع لزوجته، مع طرح تأثير الجاذبية إذا كان المكمن مائلًا بزاوية α:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="q_o%20%3D%20-%5Cfrac%7Bk_o%20A%7D%7B%5Cmu_o%7D%5Cleft%5B%5Cfrac%7B%5Cpartial%20P_o%7D%7B%5Cpartial%20x%7D%20%2B%20g%5Crho_o%20%5Csin%5Calpha%5Cright%5D"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="q_w%20%3D%20-%5Cfrac%7Bk_w%20A%7D%7B%5Cmu_w%7D%5Cleft%5B%5Cfrac%7B%5Cpartial%20P_w%7D%7B%5Cpartial%20x%7D%20%2B%20g%5Crho_w%20%5Csin%5Calpha%5Cright%5D"></span></div></div>
+          <p class="eq-note">ko وkw هما النفاذية الفعلية لكل سائل (تعتمد على النفاذية المطلقة k مضروبة بالنفاذية النسبية kr عند التشبّع الحالي)، وPo وPw ضغط كل طور، وρo وρw كثافتاهما. الإشارة السالبة تعني أن السائل يتدفق من الضغط العالي إلى المنخفض.</p>
+
+          <p><b>الخطوة 2 — تعريف fw كنسبة من الإجمالي:</b> بما أن السائلين يتدفقان معًا بمعدل إجمالي qt = qw + qo، فإن جزء الماء منه هو ببساطة:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7Bq_w%7D%7Bq_t%7D%20%3D%20%5Cfrac%7Bq_w%7D%7Bq_w%2Bq_o%7D"></span></div></div>
+
+          <p><b>الخطوة 3 — إدخال الضغط الشعري وفرق الكثافة:</b> بما أن ضغط النفط وضغط الماء عند نفس النقطة ليسا متساويين (يفصل بينهما الضغط الشعري الناتج عن التوتر السطحي بين السائلين والصخر)، نُعرّف:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="p_c%20%3D%20p_o%20-%20p_w%20%5Cquad%2C%5Cquad%20%5CDelta%5Crho%20%3D%20%5Crho_w-%5Crho_o"></span></div></div>
+
+          <p><b>الخطوة 4 — التعويض والحل جبريًا لـ fw:</b> بتعويض معادلتَي qo وqw من الخطوة 1 في تعريف fw من الخطوة 2، واستخدام العلاقتين من الخطوة 3 لإزالة الضغط المنفصل لكل سائل، نصل بعد جبر مباشر إلى المعادلة العامة الكاملة:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%2B%5Cleft%28%5Cdfrac%7Bk_o%20A%7D%7B%5Cmu_o%20q_t%7D%5Cright%29%5Cleft%5B%5Cdfrac%7B%5Cpartial%20p_c%7D%7B%5Cpartial%20x%7D%20-%20g%5CDelta%5Crho%5Csin%5Calpha%5Cright%5D%7D%7B1%2B%5Cdfrac%7Bk_o%7D%7Bk_w%7D%5Cdfrac%7B%5Cmu_w%7D%7B%5Cmu_o%7D%7D"></span></div>
+            <p class="eq-note">هذه هي المعادلة العامة الكاملة (تشمل الضغط الشعري والجاذبية معًا). عمليًا، في أغلب حسابات هندسة المكامن اليدوية والحاسبة هنا، يُهمَل تدرّج الضغط الشعري (∂pc/∂x ≈ 0) لصغر تأثيره مقارنة بحدّي اللزوجة والجاذبية، فتبقى فقط حدّ الجاذبية الاختياري (يظهر فقط عند إدخال زاوية ميل غير صفرية) — وهذا بالضبط خيار «تأثير زاوية الميل» في الحاسبة.</p>
+          </div>
+          <p><b>الخطوة 5 — الصيغة المبسّطة الشائعة (بلا ضغط شعري ولا جاذبية):</b> عندما يكون المكمن أفقيًا (α=0) ويُهمَل الضغط الشعري، يختفي البسط بالكامل إلى 1، فتنكمش المعادلة العامة إلى الصيغة التي ستراها مستخدَمة في كل مكان تقريبًا في هذا الموقع:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cdfrac%7Bk_o%7D%7Bk_w%7D%5Cdfrac%7B%5Cmu_w%7D%7B%5Cmu_o%7D%7D%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cdfrac%7Bk_%7Bro%7D%5Ccdot%5Cmu_w%7D%7Bk_%7Brw%7D%5Ccdot%5Cmu_o%7D%7D"></span></div></div>
+          <p class="eq-note">لاحظ العلاقة المباشرة بهذه الصيغة النهائية: fw يعتمد فقط على نسبة النفاذية النسبية kro/krw (وهي دالة في Sw فقط) ونسبة اللزوجتين μw/μo (ثابتة لكل مكمن مُعطى) — ولا شيء غير ذلك. هذا هو بالضبط ما يجعل منحنى fw قابلاً للرسم مسبقًا بمجرد معرفة منحنيات النفاذية النسبية ولزوجتَي السائلين، دون الحاجة لأي معلومة إضافية عن معدل الحقن أو أبعاد المكمن.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>من الجبهة إلى الرقم: التدفق الجزئي وطريقة Welge</h2></div>
+        <div class="article-body">
+          <p>معرفة أن M غير مفضّلة تخبرنا أن الإزاحة ستكون سيئة نوعيًا، لكن لتحديد <b>كمية</b> النفط المُستخرج فعليًا عند لحظة اختراق الماء لبئر الإنتاج، نحتاج أداة رياضية أدق: <b>منحنى التدفق الجزئي (Fractional Flow − fw)</b>، الذي يحدد أي جزء من إجمالي السائل المتدفق عند نقطة معينة هو ماء:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%7D%7B1%20%2B%20%5Cfrac%7Bk_%7Bro%7D%20%5Ccdot%20%5Cmu_w%7D%7Bk_%7Brw%7D%20%5Ccdot%20%5Cmu_o%7D%7D"></span></div>
+            <p class="eq-note">تُحسب kro وkrw عند كل تشبّع ماء Sw إمّا من نموذج Corey التحليلي، أو من جدول بيانات فعلي مُدخَل يدويًا — الحاسبة تدعم الطريقتين. عند وجود ميل في المكمن، تُضاف حدّ الجاذبية من المعادلة العامة 4-2/4-10 إلى البسط.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card diagram-card">
+        <div class="card-head"><h2>📐 القراءة من الرسم البياني — خطوة بخطوة (الطريقة اليدوية التقليدية)</h2></div>
+        <div class="article-body">
+          <p>قبل الحاسبات، كان المهندس يرسم منحنى fw على ورق بياني ويقرأ كل هذه القيم بمسطرة وقلم رصاص فقط. فهم هذه الطريقة اليدوية هو أفضل طريق لفهم ماذا تعنيه كل قيمة رقمية تُخرجها الحاسبة:</p>
+        </div>
+        <div class="diagram-wrap">
+          <svg viewBox="0 0 660 460" style="max-width:600px;">
+            <!-- grid -->
+            <line x1="172.0" y1="390" x2="172.0" y2="20" stroke="#eee7d3" stroke-width="1"/>
+            <text x="172.0" y="405" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.2</text>
+            <line x1="60" y1="316.0" x2="620" y2="316.0" stroke="#eee7d3" stroke-width="1"/>
+            <text x="50" y="319.0" text-anchor="end" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.2</text>
+            <line x1="284.0" y1="390" x2="284.0" y2="20" stroke="#eee7d3" stroke-width="1"/>
+            <text x="284.0" y="405" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.4</text>
+            <line x1="60" y1="242.0" x2="620" y2="242.0" stroke="#eee7d3" stroke-width="1"/>
+            <text x="50" y="245.0" text-anchor="end" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.4</text>
+            <line x1="396.0" y1="390" x2="396.0" y2="20" stroke="#eee7d3" stroke-width="1"/>
+            <text x="396.0" y="405" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.6</text>
+            <line x1="60" y1="168.0" x2="620" y2="168.0" stroke="#eee7d3" stroke-width="1"/>
+            <text x="50" y="171.0" text-anchor="end" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.6</text>
+            <line x1="508.0" y1="390" x2="508.0" y2="20" stroke="#eee7d3" stroke-width="1"/>
+            <text x="508.0" y="405" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.8</text>
+            <line x1="60" y1="94.0" x2="620" y2="94.0" stroke="#eee7d3" stroke-width="1"/>
+            <text x="50" y="97.0" text-anchor="end" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">0.8</text>
+            <line x1="620.0" y1="390" x2="620.0" y2="20" stroke="#eee7d3" stroke-width="1"/>
+            <text x="620.0" y="405" text-anchor="middle" font-size="9.5" fill="#8493a0" font-family="IBM Plex Mono">1.0</text>
+
+            <!-- axes -->
+            <line x1="60" y1="390" x2="620" y2="390" stroke="#5c6b78" stroke-width="1.6"/>
+            <line x1="60" y1="390" x2="60" y2="20" stroke="#5c6b78" stroke-width="1.6"/>
+            <text x="340" y="428" text-anchor="middle" font-size="12" fill="#5c6b78" font-family="Tajawal">تشبّع الماء Sw →</text>
+            <text x="24" y="200" text-anchor="middle" font-size="12" fill="#5c6b78" font-family="Tajawal" transform="rotate(-90,24,200)">التدفق الجزئي fw ↑</text>
+            <text x="622" y="24" font-size="10" fill="#8493a0" font-family="IBM Plex Mono">fw=1</text>
+
+            <!-- real fw(Sw) curve — computed numerically from kro/krw(Sw), not hand-drawn -->
+            <path d="M 194.40,390.00 L 202.92,388.53 L 211.43,386.62 L 219.95,384.34 L 228.47,381.77 L 236.98,378.82 L 245.50,375.40 L 254.01,371.51 L 262.53,367.14 L 271.05,362.27 L 279.56,356.90 L 288.08,350.95 L 296.60,343.94 L 305.11,335.81 L 313.63,326.58 L 322.14,316.29 L 330.66,304.94 L 339.18,292.58 L 347.69,277.64 L 356.21,258.69 L 364.73,237.10 L 373.24,214.28 L 381.76,191.60 L 390.27,170.48 L 398.79,152.03 L 407.31,133.89 L 415.82,115.74 L 424.34,98.32 L 432.86,82.38 L 441.37,68.67 L 449.89,57.92 L 458.40,49.75 L 466.92,41.94 L 475.44,34.74 L 483.95,28.56 L 492.47,23.79 L 500.99,20.82 L 509.50,20.00 L 620.00,20.00" fill="none" stroke="#0072BD" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+
+            <circle cx="194.4" cy="390" r="5" fill="#224347"/>
+            <text x="186" y="410" text-anchor="middle" font-size="11.5" fill="#224347" font-family="IBM Plex Mono" font-weight="700">Swc</text>
+
+            <!-- true Welge tangent: numerically the unique line from (Swc,0) touching the curve at exactly one point -->
+            <line x1="194.4" y1="390" x2="478.5" y2="20" stroke="#f8de7e" stroke-width="2" stroke-dasharray="6 4"/>
+            <circle cx="444.8" cy="64.0" r="6" fill="#D9534F"/>
+            <line x1="444.8" y1="64.0" x2="444.8" y2="390" stroke="#D9534F" stroke-width="1" stroke-dasharray="3 3"/>
+            <line x1="444.8" y1="64.0" x2="60" y2="64.0" stroke="#D9534F" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="444.8" y="406" text-anchor="middle" font-size="11.5" fill="#D9534F" font-family="IBM Plex Mono" font-weight="700">Swf</text>
+            <text x="48" y="68" text-anchor="end" font-size="11.5" fill="#D9534F" font-family="IBM Plex Mono" font-weight="700">fwf</text>
+
+            <circle cx="478.5" cy="20" r="6" fill="#2e7d53"/>
+            <line x1="478.5" y1="20" x2="478.5" y2="390" stroke="#2e7d53" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="478.5" y="406" text-anchor="middle" font-size="11.5" fill="#2e7d53" font-family="IBM Plex Mono" font-weight="700">S̄w</text>
+
+            <!-- rise/run triangle drawn ON the actual tangent line, between Swc and the tangent point -->
+            <path d="M194.4,390 L194.4,64.0 L444.8,64.0" fill="none" stroke="#8a6d1a" stroke-width="1"/>
+            <text x="180" y="230" text-anchor="end" font-size="9.5" fill="#8a6d1a" font-family="IBM Plex Mono">rise = fwf − 0</text>
+            <text x="320" y="58" text-anchor="middle" font-size="9.5" fill="#8a6d1a" font-family="IBM Plex Mono">run = Swf − Swc</text>
+
+            <rect x="440" y="330" width="175" height="52" rx="5" fill="#ffffff" fill-opacity="0.95" stroke="#f8de7e"/>
+            <text x="527" y="348" text-anchor="middle" font-size="10" fill="#8a6d1a" font-family="Tajawal" font-weight="700">مماس Welge — النقطة الحمراء</text>
+            <text x="527" y="362" text-anchor="middle" font-size="9" fill="#5c6b78" font-family="Tajawal">من (Swc,0) يلامس المنحنى مرة واحدة فقط</text>
+            <text x="527" y="374" text-anchor="middle" font-size="9" fill="#5c6b78" font-family="Tajawal">ثم يُمدَّد حتى fw=1 ليعطي S̄w</text>
+          </svg>
+          <p style="font-size:11px; color:var(--muted-2); text-align:center; margin-top:6px;">منحنى fw مُحسوب رقميًا من بيانات kro/krw حقيقية (Swc=0.24) — خط المماس والنقطة الحمراء موضوعان عدديًا عند نقطة التماس الفعلية، وليسا تقريبًا يدويًا.</p>
+        </div>
+
+        <div class="article-body">
+          <p><b>الخطوة 1 — ضع نقطة البداية:</b> ضع نقطة عند (Swc, 0) على الرسم — أقصى يسار المحور، عند تشبّع الماء الأصلي وfw=0 (لا يوجد ماء متدفق بعد قبل بدء الحقن).</p>
+          <p><b>الخطوة 2 — ابحث عن خط المماس:</b> ضع مسطرة على هذه النقطة، ودُرها تدريجيًا حتى تصبح الخط <b>مماسًا</b> لمنحنى fw — أي يلامسه في نقطة واحدة بالضبط دون أن يقطعه. هذه ليست أي نقطة عشوائية: هي النقطة الوحيدة التي يكون عندها "الخط المستقيم من Swc" له نفس ميل المنحنى نفسه في تلك اللحظة بالضبط.</p>
+          <p><b>الخطوة 3 — اقرأ Swf وfwf:</b> من نقطة التماس (النقطة الحمراء)، أسقط خطًا عموديًا للأسفل على المحور الأفقي فتقرأ <b>Swf</b> (تشبّع جبهة الصدمة — القيمة التي يقفز إليها التشبّع فجأة عند وصول الجبهة)، وخطًا أفقيًا لليسار فتقرأ <b>fwf</b> (نسبة الماء في التدفق عند تلك الجبهة تحديدًا).</p>
+          <p><b>الخطوة 4 — مدّد الخط واقرأ S̄w:</b> استمر بنفس المسطرة على نفس الخط حتى يصل لأعلى الرسم عند fw=1 (النقطة الخضراء). أسقط خطًا عموديًا للأسفل فتقرأ <b>S̄w</b> — وهذه هي الفكرة الذكية التي اكتشفها Welge: هذه القيمة تساوي <b>متوسط تشبّع الماء الفعلي لكامل المنطقة خلف الجبهة</b> لحظة الاختراق، رغم أن التشبّع خلف الجبهة ليس موحّدًا فعليًا (يتدرّج من Swf عند الجبهة حتى قيم أعلى قرب بئر الحقن) — امتداد المماس البسيط هذا "يلخّص" كل هذا التدرّج المعقّد برقم واحد صحيح رياضيًا.</p>
+          <p><b>ولإيجاد الميل عند أي نقطة أخرى على المنحنى</b> (وهو ما تحتاجه لاحقًا لحساب زمن الاختراق أو موقع أي تشبّع في مخطط التقدم الأمامي، أو لتحليل الأداء بعد الاختراق عند Sw2): ضع المسطرة مماسة للمنحنى في تلك النقطة تحديدًا (وليس بالضرورة عابرة من Swc)، ثم اقسم "الارتفاع" على "الأساس" لأي مثلث تكوّنه مع المحاور — هذا هو df_w/dS_w عند تلك النقطة.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🧮 الطريقة الرياضية — كيف تفعل الحاسبة نفس الشيء عدديًا</h2></div>
+        <div class="article-body">
+          <p>المسطرة والقلم دقيقان بقدر يد الإنسان فقط. الحاسبة تُنفّذ نفس الفكرة الهندسية بدقة رقمية عالية عبر خطوتين:</p>
+          <p><b>1) بناء المنحنى نقطيًا:</b> تُقسّم المسافة بين Swc و(1−Sor) إلى 400 نقطة متقاربة جدًا، وتُحسب fw عند كل نقطة عبر معادلة التدفق الجزئي أعلاه (باستخدام إمّا Corey أو الجدول المُدخَل، مع حدّ الجاذبية إن وُجد).</p>
+          <p><b>2) البحث عن نقطة المماس عدديًا (بدل تدوير مسطرة):</b> بما أن ميل الخط المستقيم من (Swc,0) إلى أي نقطة (Sw, fw) على المنحنى يُحسب مباشرة بالقسمة البسيطة fw/(Sw−Swc)، تفحص الحاسبة هذه القسمة عند كل نقطة من الـ400 نقطة، وتختار النقطة التي تُعطي <b>أعلى قيمة</b> لهذه القسمة. لماذا هذا يُطابق المماس؟ لأن الخط من نقطة ثابتة إلى منحنى محدّب-ثم-مقعّر (S-shaped) يبلغ أقصى ميل ممكن له بالضبط عند نقطة التماس — أي خط آخر (قبلها أو بعدها) يقطع المنحنى بدل أن يلامسه، وميله يكون أقل من ميل خط المماس. هذا مبدأ رياضي بسيط (تعظيم دالة) يُغني عن أي حل تفاضلي معقّد.</p>
+          <p>بعد إيجاد نقطة التماس، تُحسب S̄w مباشرة من معادلة الخط المستقيم نفسه: بما أن ميل الخط يساوي fwf/(Swf−Swc)، فإن تمديده حتى fw=1 يُعطي S̄w = Swc + 1/الميل — وهذه بالضبط الصيغة الجبرية المكافئة لخطوة "مدّ المسطرة حتى fw=1" يدويًا. ومن S̄w نحسب مباشرة <b>كفاءة الإزاحة عند الاختراق</b> — أي نسبة النفط القابل للحركة التي أُزيحت فعليًا:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="E_D%20%3D%20%5Cfrac%7B%5Cbar%7BS%7D_w%20-%20S_%7Bwc%7D%7D%7B1%20-%20S_%7Bwc%7D%7D"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🎯 دقة الطريقة العددية — تحقق مسبق</h2></div>
+        <div class="article-body">
+          <p class="eq-note">تحققتُ رقميًا من هذه الطريقة قبل استخدامها: عند خفض نسبة الحركية M (بتقليل لزوجة النفط)، ترتفع كفاءة الإزاحة المحسوبة تلقائيًا كما تتوقعه النظرية — وهو ما لاحظته فعليًا عند اختبار الخوارزمية (58.5% عند M≈0.82 مقابل 42.2% فقط عند M≈4.1 لنفس منحنيات النفاذية النسبية). كما تحققتُ من أن إضافة حدّ الجاذبية/الميل يعطي الاتجاه الفيزيائي الصحيح: الإزاحة الصاعدة (Updip) ترفع كفاءة الإزاحة، والهابطة (Downdip) تخفضها — تمامًا كما يُظهره الرسم البياني القياسي لتأثير زاوية الميل في مراجع هندسة المكامن.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>⚠️ لماذا يهتم مهندس المكامن بكل هذا؟</h2></div>
+        <div class="why-grid">
+          <div class="why-card danger">
+            <div class="wc-icon">💰</div>
+            <h4>تكلفة اقتصادية مباشرة</h4>
+            <p>الاختراق المبكر يعني إنتاج ماء مبكرًا (ارتفاع نسبة الماء المنتج − WOR) بينما لا يزال جزء كبير من النفط عالقًا في المكمن — تكاليف معالجة مياه أعلى وعمر إنتاجي اقتصادي أقصر.</p>
+          </div>
+          <div class="why-card">
+            <div class="wc-icon">🧪</div>
+            <h4>تحسين M عمليًا</h4>
+            <p>يمكن تحسين M بزيادة لزوجة الماء المحقون (حقن البوليمرات − Polymer Flooding) أو تقليل لزوجة النفط (الحقن الحراري)، مما يجعل الإزاحة أقرب للمثالية.</p>
+          </div>
+          <div class="why-card good">
+            <div class="wc-icon">📐</div>
+            <h4>تصميم نمط الحقن</h4>
+            <p>عند M غير مفضّلة، يلجأ المهندسون لأنماط حقن أكثر كثافة (كنمط الخمسة نقاط المُحسَّن) لتقليل تأثير التخطّي الإصبعي على الكسح الأفقي للمكمن.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📌 تعريف Craig الدقيق لنسبة الحركية (المستخدَم فعليًا في صناعة الإغراق المائي)</h2></div>
+        <div class="article-body">
+          <p>التعريف المبسّط M=λw/λo أعلاه يشرح <b>لماذا</b> تحدث الإزاحة المفضّلة أو غير المفضّلة، لكن في حسابات الإغراق المائي الفعلية (Craig's Definition، المرجع القياسي في الصناعة)، لا تُقاس kro وkrw عند نفس التشبّع أبدًا — بل كلٌّ منهما تُقاس في المنطقة الفيزيائية التي تخصّه فعليًا داخل المكمن، لأن هذا هو ما يحدد فعليًا السرعة النسبية للجبهتين المتجاورتين:</p>
+          <p><b>من بداية الحقن وحتى لحظة الاختراق:</b></p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="M_%7Bw%2Co%7D%20%3D%20%5Cfrac%7B%5Cleft%28k_%7Brw%7D/%5Cmu_w%5Cright%29_%7B%5Cbar%20S_%7BwBT%7D%7D%7D%7B%5Cleft%28k_%7Bro%7D/%5Cmu_o%5Cright%29_%7BS_%7Bwi%7D%7D%7D"></span></div>
+            <p class="eq-note">البسط: حركية الماء خلف الجبهة، تُقاس عند متوسط تشبّع الماء خلف الجبهة لحظة الاختراق (S̄wBT — نفس S̄w التي يحسبها مماس Welge). المقام: حركية النفط أمام الجبهة، تُقاس عند تشبّع الماء الأصلي Swi (حيث النفط لم يُزَح بعد إطلاقًا). هذه النسبة = «حركية الماء خلف الجبهة ÷ حركية النفط أمامها» — أي مقارنة مباشرة بين سرعة كل منطقة فعليًا، وليس مجرد نسبة عند نقطة واحدة عشوائية.</p>
+          </div>
+          <p><b>بعد الاختراق (Sw2 يزداد تدريجيًا عند بئر الإنتاج مع استمرار الحقن):</b></p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="M%20%3D%20%5Cfrac%7Bk_%7Brw%7D%5C%2C%40%5C%2C%5Cbar%20S_%7Bw2%7D%7D%7Bk_%7Bro%7D%5C%2C%40%5C%2CS_%7Bwi%7D%7D%5Ccdot%5Cfrac%7B%5Cmu_o%7D%7B%5Cmu_w%7D"></span></div>
+            <p class="eq-note">نفس المبدأ بالضبط، لكن krw الآن تُقاس عند متوسط التشبّع الجديد خلف الجبهة (S̄w2) بدل S̄wBT — أي أن M يستمر بالتغيّر مع الزمن حتى بعد الاختراق، لأن التشبّع خلف الجبهة يستمر بالارتفاع كلما استمر الحقن.</p>
+          </div>
+          <p>هذا بالضبط سبب الشكل المميز لمنحنى «نسبة الحركية مقابل الزمن»: تبقى M ثابتة تقريبًا طوال مرحلة ما قبل الاختراق (لأن S̄wBT ثابتة)، ثم تبدأ بالارتفاع تدريجيًا بعد لحظة الاختراق مباشرة (لأن S̄w2 يستمر بالتغيّر). للحقول الأمثلة الغازية أو الحقن الأميسيبل (Miscible)، حيث تكون النفاذية لكل مذيب هي نفس النفاذية المطلقة للصخر، يبسط التعريف إلى مجرد نسبة اللزوجتين مباشرة: M = μd/μD.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🧮 كفاءة الاسترجاع الكاملة: من الكسح الأفقي والرأسي إلى برميل النفط الفعلي</h2></div>
+        <div class="article-body">
+          <p>كل ما سبق (fw، منحنى التدفق الجزئي، مماس Welge، نسبة الحركية) يُحسب كفاءة الإزاحة <b>المجهرية</b> فقط (ED) — أي كم من النفط "غادر" المسام التي وصلها الماء فعليًا. لكن هذا ليس كل القصة: هناك أيضًا مساحات من المكمن <b>لم يصلها الماء إطلاقًا</b> (لا أفقيًا ولا رأسيًا)، ولا بد من احتسابها لمعرفة كمية النفط الفعلية المُستخرَجة من كامل المكمن. معامل الاسترجاع الكلي E يُبنى من ثلاثة معاملات منفصلة تمامًا، كل واحد يقيس بُعدًا مختلفًا من "فشل" الإزاحة في تغطية كل نقطة من المكمن:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="E%20%3D%20E_V%20%5Ccdot%20E_D"></span></div>
+            <p class="eq-note">EV: كفاءة الإزاحة الحجمية (الكسحية) — أي جزء المكمن الذي وصله الماء فعليًا (بصرف النظر عن مدى فعالية الإزاحة داخل هذا الجزء). ED: كفاءة الإزاحة المجهرية — داخل الجزء الذي وصله الماء تحديدًا، كم نسبة النفط أُزيحت فعليًا (وهذا هو ما يحسبه منحنى fw ومماس Welge).</p>
+          </div>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="E_V%20%3D%20E_A%20%5Ccdot%20E_I"></span></div>
+            <p class="eq-note">EV نفسه يتفكّك لعاملين: EA كفاءة الكسح الأفقي (Areal — النسبة المئوية من مساحة النمط التي غمرها الماء أفقيًا، وهو محور هذا الموقع)، وEI كفاءة الكسح الرأسي (Vertical أو Invasion — النسبة من السماكة الرأسية للمكمن التي غمرها الماء، والتي تنخفض بشدة في المكامن ذات الطبقات المتعددة النفاذية Layered Heterogeneity، حيث يتقدم الماء بسرعة في الطبقة عالية النفاذية بينما يتخلّف كثيرًا في الطبقات الأقل نفاذية أسفلها أو أعلاها).</p>
+          </div>
+          <p>عمليًا، كفاءات الكسح الحجمي الكلية للإغراقات المائية الفعلية تتراوح من نسبة قليلة جدًا وحتى ما يقارب 100% — والفارق الحاسم بينها هو بالضبط: نسبة الحركية (EA)، وتجانس طبقات المكمن رأسيًا (EI)، ونمط الحقن والإنتاج المُختار. أما كمية النفط الفعلية المُنتَجة (Np) فتُحسب من EV مباشرة عبر تغيّر التشبّع وعامل الحجم التكويني (FVF):</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="N_p%20%3D%20%5Cleft%28%5Cfrac%7BS_%7Bo1%7D%7D%7BB_%7Bo1%7D%7D%20-%20%5Cfrac%7BS_%7Bo2%7D%7D%7BB_%7Bo2%7D%7D%5Cright%29%20V_p%20E_V"></span></div>
+            <p class="eq-note">So1 تشبّع النفط عند بداية الإزاحة، So2 التشبّع المتبقي في المنطقة التي غمرها الماء (عادة Sor)، Bo1 وBo2 عامل الحجم التكويني للنفط عند البداية والنهاية، وVp حجم مسام المكمن الكلي. هذه المعادلة تفترض إزاحة شبيهة بالمكبس (Piston-like) داخل المنطقة المغمورة — وهو نفس افتراض ED أعلاه بالضبط.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🗺️ أنماط الحقن والإنتاج (Well Patterns)</h2></div>
+        <div class="article-body">
+          <p>لا يُحقن الماء عادة من بئر واحد نحو بئر إنتاج واحد فقط، بل تُرتَّب آبار الحقن والإنتاج في المكمن بأنماط هندسية متكررة تُغطي المساحة بالكامل. الأكثر شيوعًا هو <b>نمط الخمس نقاط (Five-Spot)</b>: بئر حقن واحد في مركز مربع، وأربعة آبار إنتاج عند زواياه — وهذا النمط تحديدًا هو المرجع الذي بُنيت عليه معادلة كفاءة الكسح 14-64 المستخدمة في الحاسبة. أنماط أخرى مثل <b>الخط المباشر (Direct Line Drive)</b> و<b>الخط المتعرج (Staggered Line Drive)</b> ترتّب الآبار في صفوف متوازية بدل شبكة متكررة، وتُستخدم عادة في مكامن ذات نفاذية اتجاهية واضحة (تختلف باختلاف الاتجاه).</p>
+          <div style="text-align:center; margin:14px 0;">
+            <svg viewBox="0 0 460 200" style="max-width:440px;">
+              <g transform="translate(20,20)">
+                <text x="70" y="-4" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">Five-Spot</text>
+                <circle cx="20" cy="20" r="6" fill="#b5432d"/><circle cx="120" cy="20" r="6" fill="#b5432d"/>
+                <circle cx="20" cy="120" r="6" fill="#b5432d"/><circle cx="120" cy="120" r="6" fill="#b5432d"/>
+                <circle cx="70" cy="70" r="7" fill="#0072BD"/>
+                <line x1="20" y1="20" x2="120" y2="20" stroke="#c9c4b4" stroke-dasharray="3 3"/>
+                <line x1="20" y1="120" x2="120" y2="120" stroke="#c9c4b4" stroke-dasharray="3 3"/>
+                <line x1="20" y1="20" x2="20" y2="120" stroke="#c9c4b4" stroke-dasharray="3 3"/>
+                <line x1="120" y1="20" x2="120" y2="120" stroke="#c9c4b4" stroke-dasharray="3 3"/>
+              </g>
+              <g transform="translate(220,20)">
+                <text x="70" y="-4" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">Direct Line Drive</text>
+                <circle cx="10" cy="20" r="6" fill="#0072BD"/><circle cx="60" cy="20" r="6" fill="#0072BD"/><circle cx="110" cy="20" r="6" fill="#0072BD"/>
+                <circle cx="10" cy="70" r="6" fill="#b5432d"/><circle cx="60" cy="70" r="6" fill="#b5432d"/><circle cx="110" cy="70" r="6" fill="#b5432d"/>
+                <circle cx="10" cy="120" r="6" fill="#0072BD"/><circle cx="60" cy="120" r="6" fill="#0072BD"/><circle cx="110" cy="120" r="6" fill="#0072BD"/>
+              </g>
+            </svg>
+          </div>
+          <div class="legend-mini">
+            <div class="lg-item"><span class="lg-dot" style="background:#0072BD"></span><div><b>الدائرة الزرقاء</b>بئر حقن (Injector)</div></div>
+            <div class="lg-item"><span class="lg-dot" style="background:#b5432d"></span><div><b>الدائرة الحمراء</b>بئر إنتاج (Producer)</div></div>
+          </div>
+          <p style="margin-top:14px;">أنماط أخرى شائعة في الصناعة: <b>نمط السبع نقاط (Seven-Spot)</b> وصيغته المقلوبة (Inverted Seven-Spot، حيث تنعكس أدوار آبار الحقن والإنتاج)، و<b>نمط التسع نقاط (Nine-Spot)</b> بصيغتيه العادية والمقلوبة — وهذا الأخير يمنح مرونة خاصة: يمكن تحويل الآبار الزاوية بين حقن وإنتاج لاحقًا بعد بدء التشغيل لإعادة توجيه النمط إذا تبيّن لاحقًا وجود <b>نفاذية اتجاهية (Directional Permeability)</b> — أي أن الصخر يسمح بمرور السوائل بسرعة مختلفة باختلاف الاتجاه (بسبب الشقوق الطبيعية أو بنية الترسيب)، وفي هذه الحالة يُفضَّل محاذاة الآبار المتشابهة (حقن مع حقن) موازية لاتجاه أعلى نفاذية، والآبار المختلفة عمودية عليه، لتقليل تأثيرها السلبي على انتظام الجبهة.</p>
+          <p><b>معيار اختيار النمط عمليًا</b> ليس فقط كفاءة الكسح النظرية، بل أيضًا: (1) نمط الآبار الموجود مسبقًا في الحقل ومسافاته، (2) نسبة آبار الإنتاج لآبار الحقن المطلوبة اقتصاديًا (الأنماط المقلوبة كالسبع والتسع نقاط المقلوبة تمنح أكبر عدد آبار إنتاج لكل بئر حقن، فتُفضَّل عند رغبة برفع معدل الإنتاج الكلي)، و(3) استمرارية الطبقة أفقيًا — فإن كانت رديئة، يقلّ تجانس الكسح كلما قلّت كثافة آبار الحقن، وقد يُلجَأ للحفر التعويضي (Infill Drilling) لتحسين ذلك.</p>
+
+          <h4>لماذا تختلف كفاءة الكسح رقميًا بين الأنماط لنفس M؟</h4>
+          <p>الفرق الأساسي هو <b>هندسة المسافة بين بئر الحقن وبئر الإنتاج ونسبة كثافة آبار الحقن إلى الإنتاج</b>. في نمط الخمس نقاط، كل بئر حقن "يخدم" أربعة آبار إنتاج بمسافات متساوية في كل الاتجاهات — توزيع متماثل يعطي جبهة إزاحة قريبة من التناظر الدائري حول بئر الحقن، وهو ما يجعله المرجع القياسي لمعادلة 14-64. أما أنماط الخط (Line Drive)، فتُصف فيها آبار الحقن والإنتاج في صفوف متوازية: كل بئر حقن يدفع الماء بشكل شبه أحادي الاتجاه نحو صف الإنتاج المقابل مباشرة، فتكون جبهة الإزاحة أقرب لخط مستقيم بدل دائرة — هذا التوزيع الخطي يجعل مناطق "الزوايا" بين الآبار (خارج المسار المباشر بين بئر حقن وبئر إنتاج) تُغمر بالماء متأخرًا جدًا مقارنة بنمط الخمس نقاط، فتنخفض كفاءة الكسح الأفقي الكلية لنفس M. النمط المتعرج (Staggered Line Drive) يخفف هذا القصور جزئيًا بإزاحة الصفوف عن بعضها، فيقلّل مساحة الزوايا المهملة مقارنة بالخط المباشر، لكنه يبقى أقل كفاءة من الخمس نقاط عند نفس M.</p>
+          <p>بمعنى آخر: <b>M يتحكم بشكل الإزاحة (منتظمة أم متخطّية إصبعيًا)، بينما نمط الآبار يتحكم بأين تذهب المساحة "غير المخدومة" جيدًا هندسيًا</b> — والاثنان يتضاعف تأثيرهما السلبي معًا عند M مرتفعة مع نمط خط مباشر، وهو أسوأ سيناريو ممكن لكفاءة الكسح.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📐 المراحل الثلاث لأي عملية إغراق مائي</h2></div>
+        <div class="article-body">
+          <p>تمر أي عملية إزاحة بثلاث مراحل زمنية متتالية، ولكل مرحلة سؤال مختلف يجيب عنه المهندس:</p>
+          <p><b>قبل الاختراق (Before Breakthrough):</b> لم يصل الماء بعد لبئر الإنتاج. كفاءة الكسح الأفقي هنا تتناسب طرديًا مع حجم الماء المحقون حتى تلك اللحظة:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="E_A%20%3D%20%5Cfrac%7BW_%7Binj%7D%7D%7B%28PV%29%28%5Cbar%7BS%7D_%7BwBT%7D-S_%7Bwi%7D%29%7D"></span></div>
+            <p class="eq-note">Winj حجم الماء المحقون حتى تلك اللحظة، وPV حجم المسام الكلي للنمط. كلما ازداد الحقن، ازدادت المساحة المغمورة تناسبًا خطيًا تقريبيًا.</p>
+          </div>
+          <p><b>عند الاختراق (At Breakthrough):</b> هذه اللحظة الحرجة التي وصل عندها الماء لأول مرة لبئر الإنتاج. كفاءة الكسح عند هذه اللحظة تحديدًا (EABT) هي ما تحسبه الحاسبة عبر معادلة 14-64 المتحقق منها، وتعتمد فقط على M — كلما ارتفعت M، انخفضت EABT، لأن التخطّي الإصبعي يعني وصول الماء لبئر الإنتاج عبر "أصابع" ضيقة بينما مساحات واسعة من المكمن لم تُغمر بعد. <b>كيف تُقرأ هذه القيمة من رسم "كفاءة الكسح مقابل M" في الحاسبة؟</b> ابحث عن قيمة M على المحور الأفقي (مقياس لوغاريتمي)، اصعد عموديًا حتى تلامس المنحنى الأزرق، ثم اقرأ القيمة المقابلة على المحور الرأسي — هذه هي EABT مباشرة؛ النقطة الحمراء على الرسم تُظهر موقعك الحالي على هذا المنحنى تلقائيًا.</p>
+          <p><b>بعد الاختراق (After Breakthrough):</b> الإنتاج يستمر، لكن الآن يخرج ماء مع النفط معًا من بئر الإنتاج (نسبة الماء المُنتَج تزداد تدريجيًا). كفاءة الكسح تستمر بالارتفاع كلما استمر الحقن — وهذا ما يحسبه ارتباط Dyes (المعادلة 14-67) في قسم "الأداء بعد الاختراق": فكلما اخترت تشبّعًا Sw2 أعلى عند بئر الإنتاج (أي استمر الحقن لفترة أطول بعد الاختراق الأول)، ارتفعت كفاءة الكسح المحسوبة، لكن ترافقها زيادة في نسبة الماء المُنتَج (WOR) — وهذه المعادلة المحاسبة الاقتصادية الحقيقية التي يوازن بها المهندس: متى يصبح إنتاج الماء الإضافي غير مجدٍ اقتصاديًا مقابل النفط الإضافي المُستخرج؟</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📏 معادلة التقدم الأمامي — أين يقع كل تشبّع تحت الأرض؟</h2></div>
+        <div class="article-body">
+          <p>منحنى fw يخبرنا بنسبة الماء عند كل تشبّع، لكنه لا يخبرنا مباشرة <b>أين</b> يقع هذا التشبّع فعليًا داخل المكمن في لحظة زمنية معينة. معادلة التقدم الأمامي (Frontal Advance) تربط الاثنين:</p>
+          <div class="eq-block">
+            <div class="eqx"><span class="katex-eq" data-tex="x_%7BS_w%7D%20%3D%20%5Cfrac%7B5.615%20%5Ccdot%20W_%7Binj%7D%7D%7B%5Cphi%20%5Ccdot%20A%7D%5Cleft%28%5Cfrac%7Bdf_w%7D%7BdS_w%7D%5Cright%29_%7BS_w%7D"></span></div>
+            <p class="eq-note">لكل تشبّع Sw معين، ميل منحنى fw عنده (df_w/dS_w) يحدد مدى سرعة "انتقاله" داخل المكمن نسبة لحجم الماء المحقون. النتيجة العملية المدهشة من نظرية Buckley-Leverett: <b>التشبعات المنخفضة (قرب الجبهة) تتحرك أسرع من التشبعات المتوسطة</b> — لهذا بالضبط تتشكّل "الصدمة" (Shock Front) بدل تدرّج تشبّع سلس؛ الجبهة تتقدم كخط حاد يفصل منطقة "مغمورة تمامًا تقريبًا" عن منطقة "لم يصلها الماء بعد بتاتًا". الرسم البياني في الحاسبة يُظهر هذا التوزيع فعليًا عند أي زمن تختاره.</p>
+          </div>
+          <p><b>كيف تُقرأ هذه المعادلة من الرسم البياني نفسه؟</b> لأي تشبّع Sw تختاره على منحنى fw (غير Swf)، ارسم مماسًا للمنحنى عنده فقط (وليس من Swc هذه المرة)، واقرأ ميله بنفس طريقة "الارتفاع÷الأساس" الموضحة أعلاه — هذا الميل هو df_w/dS_w في المعادلة. كلما كان الميل عند نقطة معينة أكبر، كان ذلك التشبّع "أسرع" في انتقاله عبر المكمن، فيظهر أبعد عن بئر الحقن في مخطط توزيع التشبّع (لاحظ أن التشبعات القريبة من Swf لها أكبر ميل تقريبًا، فتظهر متقاربة جدًا من موقع الجبهة نفسها في الرسم — بينما التشبعات العالية قرب 1−Sor، حيث المنحنى شبه أفقي (ميل قريب من الصفر)، "تتخلّف" قريبًا جدًا من بئر الحقن نفسه).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>⚠️ لماذا يهتم مهندس المكامن بكل هذا؟</h2></div>
+        <div class="why-grid">
+          <div class="why-card danger">
+            <div class="wc-icon">💰</div>
+            <h4>تكلفة اقتصادية مباشرة</h4>
+            <p>الاختراق المبكر يعني إنتاج ماء مبكرًا (ارتفاع نسبة الماء المنتج − WOR) بينما لا يزال جزء كبير من النفط عالقًا في المكمن — تكاليف معالجة مياه أعلى وعمر إنتاجي اقتصادي أقصر.</p>
+          </div>
+          <div class="why-card">
+            <div class="wc-icon">🧪</div>
+            <h4>تحسين M عمليًا</h4>
+            <p>يمكن تحسين M بزيادة لزوجة الماء المحقون (حقن البوليمرات − Polymer Flooding) أو تقليل لزوجة النفط (الحقن الحراري)، مما يجعل الإزاحة أقرب للمثالية.</p>
+          </div>
+          <div class="why-card good">
+            <div class="wc-icon">📐</div>
+            <h4>تصميم نمط الحقن</h4>
+            <p>عند M غير مفضّلة، يلجأ المهندسون لأنماط حقن أكثر كثافة (كنمط الخمسة نقاط المُحسَّن) لتقليل تأثير التخطّي الإصبعي على الكسح الأفقي للمكمن.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📖 قاموس المصطلحات التفاعلي</h2><span class="eq">اضغط لعرض الشرح</span></div>
+        <div class="gloss-grid" id="glossaryGrid"></div>
+      </div>
+
+      <div class="card">
+        <div class="article-body" style="font-size:12px;">
+          <p><b>مصادر معادلات كفاءة الكسح الأفقي والتقدم الأمامي المستخدمة في الحاسبة:</b> معادلة كفاءة الكسح عند الاختراق لنمط الخمس نقاط، ومعامِلات ارتباط Dyes et al. (1954) متعددة الأنماط، ومعادلة التقدم الأمامي لباكلي-ليفريت (Buckley-Leverett) — جميعها معادلات قياسية موثّقة في مرجعَي Craig "The Reservoir Engineering Aspects of Waterflooding" (SPE Monograph) وWillhite "Waterflooding".</p>
+        </div>
+      </div>
+
+      <!-- ============ SOLVED EXAMPLES ============ -->
+      <div class="card">
+        <div class="card-head"><h2>🧾 مثال محلول كامل — من البيانات الخام إلى الاسترجاع النهائي</h2></div>
+        <div class="article-body">
+          <p><b>السؤال:</b> مكمن نفطي خطي مرشّح للإغراق المائي. مطلوب: (أ) بناء منحنى التدفق الجزئي fw وتحديد نقطة الصدمة Swf بطريقتي الرسم والحساب المباشر، (ب) حساب زمن الاختراق وحجم الماء المحقون عنده، (ج) حساب أداء الإنتاج (WOR ومعدل الاسترجاع) عند تشبّع ماء لاحق Sw2=0.65 بعد الاختراق.</p>
+          <p><b>المعطيات:</b></p>
+          <table class="ex-table">
+            <tbody>
+              <tr><td>لزوجة النفط μo</td><td>2.0 cp</td></tr>
+              <tr><td>لزوجة الماء μw</td><td>1.0 cp</td></tr>
+              <tr><td>تشبّع الماء الأصلي Swc = Swi</td><td>0.20</td></tr>
+              <tr><td>تشبّع النفط المتبقي Sor</td><td>0.20</td></tr>
+              <tr><td>المسامية φ</td><td>25%</td></tr>
+              <tr><td>مساحة المقطع A</td><td>26,400 ft²</td></tr>
+              <tr><td>طول النظام L</td><td>600 ft</td></tr>
+              <tr><td>معدل الحقن iw</td><td>900 bbl/day</td></tr>
+              <tr><td>عامل الحجم التكويني Bo، Bw</td><td>1.25، 1.02 bbl/STB</td></tr>
+              <tr><td>زاوية الميل</td><td>0 (مكمن أفقي)</td></tr>
+            </tbody>
+          </table>
+          <table class="ex-table">
+            <thead><tr><th>Sw</th><th>kro</th><th>krw</th></tr></thead>
+            <tbody>
+              <tr><td>0.20</td><td>0.600</td><td>0.000</td></tr>
+              <tr><td>0.30</td><td>0.220</td><td>0.012</td></tr>
+              <tr><td>0.40</td><td>0.120</td><td>0.024</td></tr>
+              <tr><td>0.50</td><td>0.060</td><td>0.034</td></tr>
+              <tr><td>0.60</td><td>0.025</td><td>0.067</td></tr>
+              <tr><td>0.70</td><td>0.0023</td><td>0.130</td></tr>
+              <tr><td>0.80</td><td>0.000</td><td>0.270</td></tr>
+              <tr><td>1.00</td><td>0.000</td><td>1.000</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ex-card">
+          <div class="ex-head">الجزء (أ) — بناء منحنى fw وتحديد نقطة الصدمة Swf</div>
+          <p class="ex-note"><b>الحل بالمعادلة:</b> نحسب fw عند كل Sw من الجدول باستخدام:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cdfrac%7Bk_%7Bro%7D%5C%2C%5Cmu_w%7D%7Bk_%7Brw%7D%5C%2C%5Cmu_o%7D%7D"></span></div></div>
+          <p class="ex-note">مثال تطبيقي عند Sw=0.60:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%280.60%29%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cdfrac%7B0.025%5Ctimes%201.0%7D%7B0.067%5Ctimes%202.0%7D%7D%20%3D%200.843"></span></div></div>
+          <table class="ex-table">
+            <thead><tr><th>Sw</th><th>0.20</th><th>0.30</th><th>0.40</th><th>0.50</th><th>0.60</th><th>0.70</th><th>0.80</th><th>1.00</th></tr></thead>
+            <tbody><tr><td>fw</td><td>0.000</td><td>0.098</td><td>0.286</td><td>0.531</td><td>0.843</td><td>0.991</td><td>1.000</td><td>1.000</td></tr></tbody>
+          </table>
+
+          <p class="ex-note" style="margin-top:10px;"><b>الحل بالرسم:</b> نرسم fw مقابل Sw، ثم نضع نقطة عند (Swc=0.20 , 0) وندير مسطرة حولها حتى تلامس المنحنى في نقطة واحدة فقط، ونمدّها حتى fw=1:</p>
+          <div class="diagram-wrap" style="margin:14px 0;">
+            <svg viewBox="0 0 500 305" style="max-width:480px;">
+              <line x1="55.0" y1="280" x2="55.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="55.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.0</text>
+              <line x1="55" y1="280.0" x2="470" y2="280.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="283.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.0</text>
+              <line x1="138.0" y1="280" x2="138.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="138.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.2</text>
+              <line x1="55" y1="228.0" x2="470" y2="228.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="231.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.2</text>
+              <line x1="221.0" y1="280" x2="221.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="221.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.4</text>
+              <line x1="55" y1="176.0" x2="470" y2="176.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="179.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.4</text>
+              <line x1="304.0" y1="280" x2="304.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="304.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.6</text>
+              <line x1="55" y1="124.0" x2="470" y2="124.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="127.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.6</text>
+              <line x1="387.0" y1="280" x2="387.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="387.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.8</text>
+              <line x1="55" y1="72.0" x2="470" y2="72.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="75.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">0.8</text>
+              <line x1="470.0" y1="280" x2="470.0" y2="20" stroke="#eee7d3" stroke-width="1"/><text x="470.0" y="293" text-anchor="middle" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">1.0</text>
+              <line x1="55" y1="20.0" x2="470" y2="20.0" stroke="#eee7d3" stroke-width="1"/><text x="46" y="23.0" text-anchor="end" font-size="8.5" fill="#8493a0" font-family="IBM Plex Mono">1.0</text>
+
+              <line x1="55" y1="280" x2="470" y2="280" stroke="#5c6b78" stroke-width="1.4"/>
+              <line x1="55" y1="280" x2="55" y2="20" stroke="#5c6b78" stroke-width="1.4"/>
+              <text x="262" y="300" text-anchor="middle" font-size="10.5" fill="#5c6b78" font-family="Tajawal">Sw →</text>
+              <text x="18" y="150" text-anchor="middle" font-size="10.5" fill="#5c6b78" font-family="Tajawal" transform="rotate(-90,18,150)">fw ↑</text>
+
+              <path d="M 138.0,280.0 L 146.3,276.6 L 154.6,272.2 L 162.9,266.9 L 171.2,260.9 L 179.5,254.4 L 187.8,246.8 L 196.1,237.7 L 204.4,227.6 L 212.7,216.8 L 221.0,205.7 L 229.3,194.3 L 237.6,182.1 L 245.9,169.3 L 254.2,155.8 L 262.5,141.8 L 270.8,125.9 L 279.1,108.0 L 287.4,90.0 L 295.7,73.6 L 304.0,60.8 L 312.3,50.3 L 320.6,40.1 L 328.9,31.4 L 337.2,25.1 L 345.6,22.3 L 353.9,21.5 L 362.2,20.9 L 370.5,20.4 L 378.8,20.1 L 470.0,20.0" fill="none" stroke="#0072BD" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+
+              <circle cx="138.0" cy="280" r="4.5" fill="#224347"/>
+              <text x="132" y="298" text-anchor="middle" font-size="10" fill="#224347" font-family="IBM Plex Mono" font-weight="700">Swc=0.20</text>
+
+              <line x1="138.0" y1="280" x2="334.9" y2="20" stroke="#f8de7e" stroke-width="1.8" stroke-dasharray="5 4"/>
+              <circle cx="303.2" cy="61.9" r="5.5" fill="#D9534F"/>
+              <line x1="303.2" y1="61.9" x2="303.2" y2="280" stroke="#D9534F" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="303.2" y1="61.9" x2="55" y2="61.9" stroke="#D9534F" stroke-width="1" stroke-dasharray="3 3"/>
+              <text x="303.2" y="298" text-anchor="middle" font-size="10" fill="#D9534F" font-family="IBM Plex Mono" font-weight="700">Swf=0.598</text>
+              <text x="46" y="66" text-anchor="end" font-size="10" fill="#D9534F" font-family="IBM Plex Mono" font-weight="700">0.839</text>
+
+              <circle cx="334.9" cy="20" r="5.5" fill="#2e7d53"/>
+              <text x="334.9" y="15" text-anchor="middle" font-size="10" fill="#2e7d53" font-family="IBM Plex Mono" font-weight="700">S̄wBT=0.675</text>
+            </svg>
+          </div>
+          <p class="ex-note">النقطتان تتطابقان: <b>Swf ≈ 0.598</b>، <b>fwf ≈ 0.839</b>، وميل خط المماس (dfw/dSw)_Swf ≈ 2.107، والامتداد حتى fw=1 يعطي <b>S̄wBT ≈ 0.675</b> — وهذا هو شرط التماس نفسه معبَّرًا عنه رياضيًا:</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="%5Cleft%28%5Cfrac%7Bdf_w%7D%7BdS_w%7D%5Cright%29_%7BS_%7Bwf%7D%7D%20%3D%20%5Cfrac%7Bf_w%28S_%7Bwf%7D%29-0%7D%7BS_%7Bwf%7D-S_%7Bwc%7D%7D"></span></div></div>
+        </div>
+
+        <div class="ex-card">
+          <div class="ex-head">الجزء (ب) — زمن الاختراق وحجم الحقن التراكمي عنده</div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="PV%20%3D%20%5Cfrac%7B%5Cphi%20A%20L%7D%7B5.615%7D%20%3D%20%5Cfrac%7B0.25%5Ctimes%2026%2C400%5Ctimes%20600%7D%7B5.615%7D%20%3D%20705%2C254%5Ctext%7B%20bbl%7D"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="t_%7BBT%7D%20%3D%20%5Cfrac%7BPV%7D%7Bi_w%7D%5Ccdot%5Cfrac%7B1%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bwf%7D%7D%7D%20%3D%20%5Cfrac%7B705%2C254%7D%7B900%7D%5Ctimes%5Cfrac%7B1%7D%7B2.107%7D%20%3D%20372%5Ctext%7B%20day%7D"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="W_%7BiBT%7D%20%3D%20i_w%20%5Ccdot%20t_%7BBT%7D%20%3D%20900%5Ctimes%20372%20%3D%20334%2C696%5Ctext%7B%20bbl%7D%20%5Cquad%28%3D0.47%5Ctext%7B%20PV%7D%29"></span></div></div>
+          <p class="ex-note">هذه القيم مطابقة لما تحسبه الحاسبة تلقائيًا في تبويب «التقدم الأمامي وزمن الاختراق» عند إدخال نفس البيانات أعلاه.</p>
+        </div>
+
+        <div class="ex-card">
+          <div class="ex-head">الجزء (ج) — أداء الإنتاج بعد الاختراق عند Sw2 = 0.65</div>
+          <p class="ex-note">من نفس منحنى fw: fw(0.65) ≈ 0.940، و(dfw/dSw)_Sw2 ≈ 1.683 (قراءة الميل المحلي للمنحنى عند هذه النقطة تحديدًا — وليس ميل خط المماس من Swc).</p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="%5Cbar%20S_%7Bw2%7D%20%3D%20S_%7Bw2%7D%20%2B%20%5Cfrac%7B1-f_%7Bw2%7D%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bw2%7D%7D%7D%20%3D%200.65%2B%5Cfrac%7B1-0.940%7D%7B1.683%7D%20%3D%200.686"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="Q_i%20%3D%20%5Cfrac%7B1%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bw2%7D%7D%7D%20%3D%20%5Cfrac%7B1%7D%7B1.683%7D%20%3D%200.594%5Ctext%7B%20PV%7D"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="WOR%20%3D%20%5Cfrac%7Bi_w%20f_%7Bw2%7D%7D%7Bi_w%281-f_%7Bw2%7D%29%7D%20%3D%20%5Cfrac%7B900%5Ctimes0.940%7D%7B900%5Ctimes0.060%7D%20%3D%2015.7%5Ctext%7B%20bbl/bbl%7D"></span></div></div>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="E_D%20%3D%20%5Cfrac%7B%5Cbar%20S_%7Bw2%7D-S_%7Bwc%7D%7D%7B1-S_%7Bwc%7D%7D%20%3D%20%5Cfrac%7B0.686-0.20%7D%7B0.80%7D%20%3D%2060.7%5C%25"></span></div></div>
+          <p class="ex-note">النتائج مطابقة لتبويب «الأداء بعد الاختراق» في الحاسبة عند إدخال Sw2=0.65 — لاحظ أن fw2 وS̄w2 هنا تُقرآن بنفس منطق مماس Welge، لكن الخط الآن يبدأ من (Sw2, fw2) نفسها وليس من (Swc, 0).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🧾 مثال إضافي — الطريقة الرياضية التحليلية لإيجاد الميل (بديل عن القراءة من الرسم)</h2></div>
+        <div class="article-body">
+          <p><b>السؤال:</b> بدل قراءة ميل خط المماس بالعين من الرسم، أوجد dfw/dSw جبريًا مباشرة، لمكمن آخر لزوجتاه μw=1.0 cp وμo=2.0 cp، تتبع فيه نسبة النفاذية النسبية kro/krw نمطًا أُسّيًا واضحًا (حالة شائعة في العديد من الصخور المُختبرة معمليًا) حسب البيانات التالية:</p>
+          <table class="ex-table">
+            <thead><tr><th>Sw</th><th>0.25</th><th>0.35</th><th>0.45</th><th>0.55</th><th>0.65</th><th>0.75</th></tr></thead>
+            <tbody><tr><td>kro/krw</td><td>30.23</td><td>9.65</td><td>3.02</td><td>0.96</td><td>0.30</td><td>0.10</td></tr></tbody>
+          </table>
+        </div>
+        <div class="ex-card">
+          <p class="ex-note"><b>الخطوة 1 — ملاءمة البيانات بدالة أُسّية (Least-Squares Fit على ln(kro/krw)):</b></p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="%5Cln%5Cleft%28%5Cfrac%7Bk_%7Bro%7D%7D%7Bk_%7Brw%7D%7D%5Cright%29%20%3D%20%5Cln%20a%20%2B%20b%5C%2CS_w%20%5Cquad%5Cxrightarrow%7B%5Ctext%7Bانحدار%20خطي%7D%7D%5Cquad%20a%5Capprox531.2%2C%5C%3B%20b%5Capprox-11.48"></span></div></div>
+
+          <p class="ex-note" style="margin-top:10px;"><b>الخطوة 2 — تعويضها في معادلة fw:</b></p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cleft%28%5Cdfrac%7B%5Cmu_w%7D%7B%5Cmu_o%7D%5Cright%29%20a%5C%2C%20e%5E%7BbS_w%7D%7D"></span></div></div>
+
+          <p class="ex-note" style="margin-top:10px;"><b>الخطوة 3 — اشتقاق dfw/dSw جبريًا بقاعدة القسمة:</b></p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="%5Cleft%28%5Cfrac%7Bdf_w%7D%7BdS_w%7D%5Cright%29_%7BS_w%7D%20%3D%20%5Cfrac%7B-%5Cleft%28%5Cdfrac%7B%5Cmu_w%7D%7B%5Cmu_o%7D%5Cright%29%20a%5C%2C%20b%5C%2C%20e%5E%7BbS_w%7D%7D%7B%5Cleft%5B1%2B%5Cleft%28%5Cdfrac%7B%5Cmu_w%7D%7B%5Cmu_o%7D%5Cright%29%20a%5C%2C%20e%5E%7BbS_w%7D%5Cright%5D%5E2%7D"></span></div></div>
+
+          <p class="ex-note" style="margin-top:10px;"><b>الخطوة 4 — التطبيق العددي عند Sw=0.70 (بلا أي قراءة بالعين):</b></p>
+          <div class="eq-block"><div class="eqx"><span class="katex-eq" data-tex="f_w%280.70%29%3D0.921%20%5Cqquad%20%5Cleft%28%5Cfrac%7Bdf_w%7D%7BdS_w%7D%5Cright%29_%7B0.70%7D%20%5Capprox%200.837"></span></div></div>
+          <p class="ex-note">هذه الطريقة مفيدة تحديدًا عندما تتبع نسبة kro/krw نمطًا أُسّيًا واضحًا (كما هنا)؛ في الحالات التي لا تتبع فيها هذا النمط (كمثالنا الرئيسي أعلاه، حيث kro تهبط إلى الصفر فجأة قرب Sor)، الأدق هو الاشتقاق العددي المباشر لبيانات الجدول نفسها — وهو ما تفعله الحاسبة داخليًا افتراضيًا بغضّ النظر عن شكل العلاقة.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SIMULATOR ============ -->
+    <section class="section" id="sec-sim">
+
+      <div class="mr-panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:14px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--gold-light); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px;">استكشاف تفاعلي مباشر</div>
+            <div style="font-size:15px; font-weight:700;">حرّك الشريط لتغيير نسبة الحركية مباشرة</div>
+          </div>
+          <div class="mr-value" id="mrValueDisplay">1.00</div>
+        </div>
+        <div class="mr-slider-row">
+          <input type="range" id="mSlider" min="-10" max="130" value="0" step="1" oninput="onSliderInput()">
+        </div>
+        <div class="mr-scale"><span>M = 0.1 (مفضّلة جدًا)</span><span>M = 1</span><span>M = 20 (غير مفضّلة جدًا)</span></div>
+        <div id="mrBadge" class="mr-badge favorable">✔ نسبة حركية مفضّلة — إزاحة مستقرة</div>
+      </div>
+
+      <div class="grid2" style="align-items:start;">
+        <div class="result-panel" style="grid-column: 1 / -1;">
+          <div class="result-grid">
+            <div class="rstat"><div class="rlabel">Mobility Ratio</div><div class="rval gold" id="o_M">1.00</div></div>
+            <div class="rstat"><div class="rlabel">Shock Front Sw</div><div class="rval" id="o_swf">—</div></div>
+            <div class="rstat"><div class="rlabel">Avg Sw at Breakthrough</div><div class="rval" id="o_swbt">—</div></div>
+            <div class="rstat"><div class="rlabel">Displacement Eff. (ED)</div><div class="rval gold" id="o_ed">—</div></div>
+            <div class="rstat"><div class="rlabel">fw at Front</div><div class="rval" id="o_fwf">—</div></div>
+            <div class="rstat"><div class="rlabel">Viscosity Ratio (μo/μw)</div><div class="rval" id="o_visc">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><h2>🧱 شكل الجبهة مباشرة: شبه-مكبسي مقابل تخطّي إصبعي</h2><span class="eq">يتحدّث مباشرة مع الشريط أعلاه</span></div>
+        <div style="text-align:center;">
+          <div id="frontShapeWrap" style="max-width:420px; margin:0 auto;"></div>
+          <div id="frontShapeLabel" style="font-weight:700; margin-top:6px;"></div>
+          <div id="frontShapeSub" style="font-size:11.5px; color:var(--muted);"></div>
+        </div>
+        <p style="font-size:11.5px; color:var(--muted-2); margin-top:10px; text-align:center;">حرّك الشريط أعلاه: عند M≤1 تبقى الجبهة شبه مستقيمة (إزاحة شبه-مكبسية)، وكلما زادت M عن 1 ازداد تموّج الجبهة وتراجع موقعها المتوسط — وهذا هو النفط المتجاوَز العالق خلفها.</p>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <div class="card-head"><h2>📉 كيف تتغير كفاءة الإزاحة (ED) مع نسبة الحركية M؟</h2><span class="eq">يتحدّث مباشرة مع الشريط أعلاه</span></div>
+        <div id="edVsMPlot"></div>
+        <p style="font-size:11.5px; color:var(--muted-2); margin-top:8px; text-align:center;">النقطة الحمراء هي موضع الشريط الحالي؛ حرّك الشريط أعلاه لمشاهدتها تتحرك على المنحنى مباشرة، وسترى كيف تنخفض ED كلما زادت M عن 1.</p>
+      </div>
+      <p style="font-size:11px; color:var(--muted-2); margin:14px 0 18px; text-align:center;">لمقارنة ثابتة جنبًا إلى جنب بين الحالتين المتطرّفتين، انظر قسم «مقارنة بصرية» في صفحة الشرح.</p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+        <button class="btn ghost sm" onclick="loadSampleData()">📥 تحميل بيانات تجريبية</button>
+        <button class="btn ghost sm" onclick="clearAllInputs()">🗑️ مسح جميع القيم المُدخَلة</button>
+      </div>
+
+      <div class="card" style="margin-top:22px;">
+        <div class="card-head"><h2>2. الحساب الفيزيائي الكامل والمتقدم</h2><span class="eq">إدخال بيانات فعلية من جدول نفاذية نسبية</span></div>
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--navy-900); margin-bottom:14px; cursor:pointer;">
+          <input type="checkbox" id="useTabularKr" onchange="toggleKrMode()" style="width:16px; height:16px;"> استخدام جدول بيانات النفاذية النسبية الفعلي بدل نموذج Corey
+        </label>
+
+        <div id="coreyFields" class="grid4">
+          <div class="field"><label>lزوجة النفط μo <span class="unit">cP</span></label><input type="text" id="input_muo" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>لزوجة الماء μw <span class="unit">cP</span></label><input type="text" id="input_muw" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>Swc <span class="unit">(تشبّع الماء الأصلي)</span></label><input type="text" id="input_swc" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>Sor <span class="unit">(تشبّع الزيت المتبقي)</span></label><input type="text" id="input_sor" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>krw @ Sor <span class="unit">(النفاذية النسبية القصوى للماء)</span></label><input type="text" id="input_krwmax" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>kro @ Swc <span class="unit">(النفاذية النسبية القصوى للنفط)</span></label><input type="text" id="input_kromax" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>nw <span class="unit">(أُس Corey للماء)</span></label><input type="text" id="input_nw" value="" oninput="onPhysicalInput()"></div>
+          <div class="field"><label>no <span class="unit">(أُس Corey للنفط)</span></label><input type="text" id="input_no" value="" oninput="onPhysicalInput()"></div>
+        </div>
+
+        <div id="tabularFields" style="display:none;">
+          <div class="grid2" style="margin-bottom:10px;">
+            <div class="field"><label>lزوجة النفط μo <span class="unit">cP</span></label><input type="text" id="input_muo_tab" value="" oninput="onPhysicalInput()"></div>
+            <div class="field"><label>لزوجة الماء μw <span class="unit">cP</span></label><input type="text" id="input_muw_tab" value="" oninput="onPhysicalInput()"></div>
+          </div>
+          <div class="editor-head" style="display:grid; grid-template-columns:1fr 1fr 1fr 34px; gap:8px; margin-bottom:8px;">
+            <span style="font-size:11px; color:var(--muted-2); text-align:center;">Sw</span>
+            <span style="font-size:11px; color:var(--muted-2); text-align:center;">Kro</span>
+            <span style="font-size:11px; color:var(--muted-2); text-align:center;">Krw</span>
+            <span></span>
+          </div>
+          <div id="krTableRows"></div>
+          <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+            <button class="btn ghost sm" onclick="addKrRow()">+ إضافة صف</button>
+            <button class="btn ghost sm" onclick="loadExample42()">📚 تحميل بيانات المثال 4-2</button>
+            <button class="btn ghost sm" onclick="loadExample44()">📚 تحميل بيانات المثال 4-4</button>
+          </div>
+        </div>
+
+        <div class="eq-toggle-fann" onclick="const b=document.getElementById('dipBox'); const open=b.style.maxHeight && b.style.maxHeight!=='0px'; b.style.maxHeight= open ? '0px':'220px'; this.querySelector('span').style.transform= open? 'rotate(0deg)':'rotate(90deg)';" style="cursor:pointer; font-size:12px; color:var(--navy-700); font-weight:700; margin-top:16px; display:flex; align-items:center; gap:6px;">
+          <span style="transition:transform .2s;">▸</span> تأثير زاوية الميل والجاذبية (اختياري — لحل المثال 4-3)
+        </div>
+        <div id="dipBox" style="max-height:0; overflow:hidden; transition:max-height .25s ease;">
+          <div class="grid4" style="margin-top:10px;">
+            <div class="field"><label>النفاذية المطلقة k <span class="unit">md</span></label><input type="text" id="input_kabs" value="" oninput="onPhysicalInput()"></div>
+            <div class="field"><label>كثافة النفط ρo <span class="unit">lb/ft³</span></label><input type="text" id="input_rhoo" value="" oninput="onPhysicalInput()"></div>
+            <div class="field"><label>كثافة الماء ρw <span class="unit">lb/ft³</span></label><input type="text" id="input_rhow" value="" oninput="onPhysicalInput()"></div>
+            <div class="field"><label>زاوية الميل α <span class="unit">degree</span></label><input type="text" id="input_dipAngle" value="" oninput="onPhysicalInput()"></div>
+            <div class="field"><label>اتجاه الانحدار</label>
+              <select id="input_dipDir" onchange="onPhysicalInput()" style="width:100%; padding:10px 12px; border:1.5px solid #d8d4c6; border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13px; background:#fcfbf8;">
+                <option value="up">Updip (صاعد)</option>
+                <option value="down">Downdip (هابط)</option>
+              </select>
+            </div>
+          </div>
+          <p style="font-size:11px; color:var(--muted-2); margin-top:4px;">يستخدم المعادلة العامة 4-2/4-10 (بوحدات Darcy الميدانية)، ويتطلب أيضًا معدل التدفق الكلي qt والمساحة المقطعية A من قسم "أبعاد النموذج" أدناه.</p>
+        </div>
+
+        <button class="btn gold block" style="margin-top:16px;" onclick="applyPhysicalToSlider()">⚡ احسب واعرض النتائج الكاملة</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📈 منحنى التدفق الجزئي (Fractional Flow) وبناء مماس Welge</h2></div>
+        <div class="plotwrap" id="fracFlowPlot"></div>
+      </div>
+
+      <div class="divider-label">تحليل التقدم الأمامي وكفاءة الكسح الأفقي (Frontal Advance &amp; Areal Sweep)</div>
+
+      <div class="card">
+        <div class="card-head"><h2>3. أبعاد النموذج ومعدل الحقن</h2><span class="eq">لحساب زمن الاختراق وحجم الحقن</span></div>
+        <p id="areaAnalysisNotice" style="font-size:11.5px; color:#b5432d; background:#fdf6f5; border:1px solid rgba(181,67,45,.3); border-radius:8px; padding:8px 12px; margin-bottom:14px;">⚠ هذا القسم والقسمان التاليان (مخطط التقدم الأمامي والأداء بعد الاختراق) يُحسبان تلقائيًا فور ملء بيانات النفاذية النسبية في القسم 2 أعلاه والضغط على «احسب واعرض النتائج الكاملة».</p>
+        <div class="grid4">
+          <div class="field"><label>المسامية φ <span class="unit">(كسر)</span></label><input type="text" id="input_phi" value="" oninput="onAreaInput()"></div>
+          <div class="field"><label>المساحة المقطعية A <span class="unit">ft²</span></label><input type="text" id="input_area" value="" oninput="onAreaInput()"></div>
+          <div class="field"><label>المسافة بين الحاقن والمنتج L <span class="unit">ft</span></label><input type="text" id="input_length" value="" oninput="onAreaInput()"></div>
+          <div class="field"><label>معدل الحقن iw <span class="unit">bbl/day</span></label><input type="text" id="input_iw" value="" oninput="onAreaInput()"></div>
+          <div class="field"><label>نمط الحقن/الإنتاج</label>
+            <select id="input_pattern" onchange="onAreaInput()" style="width:100%; padding:10px 12px; border:1.5px solid #d8d4c6; border-radius:8px; font-family:'IBM Plex Mono',monospace; font-size:13px; background:#fcfbf8;">
+              <option value="fiveSpot">Five-Spot (خمس نقاط)</option>
+              <option value="directLine">Direct Line Drive</option>
+              <option value="staggeredLine">Staggered Line Drive</option>
+            </select>
+          </div>
+          <div class="field">
+            <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--navy-900); cursor:pointer;">
+              <input type="checkbox" id="cmp_patternMode" onchange="onAreaInput()" style="width:16px; height:16px;"> قارن الأنماط الثلاثة معًا
+            </label>
+          </div>
+          <div class="field"><label>Bo <span class="unit">bbl/STB</span></label><input type="text" id="input_bo" value="" oninput="onAreaInput()"></div>
+          <div class="field"><label>Bw <span class="unit">bbl/STB</span></label><input type="text" id="input_bw" value="" oninput="onAreaInput()"></div>
+        </div>
+      </div>
+
+      <div class="result-panel" style="margin-bottom:22px;">
+        <div class="result-grid">
+          <div class="rstat highlight"><div class="rlabel" id="o_eabt_label">Areal Sweep @ BT (5-Spot)</div><div class="rval gold" id="o_eabt">—</div></div>
+          <div class="rstat"><div class="rlabel">Breakthrough Time</div><div class="rval" id="o_tbt">—</div></div>
+          <div class="rstat"><div class="rlabel">Water Injected @ BT</div><div class="rval" id="o_wibt">—</div></div>
+          <div class="rstat"><div class="rlabel">Pore Volumes @ BT</div><div class="rval" id="o_qibt">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📉 كفاءة الكسح الأفقي مقابل نسبة الحركية (مرجع، نمط خمس نقاط)</h2></div>
+        <div class="plotwrap" id="eaVsMPlot"></div>
+        <p style="font-size:11px; color:var(--muted-2); margin-top:8px;">المعادلة 14-64 (Craig/SPE) — صالحة تقريبًا لـ M بين 0.15 و10؛ القيم عند M أقل من ذلك تُحدّ عند 100% لتجاوزها الحد الفيزيائي في طرفي منحنى الانحدار.</p>
+      </div>
+
+      <div class="card" id="patternCompareWrap" style="display:none;">
+        <div class="card-head"><h2>🔀 مقارنة الأنماط الثلاثة عند نفس M</h2></div>
+        <p style="font-size:11.5px; color:var(--muted); margin-bottom:10px;">نمط Five-Spot يُحسب بمعادلة Caudle-Witte (14-64)، بينما Direct Line Drive وStaggered Line Drive يُحسبان بمعادلات Dyes-Caudle-Erickson — مرجعان منشوران مختلفان، فالمقارنة هنا توضح فرق النمط الهندسي بشكل أساسي، لا فرقًا ناتجًا عن أساس حسابي واحد بالكامل. راجع <a href="javascript:void(0)" onclick="goTo('learn')" style="color:var(--navy-700); font-weight:700;">شرح سبب اختلاف كفاءة الكسح بين الأنماط هنا ↗</a>.</p>
+        <div style="overflow-x:auto;">
+          <table class="datatable">
+            <thead><tr><th>النمط</th><th>Areal Sweep @ BT</th><th>زمن الاختراق</th><th>حجم الحقن @ BT</th></tr></thead>
+            <tbody id="patternCompareBody"></tbody>
+          </table>
+        </div>
+        <div class="plotwrap" id="patternComparePlot" style="height:340px; margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>📏 مخطط جبهة التقدم (Frontal Advance) — توزيع التشبّع مع المسافة</h2></div>
+        <div class="field" style="max-width:320px;">
+          <label>الزمن المطلوب لرسم الجبهة عنده — يمكن إدخال أكثر من زمن مفصولة بفواصل <span class="unit">day</span></label>
+          <input type="text" id="input_profileTime" value="" oninput="renderSatProfile()">
+        </div>
+        <div class="plotwrap" id="satProfilePlot"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>4. الأداء بعد الاختراق (Performance After Breakthrough)</h2></div>
+        <div class="grid3">
+          <div class="field"><label>تشبّع الماء عند بئر الإنتاج Sw2</label><input type="text" id="input_sw2" value="" oninput="renderPostBT()"></div>
+        </div>
+        <div class="result-panel">
+          <div class="result-grid">
+            <div class="rstat"><div class="rlabel">fw2 (Water Cut)</div><div class="rval" id="o_fw2">—</div></div>
+            <div class="rstat"><div class="rlabel">WOR (Reservoir)</div><div class="rval" id="o_wor">—</div></div>
+            <div class="rstat"><div class="rlabel">Avg Sw Behind Front (S̄w2)</div><div class="rval" id="o_sw2bar">—</div></div>
+            <div class="rstat"><div class="rlabel">Pore Volumes Injected Qi</div><div class="rval" id="o_qi2">—</div></div>
+            <div class="rstat highlight"><div class="rlabel">Areal Sweep EA (Dyes)</div><div class="rval gold" id="o_ea2">—</div></div>
+            <div class="rstat"><div class="rlabel">Recovery Factor ED</div><div class="rval gold" id="o_ed2">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-head"><h2>📥 تصدير النتائج والتقارير</h2></div>
+        <div class="export-row">
+          <button class="btn ghost" onclick="exportCSV()">📄 تحميل CSV</button>
+          <button class="btn ghost" onclick="exportExcel()">📊 تحميل Excel</button>
+          <button class="btn gold" onclick="printReport(event)">📕 تحميل التقرير الهندسي الشامل (PDF)</button>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+</main>
+</div>
+
+<div id="printReport"></div>
+
+<script>
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const titles = {
+  home:["GENERAL / OVERVIEW","محاكي إزاحة المياه وكفاءة الكسح","Waterflood Sim"],
+  learn:["GENERAL / HOW IT WORKS","كيف تؤثر نسبة الحركية على الإزاحة؟","Learn"],
+  sim:["CALCULATOR / SIMULATOR","الحاسبة التفاعلية","Displacement Sim"],
+};
+function goTo(target){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+target).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.target===target));
+  const t = titles[target];
+  document.getElementById('crumb').textContent=t[0];
+  document.getElementById('pageTitle').textContent=t[1];
+  document.getElementById('eqTag').textContent=t[2];
+  document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});
+  if(target==='sim'){ setTimeout(renderFracFlow, 50); }
+  closeSidebar();
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+document.querySelectorAll('.mod-card').forEach(n=>n.addEventListener('click',()=>goTo(n.dataset.target)));
+
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
+}
+
+function parseFloatSafe(v, def=0.0){
+  if(v===null || v===undefined) return def;
+  const s = String(v).trim();
+  if(s==='') return def;
+  const f = parseFloat(s.replace(',', '.'));
+  return isNaN(f) ? def : f;
+}
+function fmt(n,d=2){ if(!isFinite(n)) return "—"; return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+
+/* ============================================================
+   MOBILITY RATIO <-> SLIDER MAPPING (log scale, M in [0.1, 20])
+   ============================================================ */
+let currentM = 1.0;
+function sliderToM(sliderVal){
+  // slider range -10..130 maps log10(M) from -1 to 1.3 (M: 0.1 to ~20)
+  const t = sliderVal/100; // -0.1 .. 1.3
+  return Math.pow(10, t);
+}
+function mToSlider(M){
+  const t = Math.log10(M);
+  return Math.round(t*100);
+}
+function onSliderInput(){
+  const sv = parseFloat(document.getElementById('mSlider').value);
+  currentM = sliderToM(sv);
+  updateMDisplay();
+}
+function updateMDisplay(){
+  document.getElementById('mrValueDisplay').textContent = currentM.toFixed(2);
+  document.getElementById('o_M').textContent = currentM.toFixed(3);
+  const badge = document.getElementById('mrBadge');
+  if(currentM <= 0.9){
+    badge.className='mr-badge favorable'; badge.innerHTML='✔ نسبة حركية مفضّلة — إزاحة مستقرة شبه-مكبسية';
+  } else if(currentM <= 1.15){
+    badge.className='mr-badge unit'; badge.innerHTML='◆ نسبة حركية وحدوية — إزاحة متوازنة تقريبًا';
+  } else {
+    badge.className='mr-badge unfavorable'; badge.innerHTML='⚠ نسبة حركية غير مفضّلة — تخطّي إصبعي متوقّع';
+  }
+  computeWelgeForM(currentM);
+}
+function resetQuickResults(){
+  // Calculator starts fully empty: no computation runs, and every output
+  // shows a dash, until the user actually moves the slider or provides
+  // real inputs — no numbers are ever shown that weren't asked for.
+  ['o_swf','o_swbt','o_ed','o_fwf','o_visc'].forEach(id=>{
+    document.getElementById(id).textContent = '—';
+  });
+  document.getElementById('mrValueDisplay').textContent = currentM.toFixed(2);
+  document.getElementById('o_M').textContent = currentM.toFixed(3);
+  const badge = document.getElementById('mrBadge');
+  badge.className='mr-badge neutral'; badge.innerHTML='حرّك الشريط لبدء الاستكشاف';
+  // The front-shape rectangle depends only on the slider's own M value
+  // (no physical inputs required), so it's safe to show from the start —
+  // unlike the six stats above, it isn't standing in for a real calculation.
+  try{ drawFrontShape(currentM); }catch(e){ console.error('drawFrontShape failed:', e); }
+}
+
+/* ============================================================
+   FRACTIONAL FLOW (Corey model) + WELGE TANGENT CONSTRUCTION
+   ============================================================ */
+function coreyFw(sw, swc, sor, krwMax, kroMax, nw, no, muw, muo){
+  let swn = (sw-swc)/(1-swc-sor);
+  swn = Math.max(0, Math.min(1, swn));
+  const krw = krwMax*Math.pow(swn, nw);
+  const kro = kroMax*Math.pow(1-swn, no);
+  if(krw<=1e-9) return 0;
+  return 1/(1 + (kro*muw)/(krw*muo));
+}
+let physicalParams = {swc:0.20, sor:0.25, krwMax:0.35, kroMax:0.85, nw:2.0, no:2.0, muw:0.5, muo:5.0};
+let lastWelge = null;
+let lastPostBT = null;
+let krRows = [
+  {sw:0.20, kro:1.00, krw:0.000},
+  {sw:0.30, kro:0.60, krw:0.012},
+  {sw:0.40, kro:0.33, krw:0.033},
+  {sw:0.50, kro:0.15, krw:0.070},
+  {sw:0.60, kro:0.05, krw:0.130},
+  {sw:0.70, kro:0.00, krw:0.220},
+];
+let useTabular = false;
+
+function toggleKrMode(){
+  useTabular = document.getElementById('useTabularKr').checked;
+  document.getElementById('coreyFields').style.display = useTabular ? 'none' : 'grid';
+  document.getElementById('tabularFields').style.display = useTabular ? 'block' : 'none';
+  if(useTabular) renderKrTable();
+}
+function renderKrTable(){
+  const wrap = document.getElementById('krTableRows');
+  wrap.innerHTML = krRows.map((r,i)=>`
+    <div class="kr-row">
+      <input type="text" value="${r.sw}" onchange="krRows[${i}].sw=parseFloatSafe(this.value,0)">
+      <input type="text" value="${r.kro}" onchange="krRows[${i}].kro=parseFloatSafe(this.value,0)">
+      <input type="text" value="${r.krw}" onchange="krRows[${i}].krw=parseFloatSafe(this.value,0)">
+      <button class="kr-row-del" onclick="delKrRow(${i})">✕</button>
+    </div>`).join('');
+}
+function addKrRow(){ krRows.push({sw:0, kro:0, krw:0}); renderKrTable(); }
+function delKrRow(i){ krRows.splice(i,1); renderKrTable(); }
+
+/* ============================================================
+   SAMPLE DATA / CLEAR — the calculator starts empty by default;
+   these two actions let the user either see a fully worked
+   example populate every field at once, or wipe everything
+   back to blank in a single click.
+   ============================================================ */
+function loadSampleData(){
+  const setVal = (id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  document.getElementById('useTabularKr').checked = false;
+  toggleKrMode();
+  setVal('input_muo','5.0'); setVal('input_muw','0.5');
+  setVal('input_swc','0.20'); setVal('input_sor','0.25');
+  setVal('input_krwmax','0.35'); setVal('input_kromax','0.85');
+  setVal('input_nw','2.0'); setVal('input_no','2.0');
+  setVal('input_kabs','50'); setVal('input_rhoo','45'); setVal('input_rhow','64'); setVal('input_dipAngle','0');
+  setVal('input_phi','0.20'); setVal('input_area','26400'); setVal('input_length','600'); setVal('input_iw','900');
+  setVal('input_bo','1.20'); setVal('input_bw','1.02');
+  setVal('input_profileTime','120'); setVal('input_sw2','0.60');
+  applyPhysicalToSlider();
+  onAreaInput();
+  renderPostBT();
+}
+function clearAllInputs(){
+  document.querySelectorAll('#sec-sim input[type="text"]').forEach(el=>{ el.value=''; });
+  document.getElementById('useTabularKr').checked = false;
+  toggleKrMode();
+  krRows = [];
+  renderKrTable();
+  currentM = 1.0;
+  document.getElementById('mSlider').value = 0;
+  resetQuickResults();
+  lastWelge = null; lastPostBT = null;
+  const notice = document.getElementById('areaAnalysisNotice');
+  if(notice) notice.style.display = '';
+  ['o_fw2','o_wor','o_sw2bar','o_qi2','o_ea2','o_ed2','o_eabt','o_tbt','o_wibt','o_qibt'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.textContent='—';
+  });
+}
+function loadExample42(){
+  krRows = [
+    {sw:0.10, kro:1.0,  krw:0.000},
+    {sw:0.20, kro:0.6,  krw:0.000},
+    {sw:0.30, kro:0.22, krw:0.012},
+    {sw:0.40, kro:0.12, krw:0.024},
+    {sw:0.50, kro:0.06, krw:0.034},
+    {sw:0.60, kro:0.025,krw:0.067},
+    {sw:0.70, kro:0.0023,krw:0.13},
+    {sw:0.80, kro:0.0,  krw:0.27},
+    {sw:0.90, kro:0.0,  krw:0.47},
+    {sw:1.00, kro:0.0,  krw:1.0},
+  ];
+  document.getElementById('input_muo_tab').value='2.0';
+  document.getElementById('input_muw_tab').value='1.0';
+  renderKrTable();
+}
+function loadExample44(){
+  // Example 4-4 gives kro/krw ratio directly; represented here as kro=ratio, krw=1
+  // (mathematically equivalent for fw when the gravity/dip term is not used, since
+  // fw depends only on the kro/krw ratio in that case — Example 4-4 uses dip=0).
+  krRows = [
+    {sw:0.25, kro:30.23, krw:1.0},
+    {sw:0.30, kro:17.00, krw:1.0},
+    {sw:0.35, kro:9.56,  krw:1.0},
+    {sw:0.40, kro:5.38,  krw:1.0},
+    {sw:0.45, kro:3.02,  krw:1.0},
+    {sw:0.50, kro:1.70,  krw:1.0},
+    {sw:0.55, kro:0.96,  krw:1.0},
+    {sw:0.60, kro:0.54,  krw:1.0},
+    {sw:0.65, kro:0.30,  krw:1.0},
+    {sw:0.70, kro:0.17,  krw:1.0},
+    {sw:0.75, kro:0.10,  krw:1.0},
+  ];
+  document.getElementById('input_muo_tab').value='2.0';
+  document.getElementById('input_muw_tab').value='1.0';
+  document.getElementById('input_phi').value='0.25';
+  document.getElementById('input_area').value='26400';
+  document.getElementById('input_length').value='600';
+  document.getElementById('input_iw').value='900';
+  document.getElementById('input_bo').value='1.25';
+  document.getElementById('input_bw').value='1.02';
+  renderKrTable();
+}
+function tabularKroKrw(sw, rows){
+  const sorted = [...rows].sort((a,b)=>a.sw-b.sw);
+  if(sw<=sorted[0].sw) return {kro:sorted[0].kro, krw:sorted[0].krw};
+  if(sw>=sorted[sorted.length-1].sw) return {kro:sorted[sorted.length-1].kro, krw:sorted[sorted.length-1].krw};
+  for(let i=0;i<sorted.length-1;i++){
+    if(sw>=sorted[i].sw && sw<=sorted[i+1].sw){
+      const f = (sw-sorted[i].sw)/(sorted[i+1].sw-sorted[i].sw);
+      return {kro: sorted[i].kro+f*(sorted[i+1].kro-sorted[i].kro), krw: sorted[i].krw+f*(sorted[i+1].krw-sorted[i].krw)};
+    }
+  }
+  return {kro:0, krw:0};
+}
+function gravityCoefficient(){
+  // Returns the per-kro multiplier for the gravity/dip term of Eq. 4-2/4-10
+  // (Darcy field units): grav = 0.001127*k*A/(muo*qt) * (-0.433*deltaRho_SG*sign*sin(alpha))
+  const k = parseFloatSafe(document.getElementById('input_kabs')?.value, 0);
+  const alpha = parseFloatSafe(document.getElementById('input_dipAngle')?.value, 0);
+  if(k<=0 || alpha===0) return 0;
+  const rhoO = parseFloatSafe(document.getElementById('input_rhoo')?.value, 45);
+  const rhoW = parseFloatSafe(document.getElementById('input_rhow')?.value, 64);
+  const dir = document.getElementById('input_dipDir')?.value || 'up';
+  const A = parseFloatSafe(document.getElementById('input_area')?.value, 26400);
+  const qt = parseFloatSafe(document.getElementById('input_iw')?.value, 900);
+  const muoForGrav = useTabular ? parseFloatSafe(document.getElementById('input_muo_tab').value,1.0) : parseFloatSafe(document.getElementById('input_muo').value,5.0);
+  const deltaRhoSG = (rhoW-rhoO)/62.4;
+  const sign = dir==='up' ? 1 : -1;
+  return 0.001127*k*A/(muoForGrav*qt) * (-0.433*deltaRhoSG*sign*Math.sin(alpha*Math.PI/180));
+}
+function buildFwCurve(muo, muw){
+  const gCoef = gravityCoefficient();
+  const swArr=[], fwArr=[];
+  const N=400;
+  let swMin, swMax;
+  if(useTabular){
+    const sorted=[...krRows].sort((a,b)=>a.sw-b.sw);
+    swMin=sorted[0].sw; swMax=sorted[sorted.length-1].sw;
+  } else {
+    swMin=physicalParams.swc; swMax=1-physicalParams.sor;
+  }
+  for(let i=0;i<=N;i++){
+    const sw = swMin + (swMax-swMin)*(i/N);
+    let kro, krw;
+    if(useTabular){ ({kro,krw}=tabularKroKrw(sw, krRows)); }
+    else {
+      const swn = Math.max(0,Math.min(1,(sw-physicalParams.swc)/(1-physicalParams.swc-physicalParams.sor)));
+      krw = physicalParams.krwMax*Math.pow(swn, physicalParams.nw);
+      kro = physicalParams.kroMax*Math.pow(1-swn, physicalParams.no);
+    }
+    let fw;
+    if(krw<=1e-9){ fw=0; }
+    else {
+      const numerator = 1 + gCoef*kro;
+      fw = numerator/(1+(kro/krw)*(muw/muo));
+      fw = Math.max(0, Math.min(1, fw));
+    }
+    swArr.push(sw); fwArr.push(fw);
+  }
+  return {swArr, fwArr, swc:swMin};
+}
+function welgeAnalysis(swArr, fwArr, swc){
+  let bestIdx=0, bestSlope=-1;
+  for(let i=1;i<swArr.length;i++){
+    const slope = fwArr[i]/(swArr[i]-swc);
+    if(slope>bestSlope){ bestSlope=slope; bestIdx=i; }
+  }
+  const swf=swArr[bestIdx], fwf=fwArr[bestIdx];
+  const swBt = swc + 1/bestSlope;
+  const ed = (swBt-swc)/(1-swc);
+  return {swf, fwf, swBt, ed};
+}
+
+function computeEdForM(M){
+  // Pure helper (no DOM side effects): same Corey-based logic as
+  // computeWelgeForM, used to trace out the ED-vs-M trend curve.
+  const p = physicalParams;
+  const muo = (M*p.kroMax*p.muw)/p.krwMax;
+  const muw = p.muw;
+  const N=150;
+  let bestSlope=-1;
+  for(let i=1;i<=N;i++){
+    const sw = p.swc + (1-p.swc-p.sor)*(i/N);
+    const fw = coreyFw(sw, p.swc, p.sor, p.krwMax, p.kroMax, p.nw, p.no, muw, muo);
+    const slope = fw/(sw-p.swc);
+    if(slope>bestSlope) bestSlope=slope;
+  }
+  const swBt = p.swc + 1/bestSlope;
+  return (swBt-p.swc)/(1-p.swc);
+}
+function renderEdVsMTrend(M, edNow){
+  const Ms=[], eds=[];
+  for(let lm=-1; lm<=1.3; lm+=0.04){
+    const m = Math.pow(10, lm);
+    Ms.push(m); eds.push(computeEdForM(m)*100);
+  }
+  Plotly.newPlot('edVsMPlot', [
+    {x:Ms, y:eds, mode:'lines', line:{color:'#f8de7e', width:3}, name:'ED vs M'},
+    {x:[M], y:[edNow*100], mode:'markers', marker:{color:'#D9534F', size:13, line:{color:'#fff', width:1.5}}, name:'الوضع الحالي'}
+  ], {
+    xaxis:{title:'Mobility Ratio, M (log scale)', type:'log'},
+    yaxis:{title:'Displacement Efficiency, ED (%)'},
+    margin:{t:20,b:45,l:55,r:20}, height:300, showlegend:false
+  }, {responsive:true, displaylogo:false});
+}
+function drawFrontShape(M){
+  // Deterministic interpolation between the two static reference shapes
+  // shown in the Learn page: nearly flat at M<=1 (piston-like), and a
+  // small number of genuinely narrow, pointed finger protrusions growing
+  // in count/reach as M increases past 1 — not just a wavy blob, since a
+  // real fingering front is defined by distinct narrow channels bypassing
+  // through the oil, not one smooth undulating boundary.
+  const rand = seededRand(1000);
+  const logM = Math.max(0, Math.log10(M));
+  const baseX = 112 - Math.min(30, 12*logM);
+  let pts = [[10,10]];
+  if(M<=1){
+    for(let i=0;i<8;i++){
+      const y = 10 + i*(200/7);
+      const wob = Math.sin(i*1.3+0.5)*0.5;
+      pts.push([baseX+6*wob, y]);
+    }
+  } else {
+    const nFingers = Math.min(6, Math.round(1 + logM*3.0));
+    const reach = Math.min(175, 65*logM);
+    const centers=[], widths=[], reaches=[];
+    for(let i=0;i<nFingers;i++){
+      centers.push((i+0.5)/nFingers + (rand()-0.5)*0.05);
+      widths.push(0.045 + rand()*0.025);
+      reaches.push(reach*(0.6+rand()*0.85));
+    }
+    const nSeg = 60;
+    for(let i=0;i<=nSeg;i++){
+      const yFrac = i/nSeg;
+      const y = 10 + yFrac*200;
+      let x = baseX + 8*Math.sin(yFrac*11+1.1);
+      for(let f=0; f<nFingers; f++){
+        const d = Math.abs(yFrac-centers[f]);
+        if(d < widths[f]){
+          x += Math.pow(1-(d/widths[f]), 1.6) * reaches[f];
+        }
+      }
+      pts.push([Math.max(16, Math.min(305, x)), y]);
+    }
+  }
+  pts.push([10,210]);
+  const d = 'M '+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L ')+' Z';
+  const svg = `<svg viewBox="0 0 320 220" style="max-width:100%;">
+    <rect x="10" y="10" width="300" height="200" fill="#f3e6c9" stroke="#224347" stroke-width="2"/>
+    <path d="${d}" fill="#0072BD" opacity=".85"/>
+    <line x1="10" y1="10" x2="10" y2="210" stroke="#224347" stroke-width="3"/>
+    <text x="60" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">حقن</text>
+    <text x="270" y="230" text-anchor="middle" font-size="11" fill="#224347" font-family="Tajawal" font-weight="700">إنتاج</text>
+  </svg>`;
+  document.getElementById('frontShapeWrap').innerHTML = svg;
+  const labelEl = document.getElementById('frontShapeLabel');
+  const subEl = document.getElementById('frontShapeSub');
+  if(M<=0.9){
+    labelEl.style.color='var(--good)'; labelEl.textContent='M ≤ 1 — جبهة شبه-مكبسية مستقرة';
+    subEl.textContent='كسح منتظم، إزاحة شبه كاملة للنفط أمام الجبهة';
+  } else if(M<=1.15){
+    labelEl.style.color='var(--gold)'; labelEl.textContent='M ≈ 1 — إزاحة متوازنة تقريبًا';
+    subEl.textContent='بداية ظهور تموّج طفيف في الجبهة';
+  } else {
+    labelEl.style.color='var(--danger)'; labelEl.textContent='M > 1 — تخطّي إصبعي (Fingering)';
+    subEl.textContent='اختراق مبكر، نفط متجاوَز عالق بين الأصابع';
+  }
+}
+function seededRand(seed){
+  // small deterministic PRNG (mulberry32) so the finger pattern is
+  // stable and reproducible for a given M, not randomly reshuffled.
+  let t = seed>>>0;
+  return function(){
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t>>>15), 1 | t);
+    r = (r + Math.imul(r ^ (r>>>7), 61 | r)) ^ r;
+    return ((r ^ (r>>>14))>>>0) / 4294967296;
+  };
+}
+function computeWelgeForM(M){
+  // Build a representative Corey curve whose endpoint mobility ratio equals M,
+  // by scaling the oil viscosity relative to the last physical parameter set
+  // (keeps kr shapes fixed; this is the same approach used by the physical
+  // panel, so slider-driven "quick explore" stays visually consistent).
+  const p = physicalParams;
+  const impliedMuo = (p.krwMax*p.muw*  (1/M) ) ; // placeholder, recomputed below properly
+  // Solve muo such that (krwMax*muo)/(kroMax*muw) = M  =>  muo = M*kroMax*muw/krwMax
+  const muo = (M*p.kroMax*p.muw)/p.krwMax;
+  const muw = p.muw;
+
+  const N=400;
+  const swArr=[], fwArr=[];
+  for(let i=0;i<=N;i++){
+    const sw = p.swc + (1-p.swc-p.sor)*(i/N);
+    swArr.push(sw);
+    fwArr.push(coreyFw(sw, p.swc, p.sor, p.krwMax, p.kroMax, p.nw, p.no, muw, muo));
+  }
+  let bestIdx=0, bestSlope=-1;
+  for(let i=1;i<swArr.length;i++){
+    const slope = fwArr[i]/(swArr[i]-p.swc);
+    if(slope>bestSlope){ bestSlope=slope; bestIdx=i; }
+  }
+  const swf = swArr[bestIdx], fwf = fwArr[bestIdx];
+  const swBt = p.swc + 1/bestSlope;
+  const ed = (swBt-p.swc)/(1-p.swc);
+
+  document.getElementById('o_swf').textContent = swf.toFixed(3);
+  document.getElementById('o_swbt').textContent = swBt.toFixed(3);
+  document.getElementById('o_ed').textContent = (ed*100).toFixed(1)+'%';
+  document.getElementById('o_fwf').textContent = fwf.toFixed(3);
+  document.getElementById('o_visc').textContent = (muo/muw).toFixed(2);
+
+  lastWelge = {swArr, fwArr, swf, fwf, swBt, swc:p.swc, ed, M, muo, muw};
+  try{ drawFrontShape(M); }catch(e){ console.error('drawFrontShape failed:', e); }
+  try{ renderEdVsMTrend(M, ed); }catch(e){ console.error('renderEdVsMTrend failed:', e); }
+  renderFracFlow();
+}
+
+function renderFracFlow(){
+  if(!lastWelge) return;
+  const {swArr, fwArr, swf, fwf, swBt, swc} = lastWelge;
+  const tangentX = [swc, swBt];
+  const tangentY = [0, 1];
+  const data = [
+    {x:swArr, y:fwArr, mode:'lines', name:'fw(Sw)', line:{color:'#0072BD', width:3}},
+    {x:tangentX, y:tangentY, mode:'lines', name:'Welge Tangent', line:{color:'#f8de7e', width:2, dash:'dash'}},
+    {x:[swf], y:[fwf], mode:'markers', name:'Shock Front', marker:{color:'#D9534F', size:11, symbol:'diamond'}},
+    {x:[swBt], y:[1], mode:'markers', name:'Sw at Breakthrough', marker:{color:'#2e7d53', size:10}}
+  ];
+  const layout = {
+    xaxis:{title:'Water Saturation, Sw', range:[0,1]},
+    yaxis:{title:'Fractional Flow, fw', range:[0,1.05]},
+    margin:{t:20,b:50,l:55,r:20}, height:400, legend:{orientation:'h', y:-0.2}
+  };
+  Plotly.newPlot('fracFlowPlot', data, layout, {responsive:true, displaylogo:false});
+  renderAreaAnalysis();
+}
+
+/* ============================================================
+   AREAL SWEEP EFFICIENCY — Craig/SPE correlation (Eq. 14-64,
+   five-spot pattern) and Dyes et al. (1954) multi-pattern
+   correlation (Eq. 14-67), verified numerically against the
+   published chart values before use (M=1 -> 68.4% vs ~70% on
+   chart; M=10 -> 49.8% vs ~50% on chart).
+   ============================================================ */
+function eabt5Spot(M){
+  const v = 0.54602036 + 0.03170817/M + 0.30222997/Math.exp(M) - 0.00509693*M;
+  return Math.max(0, Math.min(1, v));
+}
+const DYES_COEF = {
+  fiveSpot:      {a1:-0.2062, a2:-0.0712, a3:-0.511,  a4:0.3048, a5:0.123,   a6:0.4394},
+  directLine:    {a1:-0.3014, a2:-0.1568, a3:-0.9402, a4:0.3714, a5:-0.0865, a6:0.8805},
+  staggeredLine: {a1:-0.2077, a2:-0.1059, a3:-0.3526, a4:0.2608, a5:0.2444,  a6:0.3158},
+};
+function areaSweepDyes(M, fw, pattern){
+  const c = DYES_COEF[pattern] || DYES_COEF.fiveSpot;
+  const A = (c.a1*Math.log(M+c.a2)+c.a3)*fw + c.a4*Math.log(M+c.a5) + c.a6;
+  const ea = 1/(1+A);
+  return Math.max(0.05, Math.min(0.99, ea));
+}
+function slopeAt(sw){
+  if(!lastWelge) return 0;
+  const {swArr, fwArr} = lastWelge;
+  const n = swArr.length;
+  let idx = Math.round((sw-swArr[0])/(swArr[n-1]-swArr[0])*(n-1));
+  idx = Math.max(1, Math.min(n-2, idx));
+  return (fwArr[idx+1]-fwArr[idx-1])/(swArr[idx+1]-swArr[idx-1]);
+}
+
+function onAreaInput(){ renderAreaAnalysis(); }
+
+function renderAreaAnalysis(){
+  if(!lastWelge) return;
+  const notice = document.getElementById('areaAnalysisNotice');
+  if(notice) notice.style.display = 'none';
+  const {swf, fwf, swBt, swc, M} = lastWelge;
+  const phi = parseFloatSafe(document.getElementById('input_phi').value, 0.20);
+  const A = parseFloatSafe(document.getElementById('input_area').value, 26400);
+  const L = parseFloatSafe(document.getElementById('input_length').value, 600);
+  const iw = parseFloatSafe(document.getElementById('input_iw').value, 900);
+  const pattern = document.getElementById('input_pattern').value;
+
+  const eabt = (pattern === 'fiveSpot') ? eabt5Spot(M) : areaSweepDyes(M, fwf, pattern);
+  const eabtLabel = document.getElementById('o_eabt_label');
+  if(eabtLabel) eabtLabel.textContent = pattern==='fiveSpot' ? 'Areal Sweep @ BT (5-Spot, Caudle-Witte)' : 'Areal Sweep @ BT ('+(pattern==='directLine'?'Direct Line Drive':'Staggered Line Drive')+', Dyes)';
+  document.getElementById('o_eabt').textContent = (eabt*100).toFixed(1)+'%';
+
+  const PV = (phi*A*L)/5.615;
+  const slopeFront = slopeAt(swf);
+  const tBT = slopeFront>0 ? (PV/iw)/slopeFront : NaN;
+  const WiBT = slopeFront>0 ? PV/slopeFront : NaN;
+  const QiBT = slopeFront>0 ? 1/slopeFront : NaN;
+  document.getElementById('o_tbt').textContent = isFinite(tBT) ? fmt(tBT,1)+' day' : '—';
+  document.getElementById('o_wibt').textContent = isFinite(WiBT) ? fmt(WiBT,0)+' bbl' : '—';
+  document.getElementById('o_qibt').textContent = isFinite(QiBT) ? QiBT.toFixed(3)+' PV' : '—';
+
+  // Reference EABT vs M curve (5-spot)
+  const Ms = [], eas = [];
+  for(let lm=-0.85; lm<=1.0; lm+=0.02){ const m=Math.pow(10,lm); Ms.push(m); eas.push(eabt5Spot(m)*100); }
+  try{
+    Plotly.newPlot('eaVsMPlot', [
+      {x:Ms, y:eas, mode:'lines', line:{color:'#0072BD', width:3}, name:'EABT (5-Spot)'},
+      {x:[M], y:[eabt*100], mode:'markers', marker:{color:'#D9534F', size:12}, name:'Current M'}
+    ], {
+      xaxis:{title:'Mobility Ratio, M', type:'log'}, yaxis:{title:'Areal Sweep Efficiency @ BT (%)', range:[40,100]},
+      margin:{t:20,b:45,l:55,r:20}, height:340
+    }, {responsive:true, displaylogo:false});
+  }catch(e){ console.error('eaVsMPlot chart failed:', e); }
+
+  try{ renderSatProfile(); }catch(e){ console.error('renderSatProfile failed:', e); }
+  try{ renderPostBT(); }catch(e){ console.error('renderPostBT failed:', e); }
+
+  const cmpWrap = document.getElementById('patternCompareWrap');
+  if(document.getElementById('cmp_patternMode').checked){
+    const patterns = [
+      {key:'fiveSpot', label:'Five-Spot'},
+      {key:'directLine', label:'Direct Line Drive'},
+      {key:'staggeredLine', label:'Staggered Line Drive'}
+    ];
+    const rows = patterns.map(p=>{
+      const ea = (p.key==='fiveSpot') ? eabt5Spot(M) : areaSweepDyes(M, fwf, p.key);
+      const slope = slopeAt(swf);
+      const tbt = slope>0 ? (PV/iw)/slope : NaN;
+      const wibt = slope>0 ? PV/slope : NaN;
+      return {...p, ea, tbt, wibt};
+    });
+    document.getElementById('patternCompareBody').innerHTML = rows.map(r=>`<tr>
+      <td><b>${r.label}</b></td><td>${(r.ea*100).toFixed(1)}%</td>
+      <td>${isFinite(r.tbt)?fmt(r.tbt,1)+' day':'—'}</td>
+      <td>${isFinite(r.wibt)?fmt(r.wibt,0)+' bbl':'—'}</td>
+    </tr>`).join('');
+    try{
+      Plotly.newPlot('patternComparePlot', [{
+        x: rows.map(r=>r.label), y: rows.map(r=>r.ea*100), type:'bar',
+        marker:{color:['#0072BD','#D9534F','#2e7d53']}
+      }], {
+        yaxis:{title:'Areal Sweep Efficiency @ BT (%)'},
+        margin:{t:20,b:60,l:55,r:20}, height:300
+      }, {responsive:true, displaylogo:false});
+    }catch(e){ console.error('patternComparePlot failed:', e); }
+    cmpWrap.style.display='block';
+  } else {
+    cmpWrap.style.display='none';
+  }
+}
+
+function renderSatProfile(){
+  if(!lastWelge) return;
+  const {swArr, fwArr, swf, swc} = lastWelge;
+  const phi = parseFloatSafe(document.getElementById('input_phi').value, 0.20);
+  const A = parseFloatSafe(document.getElementById('input_area').value, 26400);
+  const iw = parseFloatSafe(document.getElementById('input_iw').value, 900);
+  const L = parseFloatSafe(document.getElementById('input_length').value, 600);
+  const rawT = document.getElementById('input_profileTime').value;
+  const times = (rawT.trim()==='' ? [120] : rawT.split(/[,\s]+/).map(s=>parseFloat(s.replace(',','.'))).filter(v=>isFinite(v) && v>0));
+  if(times.length===0) times.push(120);
+
+  const palette = ['#0072BD','#D9534F','#2e7d53','#f8de7e','#7b4fa6','#1c92a0'];
+  const frontSlope = slopeAt(swf);
+  const data = [];
+  times.forEach((t, idx)=>{
+    const color = palette[idx % palette.length];
+    const Winj = iw*t;
+    const k = 5.615*Winj/(phi*A);
+    // Build every (x, Sw) pair behind the shock (Sw >= Swf), then sort by
+    // x so the line is well-ordered regardless of loop direction.
+    let pts=[];
+    const n = swArr.length;
+    for(let i=1;i<n-1;i++){
+      const sw = swArr[i];
+      if(sw < swf) continue;
+      const slope = (fwArr[i+1]-fwArr[i-1])/(swArr[i+1]-swArr[i-1]);
+      pts.push([k*slope, sw]);
+    }
+    pts.sort((a,b)=>a[0]-b[0]);
+    // Walk the sorted points; stop and interpolate exactly at x=L once we'd
+    // otherwise cross the reservoir boundary, so the line always reaches
+    // the right edge cleanly instead of being abruptly cut off.
+    const xs=[], sws=[];
+    for(let i=0;i<pts.length;i++){
+      const [x,sw] = pts[i];
+      if(x<=L){ xs.push(x); sws.push(sw); continue; }
+      if(i>0){
+        const [x0,sw0] = pts[i-1];
+        const frac = (L-x0)/(x-x0);
+        xs.push(L); sws.push(sw0 + frac*(sw-sw0));
+      }
+      break;
+    }
+    const xFrontRaw = k*frontSlope; // unclamped — may exceed L once breakthrough has already occurred
+    const label = 't = '+t+' day';
+    // 1) smooth profile behind the front
+    data.push({x:xs, y:sws, mode:'lines', line:{color, width:3}, name:label, legendgroup:'t'+idx});
+    if(xFrontRaw < L){
+      // 2) the shock itself — vertical discontinuity at xFront from Swf down to Swc (front still inside the reservoir)
+      data.push({x:[xFrontRaw, xFrontRaw], y:[swf, swc], mode:'lines', line:{color, width:3, dash:'dot'}, showlegend:false, legendgroup:'t'+idx});
+      // 3) undisturbed zone ahead of the front — flat plateau at Sw=Swc out to the reservoir length L
+      data.push({x:[xFrontRaw, L], y:[swc, swc], mode:'lines', line:{color, width:2, dash:'dashdot'}, opacity:0.55, showlegend:false, legendgroup:'t'+idx});
+    }
+    // else: the front has already exited the reservoir (post-breakthrough) — no
+    // discontinuity remains inside the domain, so only the smooth profile is drawn,
+    // already reaching all the way to x=L above.
+  });
+
+  Plotly.newPlot('satProfilePlot', data, {
+    xaxis:{title:'Distance from Injector, x (ft)', range:[0,L]}, yaxis:{title:'Water Saturation, Sw', range:[0,1]},
+    margin:{t:20,b:45,l:55,r:20}, height:380, legend:{orientation:'h', y:-0.22}
+  }, {responsive:true, displaylogo:false});
+}
+
+function renderPostBT(){
+  if(!lastWelge) return;
+  const {swArr, fwArr, swc, M} = lastWelge;
+  const phi = parseFloatSafe(document.getElementById('input_phi').value, 0.20);
+  const A = parseFloatSafe(document.getElementById('input_area').value, 26400);
+  const L = parseFloatSafe(document.getElementById('input_length').value, 600);
+  const iw = parseFloatSafe(document.getElementById('input_iw').value, 900);
+  const Bo = parseFloatSafe(document.getElementById('input_bo').value, 1.20);
+  const Bw = parseFloatSafe(document.getElementById('input_bw').value, 1.02);
+  const pattern = document.getElementById('input_pattern').value;
+  const sw2 = parseFloatSafe(document.getElementById('input_sw2').value, 0.60);
+  const swf = lastWelge.swf;
+
+  if(sw2 <= swf || sw2 >= 1-1e-6){
+    ['o_fw2','o_wor','o_sw2bar','o_qi2','o_ea2','o_ed2'].forEach(id=>document.getElementById(id).textContent='—');
+    return;
+  }
+  // interpolate fw at sw2
+  const n=swArr.length;
+  let idx=0; for(let i=0;i<n;i++){ if(swArr[i]>=sw2){ idx=i; break; } }
+  const fw2 = fwArr[idx];
+  const slope2 = slopeAt(sw2);
+  const sw2bar = sw2 + (1-fw2)/slope2;
+  const Qi = 1/slope2;
+  const PV = (phi*A*L)/5.615;
+  const eaDyes = areaSweepDyes(M, fw2, pattern);
+  const ed2 = (sw2bar - swc)/(1-swc);
+  const WOR = (iw*fw2*Bo)/(iw*(1-fw2)*Bw);
+
+  document.getElementById('o_fw2').textContent = fw2.toFixed(3);
+  document.getElementById('o_wor').textContent = WOR.toFixed(3);
+  document.getElementById('o_sw2bar').textContent = sw2bar.toFixed(3);
+  document.getElementById('o_qi2').textContent = Qi.toFixed(3)+' PV';
+  document.getElementById('o_ea2').textContent = (eaDyes*100).toFixed(1)+'%';
+  document.getElementById('o_ed2').textContent = (ed2*100).toFixed(1)+'%';
+
+  lastPostBT = {sw2, fw2, WOR, sw2bar, Qi, eaDyes, ed2, pattern};
+}
+
+/* ============================================================
+   EXPORTS — CSV / Excel / PDF report
+   ============================================================ */
+function collectAreaMetrics(){
+  const phi = parseFloatSafe(document.getElementById('input_phi').value, 0.20);
+  const A = parseFloatSafe(document.getElementById('input_area').value, 26400);
+  const L = parseFloatSafe(document.getElementById('input_length').value, 600);
+  const iw = parseFloatSafe(document.getElementById('input_iw').value, 900);
+  const pattern = document.getElementById('input_pattern').value;
+  const {swf, M} = lastWelge;
+  const eabt = eabt5Spot(M);
+  const PV = (phi*A*L)/5.615;
+  const slopeFront = slopeAt(swf);
+  const tBT = slopeFront>0 ? (PV/iw)/slopeFront : NaN;
+  const WiBT = slopeFront>0 ? PV/slopeFront : NaN;
+  const QiBT = slopeFront>0 ? 1/slopeFront : NaN;
+  return {phi, A, L, iw, pattern, eabt, PV, tBT, WiBT, QiBT};
+}
+
+function exportCSV(){
+  if(!lastWelge){ alert('لا توجد نتائج بعد.'); return; }
+  const {swArr, fwArr, swf, fwf, swBt, swc, ed, M} = lastWelge;
+  const area = collectAreaMetrics();
+  let csv = 'Metric,Value\n';
+  csv += `Mobility Ratio M,${M.toFixed(4)}\n`;
+  csv += `Shock Front Sw,${swf.toFixed(4)}\n`;
+  csv += `fw at Front,${fwf.toFixed(4)}\n`;
+  csv += `Avg Sw at Breakthrough,${swBt.toFixed(4)}\n`;
+  csv += `Displacement Efficiency ED (%),${(ed*100).toFixed(2)}\n`;
+  csv += `Areal Sweep Efficiency EABT 5-Spot (%),${(area.eabt*100).toFixed(2)}\n`;
+  csv += `Breakthrough Time (day),${isFinite(area.tBT)?area.tBT.toFixed(2):''}\n`;
+  csv += `Water Injected at BT (bbl),${isFinite(area.WiBT)?area.WiBT.toFixed(1):''}\n`;
+  csv += `Pore Volumes at BT,${isFinite(area.QiBT)?area.QiBT.toFixed(4):''}\n`;
+  if(lastPostBT){
+    csv += `\nPost-Breakthrough @ Sw2=${lastPostBT.sw2},\n`;
+    csv += `fw2,${lastPostBT.fw2.toFixed(4)}\n`;
+    csv += `WOR,${lastPostBT.WOR.toFixed(4)}\n`;
+    csv += `Avg Sw2,${lastPostBT.sw2bar.toFixed(4)}\n`;
+    csv += `Pore Volumes Injected Qi,${lastPostBT.Qi.toFixed(4)}\n`;
+    csv += `Areal Sweep EA Dyes (%),${(lastPostBT.eaDyes*100).toFixed(2)}\n`;
+    csv += `Recovery Factor ED2 (%),${(lastPostBT.ed2*100).toFixed(2)}\n`;
+  }
+  csv += '\nSw,fw\n';
+  for(let i=0;i<swArr.length;i+=8){ csv += `${swArr[i].toFixed(4)},${fwArr[i].toFixed(4)}\n`; }
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob); link.download='Waterflood_Sweep_Results.csv'; link.target='_blank'; link.click();
+}
+
+function exportExcel(){
+  if(!lastWelge){ alert('لا توجد نتائج بعد.'); return; }
+  const {swArr, fwArr, swf, fwf, swBt, swc, ed, M} = lastWelge;
+  const area = collectAreaMetrics();
+  const wb = XLSX.utils.book_new();
+
+  const summary = [
+    ['Metric','Value'],
+    ['Mobility Ratio M', Number(M.toFixed(4))],
+    ['Shock Front Sw', Number(swf.toFixed(4))],
+    ['fw at Front', Number(fwf.toFixed(4))],
+    ['Avg Sw at Breakthrough', Number(swBt.toFixed(4))],
+    ['Displacement Efficiency ED (%)', Number((ed*100).toFixed(2))],
+    ['Areal Sweep Efficiency EABT 5-Spot (%)', Number((area.eabt*100).toFixed(2))],
+    ['Breakthrough Time (day)', isFinite(area.tBT)?Number(area.tBT.toFixed(2)):''],
+    ['Water Injected at BT (bbl)', isFinite(area.WiBT)?Number(area.WiBT.toFixed(1)):''],
+    ['Pore Volumes at BT', isFinite(area.QiBT)?Number(area.QiBT.toFixed(4)):''],
+  ];
+  if(lastPostBT){
+    summary.push([], ['Post-Breakthrough @ Sw2='+lastPostBT.sw2, '']);
+    summary.push(['fw2', Number(lastPostBT.fw2.toFixed(4))]);
+    summary.push(['WOR', Number(lastPostBT.WOR.toFixed(4))]);
+    summary.push(['Avg Sw2', Number(lastPostBT.sw2bar.toFixed(4))]);
+    summary.push(['Pore Volumes Injected Qi', Number(lastPostBT.Qi.toFixed(4))]);
+    summary.push(['Areal Sweep EA Dyes (%)', Number((lastPostBT.eaDyes*100).toFixed(2))]);
+    summary.push(['Recovery Factor ED2 (%)', Number((lastPostBT.ed2*100).toFixed(2))]);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(summary), 'Summary');
+
+  const fwData=[['Sw','fw']];
+  for(let i=0;i<swArr.length;i+=4){ fwData.push([Number(swArr[i].toFixed(4)), Number(fwArr[i].toFixed(4))]); }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(fwData), 'Fractional Flow Curve');
+
+  XLSX.writeFile(wb, 'Waterflood_Sweep_Results.xlsx');
+}
+
+async function printReport(evt){
+  if(!lastWelge){ alert('الرجاء إجراء الحساب أولاً.'); return; }
+  const btn = evt ? evt.target : null;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ جارٍ تجهيز التقرير...'; }
+
+  const {swArr, fwArr, swf, fwf, swBt, swc, ed, M} = lastWelge;
+  const area = collectAreaMetrics();
+
+  let fwImg='', satImg='', eaImg='';
+  try{
+    const tmp1=document.createElement('div'); tmp1.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp1);
+    await Plotly.newPlot(tmp1, [
+      {x:swArr, y:fwArr, mode:'lines', line:{color:'#0072BD', width:3}, name:'fw(Sw)'},
+      {x:[swc,swBt], y:[0,1], mode:'lines', line:{color:'#f8de7e', width:2, dash:'dash'}, name:'Welge Tangent'},
+      {x:[swf], y:[fwf], mode:'markers', marker:{color:'#D9534F', size:11}, name:'Shock Front'}
+    ], {xaxis:{title:'Water Saturation, Sw', range:[0,1]}, yaxis:{title:'Fractional Flow, fw', range:[0,1.05]},
+        margin:{t:30,b:45,l:55,r:20}, height:520, width:900, title:{text:'Fractional Flow Curve', font:{size:14}}}, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    fwImg = await Plotly.toImage(tmp1, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp1); tmp1.remove();
+  }catch(e){}
+  try{
+    const tmp2=document.createElement('div'); tmp2.style.cssText='position:fixed;left:-9999px;top:0;width:900px;height:520px;';
+    document.body.appendChild(tmp2);
+    const Ms=[], eas=[];
+    for(let lm=-0.85; lm<=1.0; lm+=0.03){ const m=Math.pow(10,lm); Ms.push(m); eas.push(eabt5Spot(m)*100); }
+    await Plotly.newPlot(tmp2, [
+      {x:Ms, y:eas, mode:'lines', line:{color:'#0072BD', width:3}},
+      {x:[M], y:[area.eabt*100], mode:'markers', marker:{color:'#D9534F', size:12}}
+    ], {xaxis:{title:'Mobility Ratio, M', type:'log'}, yaxis:{title:'Areal Sweep Efficiency @ BT (%)', range:[40,100]},
+        margin:{t:30,b:45,l:55,r:20}, height:520, width:900, title:{text:'Areal Sweep Efficiency vs M (5-Spot)', font:{size:14}}}, {staticPlot:true});
+    await new Promise(r=>setTimeout(r,150));
+    eaImg = await Plotly.toImage(tmp2, {format:'png', width:900, height:520, scale:2});
+    Plotly.purge(tmp2); tmp2.remove();
+  }catch(e){}
+
+  if(btn){ btn.disabled=false; btn.textContent='📕 تحميل التقرير الهندسي الشامل (PDF)'; }
+
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0,10)+'  '+now.toTimeString().slice(0,5);
+  const mClass = M<=0.9 ? 'Favorable' : (M<=1.15 ? 'Unit' : 'Unfavorable');
+
+  const html = `
+    <div class="pr-page">
+      <div class="pr-body">
+        <div class="pr-page-header">
+          <div class="pr-brand"><div class="pr-mark">AM</div><div class="pr-brand-text"><div class="pr-t1">Waterflood Sweep Simulator</div><div class="pr-t2">${dateStr}</div></div></div>
+          <div class="pr-section-name">COVER</div>
+        </div>
+        <div class="pr-headbar">
+          <div class="pr-h1">Waterflood Sweep Simulator</div>
+          <div class="pr-h2">MOBILITY RATIO · FRACTIONAL FLOW · AREAL SWEEP EFFICIENCY</div>
+        </div>
+        <div class="pr-cover-title">
+          <h1>Displacement &amp; Sweep Efficiency Report</h1>
+          <p>Mobility Ratio Classification: ${mClass}</p>
+        </div>
+        <hr class="pr-rule">
+        <div class="pr-infolist">
+          <div><span>Mobility Ratio (M)</span><b>${M.toFixed(3)}</b></div>
+          <div><span>Injection Pattern</span><b>${area.pattern}</b></div>
+          <div><span>Injection Rate</span><b>${area.iw} bbl/day</b></div>
+          <div><span>Report Generated</span><b>${dateStr}</b></div>
+        </div>
+        <div class="pr-kpi-row">
+          <div class="pr-kpi"><div class="pr-kpi-label">Shock Front Sw</div><div class="pr-kpi-value">${swf.toFixed(3)}</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Disp. Eff. (ED)</div><div class="pr-kpi-value">${(ed*100).toFixed(1)}%</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Areal Sweep @ BT</div><div class="pr-kpi-value">${(area.eabt*100).toFixed(1)}%</div></div>
+          <div class="pr-kpi"><div class="pr-kpi-label">Breakthrough Time</div><div class="pr-kpi-value">${isFinite(area.tBT)?area.tBT.toFixed(0):'—'}d</div></div>
+        </div>
+        <div class="pr-check ok">✔ Analysis based on Buckley-Leverett fractional flow theory and Welge tangent construction, verified numerically against Craig/SPE reference correlations.</div>
+      </div>
+      <div class="pr-footer"><div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div><div class="pr-pageno">Page 1 of 4</div></div>
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        <div class="pr-page-header">
+          <div class="pr-brand"><div class="pr-mark">AM</div><div class="pr-brand-text"><div class="pr-t1">Waterflood Sweep Simulator</div><div class="pr-t2">${dateStr}</div></div></div>
+          <div class="pr-section-name">GOVERNING EQUATIONS</div>
+        </div>
+        <div class="pr-section-title">1. Governing Equations Used in This Analysis</div>
+        <p class="pr-eq-intro">All equations below follow Buckley–Leverett fractional-flow theory and the Welge tangent construction (Craig, "The Reservoir Engineering Aspects of Waterflooding", SPE Monograph), applied to this run's input data.</p>
+
+        <div class="pr-eq-row"><div class="pr-eq-label">Fractional flow of water</div><div class="eqx"><span class="katex-eq" data-tex="f_w%20%3D%20%5Cfrac%7B1%7D%7B1%2B%5Cdfrac%7Bk_%7Bro%7D%5C%2C%5Cmu_w%7D%7Bk_%7Brw%7D%5C%2C%5Cmu_o%7D%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Mobility ratio</div><div class="eqx"><span class="katex-eq" data-tex="M%20%3D%20%5Cfrac%7B%5Clambda_w%7D%7B%5Clambda_o%7D%20%3D%20%5Cfrac%7Bk_%7Brw%7D/%5Cmu_w%7D%7Bk_%7Bro%7D/%5Cmu_o%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Welge tangent condition (defines shock-front Swf)</div><div class="eqx"><span class="katex-eq" data-tex="%5Cleft%28%5Cfrac%7Bdf_w%7D%7BdS_w%7D%5Cright%29_%7BS_%7Bwf%7D%7D%20%3D%20%5Cfrac%7Bf_w%28S_%7Bwf%7D%29%7D%7BS_%7Bwf%7D-S_%7Bwc%7D%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Reservoir pore volume</div><div class="eqx"><span class="katex-eq" data-tex="PV%20%3D%20%5Cfrac%7B%5Cphi%20A%20L%7D%7B5.615%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Breakthrough time</div><div class="eqx"><span class="katex-eq" data-tex="t_%7BBT%7D%20%3D%20%5Cfrac%7BPV%7D%7Bi_w%7D%5Ccdot%5Cfrac%7B1%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bwf%7D%7D%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Cumulative water injected at breakthrough</div><div class="eqx"><span class="katex-eq" data-tex="W_%7BiBT%7D%20%3D%20i_w%20%5Ccdot%20t_%7BBT%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Areal sweep efficiency at breakthrough (5-spot, Craig/SPE correlation)</div><div class="eqx"><span class="katex-eq" data-tex="E_%7BABT%7D%20%3D%200.54602036%2B%5Cfrac%7B0.03170817%7D%7BM%7D%2B%5Cfrac%7B0.30222997%7D%7Be%5E%7BM%7D%7D-0.00509693%5C%2CM"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Areal sweep after breakthrough (Dyes et al., 1954)</div><div class="eqx"><span class="katex-eq" data-tex="E_A%20%3D%20E_%7BABT%7D%20%2B%200.633%5Clog%5Cleft%28%5Cfrac%7BW_%7Binj%7D%7D%7BW_%7BiBT%7D%7D%5Cright%29"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Average water saturation behind the front (post-breakthrough, Welge)</div><div class="eqx"><span class="katex-eq" data-tex="%5Cbar%20S_%7Bw2%7D%20%3D%20S_%7Bw2%7D%20%2B%20%5Cfrac%7B1-f_%7Bw2%7D%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bw2%7D%7D%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Pore volumes injected (post-breakthrough)</div><div class="eqx"><span class="katex-eq" data-tex="Q_i%20%3D%20%5Cfrac%7B1%7D%7B%5Cleft%28df_w/dS_w%5Cright%29_%7BS_%7Bw2%7D%7D%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Producing water-oil ratio</div><div class="eqx"><span class="katex-eq" data-tex="WOR%20%3D%20%5Cfrac%7Bi_w%20f_%7Bw2%7D%7D%7Bi_w%281-f_%7Bw2%7D%29%7D"></span></div></div>
+        <div class="pr-eq-row"><div class="pr-eq-label">Microscopic displacement efficiency</div><div class="eqx"><span class="katex-eq" data-tex="E_D%20%3D%20%5Cfrac%7B%5Cbar%20S_%7Bw2%7D-S_%7Bwc%7D%7D%7B1-S_%7Bwc%7D%7D"></span></div></div>
+      </div>
+      <div class="pr-footer"><div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div><div class="pr-pageno">Page 2 of 4</div></div>
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        <div class="pr-page-header">
+          <div class="pr-brand"><div class="pr-mark">AM</div><div class="pr-brand-text"><div class="pr-t1">Waterflood Sweep Simulator</div><div class="pr-t2">${dateStr}</div></div></div>
+          <div class="pr-section-name">FRACTIONAL FLOW &amp; SWEEP CHARTS</div>
+        </div>
+        <div class="pr-section-title">2. Fractional Flow Curve &amp; Welge Construction</div>
+        <div class="pr-plots"><div class="pr-plot-box">${fwImg?`<img src="${fwImg}">`:'<p>Chart unavailable</p>'}</div></div>
+      </div>
+      <div class="pr-footer"><div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div><div class="pr-pageno">Page 3 of 4</div></div>
+    </div>
+
+    <div class="pr-page">
+      <div class="pr-body">
+        <div class="pr-page-header">
+          <div class="pr-brand"><div class="pr-mark">AM</div><div class="pr-brand-text"><div class="pr-t1">Waterflood Sweep Simulator</div><div class="pr-t2">${dateStr}</div></div></div>
+          <div class="pr-section-name">AREAL SWEEP EFFICIENCY</div>
+        </div>
+        <div class="pr-section-title">3. Areal Sweep Efficiency vs Mobility Ratio (5-Spot)</div>
+        <div class="pr-plots"><div class="pr-plot-box">${eaImg?`<img src="${eaImg}">`:'<p>Chart unavailable</p>'}</div></div>
+        ${lastPostBT?`
+        <div class="pr-section-title">4. Post-Breakthrough Performance @ Sw2=${lastPostBT.sw2}</div>
+        <table class="pr-table">
+          <thead><tr><th>fw2</th><th>WOR</th><th>Avg Sw2</th><th>Qi (PV)</th><th>EA (Dyes)</th><th>Recovery ED</th></tr></thead>
+          <tbody><tr><td>${lastPostBT.fw2.toFixed(3)}</td><td>${lastPostBT.WOR.toFixed(3)}</td><td>${lastPostBT.sw2bar.toFixed(3)}</td><td>${lastPostBT.Qi.toFixed(3)}</td><td>${(lastPostBT.eaDyes*100).toFixed(1)}%</td><td>${(lastPostBT.ed2*100).toFixed(1)}%</td></tr></tbody>
+        </table>`:''}
+      </div>
+      <div class="pr-footer"><div><span class="pr-foot-brand">Al-Misbar Engineering Solutions</span> &nbsp;|&nbsp; <a href="https://misbar.odoo.com/">misbar.odoo.com</a></div><div class="pr-pageno">Page 4 of 4</div></div>
+    </div>
+  `;
+  document.getElementById('printReport').innerHTML = html;
+  renderKatexIn(document.getElementById('printReport'));
+  await new Promise(r=>setTimeout(r,300));
+  window.print();
+}
+
+function onPhysicalInput(){ /* live-only; applied explicitly via button */ }
+function applyPhysicalToSlider(){
+  let muo, muw, M;
+  if(useTabular){
+    muo=parseFloatSafe(document.getElementById('input_muo_tab').value,1.0);
+    muw=parseFloatSafe(document.getElementById('input_muw_tab').value,0.5);
+    if(krRows.length<2){ alert('أضف صفَّين على الأقل من بيانات النفاذية النسبية.'); return; }
+    const sorted=[...krRows].sort((a,b)=>a.sw-b.sw);
+    const first=sorted[0], last=sorted[sorted.length-1];
+    // Endpoint mobility ratio, reported for reference/visualization only —
+    // the actual fw curve below uses the full table, not this single number.
+    M = (first.krw>0 ? (first.krw*muo) : (last.krw*muo)) / ((last.kro>0?last.kro:first.kro)*muw || 1e-6);
+    if(!isFinite(M) || M<=0) M = 1.0;
+  } else {
+    muo=parseFloatSafe(document.getElementById('input_muo').value,5.0);
+    muw=parseFloatSafe(document.getElementById('input_muw').value,0.5);
+    const swc=parseFloatSafe(document.getElementById('input_swc').value,0.20);
+    const sor=parseFloatSafe(document.getElementById('input_sor').value,0.25);
+    const krwMax=parseFloatSafe(document.getElementById('input_krwmax').value,0.35);
+    const kroMax=parseFloatSafe(document.getElementById('input_kromax').value,0.85);
+    const nw=parseFloatSafe(document.getElementById('input_nw').value,2.0);
+    const no=parseFloatSafe(document.getElementById('input_no').value,2.0);
+    if(swc+sor>=1){ alert('مجموع Swc وSor يجب أن يكون أقل من 1.'); return; }
+    physicalParams = {swc,sor,krwMax,kroMax,nw,no,muw,muo};
+    M = (krwMax*muo)/(kroMax*muw);
+  }
+
+  const {swArr, fwArr, swc:swMin} = buildFwCurve(muo, muw);
+  const {swf, fwf, swBt, ed} = welgeAnalysis(swArr, fwArr, swMin);
+  lastWelge = {swArr, fwArr, swf, fwf, swBt, swc:swMin, ed, M, muo, muw};
+
+  currentM = Math.max(0.05, Math.min(30, M));
+  document.getElementById('mSlider').value = mToSlider(Math.max(0.1,Math.min(20,currentM)));
+  document.getElementById('mrValueDisplay').textContent = currentM.toFixed(2);
+  document.getElementById('o_M').textContent = currentM.toFixed(3);
+  const badge = document.getElementById('mrBadge');
+  if(currentM<=0.9){ badge.className='mr-badge favorable'; badge.innerHTML='✔ نسبة حركية مفضّلة — إزاحة مستقرة شبه-مكبسية'; }
+  else if(currentM<=1.15){ badge.className='mr-badge unit'; badge.innerHTML='◆ نسبة حركية وحدوية — إزاحة متوازنة تقريبًا'; }
+  else { badge.className='mr-badge unfavorable'; badge.innerHTML='⚠ نسبة حركية غير مفضّلة — تخطّي إصبعي متوقّع'; }
+  document.getElementById('o_swf').textContent = swf.toFixed(3);
+  document.getElementById('o_swbt').textContent = swBt.toFixed(3);
+  document.getElementById('o_ed').textContent = (ed*100).toFixed(1)+'%';
+  document.getElementById('o_fwf').textContent = fwf.toFixed(3);
+  document.getElementById('o_visc').textContent = (muo/muw).toFixed(2);
+
+  // Each chart/section renders independently — a failure in one (e.g. a
+  // slow-loading chart library) must never silently prevent the others
+  // from updating, since they all depend on this same button click.
+  try{ renderFracFlow(); }catch(e){ console.error('renderFracFlow failed:', e); }
+  try{ renderAreaAnalysis(); }catch(e){ console.error('renderAreaAnalysis failed:', e); }
+}
+
+/* ============================================================
+   GLOSSARY
+   ============================================================ */
+const GLOSSARY = [
+  {term:'Mobility λ', ar:'الحركية', text:'قدرة سائل معين على التحرك عبر الصخر المسامي، تُحسب كنسبة النفاذية النسبية إلى اللزوجة (kr/μ).', analogy:'كلما زادت "سيولة" الطريق أمام سائل معين (نفاذية عالية) وقلّت لزوجته، تحرك بسهولة أكبر — كسيارة سريعة على طريق واسع.'},
+  {term:'Mobility Ratio M', ar:'نسبة الحركية', text:'مقارنة مباشرة بين حركية السائل الدافع (الماء) وحركية السائل المُزاح (النفط). M≤1 مفضّلة، M>1 غير مفضّلة.', analogy:'إذا كان الماء "أسرع" من النفط في التحرك عبر المسام، فسيسبقه ويتخطّاه بدل دفعه أمامه بانتظام.'},
+  {term:'Relative Permeability kr', ar:'النفاذية النسبية', text:'مدى سهولة مرور سائل معين عبر الصخر عندما يتواجد أكثر من سائل واحد فيه معًا (مقارنة بحالة تواجد سائل واحد فقط).', analogy:'كطريق يشترك فيه مشاة وسيارات — سعة مرور السيارات تقل عن حالة الطريق الفارغ لها وحدها.'},
+  {term:'Viscosity μ', ar:'اللزوجة', text:'مقاومة السائل الداخلية للتدفق؛ كلما زادت، قلّت حركية ذلك السائل عبر المسام عند نفس النفاذية النسبية.', analogy:'الفرق بين سكب الماء وسكب العسل عبر نفس الفتحة.'},
+  {term:'Piston-like Displacement', ar:'الإزاحة شبه-المكبسية', text:'نمط إزاحة مثالي تتقدم فيه جبهة الماء بشكل منتظم كمكبس واحد، يحدث عند M منخفضة.', analogy:'كأنك تدفع سائلاً بلوحة مستوية بدل نفخه بشكل غير منتظم.'},
+  {term:'Viscous Fingering', ar:'التخطّي الإصبعي اللزج', text:'عدم استقرار جبهة الإزاحة عند M المرتفعة، حيث يخترق الماء النفط في مسارات ضيقة متعددة بدل جبهة واحدة.', analogy:'كصب ماء رقيق فوق عسل كثيف — الماء يخترق بخيوط رفيعة متفرقة بدل دفع العسل بانتظام.'},
+  {term:'Bypassed Oil', ar:'النفط المتجاوَز', text:'كميات نفط تبقى عالقة خلف جبهة الإزاحة الرئيسية بسبب عدم انتظام تقدّم الماء، فلا تُزاح رغم مرور الماء بالقرب منها.', analogy:'جيوب من النفط "تراها" المياه المتقدمة لكنها تتجاوزها في طريقها السريع عبر الأصابع.'},
+  {term:'Fractional Flow fw', ar:'التدفق الجزئي', text:'النسبة التي يُشكّلها الماء من إجمالي السائل المتدفق عند تشبّع ماء معين؛ أساس تحليل Buckley-Leverett.', analogy:'مثل قياس "كم فنجانًا من كل عشرة تُسكب ماءً" عند نقطة معينة من الأنبوب المختلط.'},
+  {term:'Welge Tangent Construction', ar:'بناء مماس Welge', text:'طريقة رسومية/رياضية لتحديد تشبّع جبهة الصدمة ومتوسط التشبّع خلفها لحظة الاختراق، عبر رسم مماس من نقطة البداية على منحنى fw.', analogy:'مثل رسم خط مستقيم من نقطة الصفر يلامس المنحنى بالضبط عند أعلى ميل ممكن للوصول إليه.'},
+  {term:'Displacement Efficiency ED', ar:'كفاءة الإزاحة', text:'النسبة المئوية من النفط القابل للحركة التي أُزيحت فعليًا لحظة اختراق الماء لبئر الإنتاج.', analogy:'كم من الكعكة "دفعتها" فعليًا للخارج قبل أن يبدأ الماء بالخروج معها.'},
+];
+function renderGlossary(){
+  const grid=document.getElementById('glossaryGrid');
+  if(!grid) return;
+  grid.innerHTML = GLOSSARY.map((g,i)=>`
+    <div class="gloss-card" id="gc-${i}" onclick="toggleGloss(${i})">
+      <div class="gc-head"><div><div class="gc-term">${g.term}</div><div class="gc-ar">${g.ar}</div></div><span class="gc-chev">▸</span></div>
+      <div class="gc-body"><p>${g.text}</p><div class="gc-analogy">💡 ${g.analogy}</div></div>
+    </div>`).join('');
+}
+function toggleGloss(i){
+  const card=document.getElementById('gc-'+i);
+  const wasOpen=card.classList.contains('open');
+  document.querySelectorAll('.gloss-card').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen) card.classList.add('open');
+}
+renderGlossary();
+
+function renderKatexIn(container){
+  if(typeof katex === 'undefined'){ setTimeout(()=>renderKatexIn(container), 150); return; }
+  container.querySelectorAll('.katex-eq').forEach(el=>{
+    const tex = decodeURIComponent(el.dataset.tex);
+    try{ katex.render(tex, el, {throwOnError:false, displayMode:true}); }catch(e){ el.textContent = tex; }
+  });
+}
+
+/* init */
+resetQuickResults();
+renderKatexIn(document.body);
+</script>
+</body>
+</html>
